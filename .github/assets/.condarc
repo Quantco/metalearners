@@ -1,0 +1,8 @@
+repodata_use_zst: true
+channels:
+  - qc-internal
+  - conda-forge
+custom_channels:
+  qc-internal: https://conda.prod.quantco.cloud/t/${QUETZ_API_KEY}/get/
+conda_build:
+  pkg_format: 2

@@ -1,0 +1,22 @@
+name: metalearners
+channels:
+  - qc-internal
+  - conda-forge
+  - nodefaults
+dependencies:
+  # Git
+  - pre-commit
+  # Python
+  - pip
+  - python>=3.8
+  - setuptools-scm
+  - setuptools>=61 # Adds support for pyproject.toml package declaration.
+  # Documentation
+  - make
+  - numpydoc
+  - sphinx
+  - sphinxcontrib-apidoc
+  - sphinx_rtd_theme
+  # Testing
+  - pytest>=6 # Adds --import-mode option
+  - pytest-cov
