@@ -5,11 +5,11 @@ repos:
     hooks:
       - id: docformatter-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-ruff
-    rev: 0.1.14
+    rev: 0.2.0
     hooks:
       - id: ruff-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-black
-    rev: 24.1.0
+    rev: 24.1.1
     hooks:
       - id: black-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-mypy
@@ -21,7 +21,7 @@ repos:
     rev: 3.2.4
     hooks:
       - id: prettier-conda
-        files: "\\.(md|yml|yaml)$"
+        files: \.(md|yml|yaml)$
   - repo: https://github.com/Quantco/pre-commit-mirrors-pre-commit-hooks
     rev: 4.5.0
     hooks:
@@ -30,11 +30,11 @@ repos:
       - id: check-merge-conflict-conda
         args: ["--assume-in-merge"]
   - repo: https://github.com/Quantco/pre-commit-mirrors-typos
-    rev: 1.17.2
+    rev: 1.18.0
     hooks:
       - id: typos-conda
-  - repo: https://github.com/Quantco/pre-commit-insert-license
-    rev: "1.3.0"
+  - repo: https://github.com/Quantco/pre-commit-mirrors-insert-license
+    rev: 1.3.0
     hooks:
       - id: insert-license
         types: [python]

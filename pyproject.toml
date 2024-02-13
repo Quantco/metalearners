@@ -46,12 +46,13 @@ exclude = '''
 '''
 
 [tool.ruff]
+line-length = 88
+[tool.ruff.lint]
 ignore = [
   "N803",  # https://docs.astral.sh/ruff/rules/invalid-argument-name
   "N806",  # https://docs.astral.sh/ruff/rules/non-lowercase-variable-in-function
   "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
 ]
-line-length = 88
 select = [
   # pyflakes
   "F",
