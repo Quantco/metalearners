@@ -4,19 +4,27 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  # Git
+  ## Git
   - pre-commit
-  # Python
+  - git_root
+  ## Python
   - pip
   - python>=3.8
   - setuptools-scm
   - setuptools>=61 # Adds support for pyproject.toml package declaration.
-  # Documentation
+  ## Documentation
   - make
   - numpydoc
   - sphinx
   - sphinxcontrib-apidoc
   - sphinx_rtd_theme
-  # Testing
+  ## Testing
   - pytest>=6 # Adds --import-mode option
   - pytest-cov
+  ##  Numerical
+  # First version to add the return_indices parameter to cross_validate.
+  - scikit-learn>=1.3
+  - numpy
+  - pandas
+  - typing-extensions
+  - lightgbm

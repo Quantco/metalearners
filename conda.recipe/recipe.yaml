@@ -24,11 +24,16 @@ requirements:
     - setuptools-scm
   run:
     - python >=3.8
+    - scikit-learn >=1.3
+    - pandas
+    - numpy
+    - typing-extensions
 
 tests:
   - python:
       imports:
         - metalearners
+        - metalearners.cross_fit_estimator
       pip_check: true
 
 about:
