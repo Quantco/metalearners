@@ -86,6 +86,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         y: Union[Vector, Matrix],
+        **kwargs,
     ) -> Self:
         """Fit the underlying estimators.
 
@@ -217,6 +218,7 @@ class CrossFitEstimator:
         X: Matrix,
         is_oos: bool,
         oos_method: Optional[_OosMethod] = None,
+        **kwargs,
     ) -> np.ndarray:
         """Predict from ``X``.
 
@@ -253,3 +255,9 @@ class CrossFitEstimator:
             method="predict_proba",
             oos_method=oos_method,
         )
+
+    def score(self, X, y, sample_weight=None, **kwargs):
+        raise NotImplementedError()
+
+    def set_params(self, **params):
+        raise NotImplementedError()
