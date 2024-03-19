@@ -14,12 +14,11 @@ authors = [
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.urls]
 repository = "https://github.com/quantco/metalearners"
@@ -67,7 +66,7 @@ select = [
 ]
 
 [tool.mypy]
-python_version = '3.8'
+python_version = '3.9'
 ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true

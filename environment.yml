@@ -9,7 +9,7 @@ dependencies:
   - git_root
   ## Python
   - pip
-  - python>=3.8
+  - python>=3.9
   - setuptools-scm
   - setuptools>=61 # Adds support for pyproject.toml package declaration.
   ## Documentation

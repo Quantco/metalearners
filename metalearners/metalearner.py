@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 from abc import ABC, abstractmethod
-from typing import Collection, Dict, List, Optional, Union
+from collections.abc import Collection
+from typing import Optional, Union
 
 import numpy as np
 from typing_extensions import Self
@@ -10,11 +11,11 @@ from typing_extensions import Self
 from metalearners._utils import Matrix, Vector, _ScikitModel, validate_number_positive
 from metalearners.cross_fit_estimator import CrossFitEstimator
 
-Params = Dict[str, Union[int, float, str]]
+Params = dict[str, Union[int, float, str]]
 Features = Union[Collection[str], Collection[int]]
 
 
-def _initialize_model_dict(argument, expected_names: Collection[str]) -> Dict:
+def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
     if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
         return argument
     return {name: argument for name in expected_names}
@@ -24,19 +25,19 @@ class MetaLearner(ABC):
 
     @classmethod
     @abstractmethod
-    def nuisance_model_names(cls) -> List[str]: ...
+    def nuisance_model_names(cls) -> list[str]: ...
 
     @classmethod
     @abstractmethod
-    def treatment_model_names(cls) -> List[str]: ...
+    def treatment_model_names(cls) -> list[str]: ...
 
     def __init__(
         self,
-        nuisance_model_factory: Union[_ScikitModel, Dict[str, _ScikitModel]],
-        treatment_model_factory: Union[_ScikitModel, Dict[str, _ScikitModel]],
-        nuisance_model_params: Optional[Union[Params, Dict[str, Params]]] = None,
-        treatment_model_params: Optional[Union[Params, Dict[str, Params]]] = None,
-        feature_set: Optional[Union[Features, Dict[str, Features]]] = None,
+        nuisance_model_factory: Union[_ScikitModel, dict[str, _ScikitModel]],
+        treatment_model_factory: Union[_ScikitModel, dict[str, _ScikitModel]],
+        nuisance_model_params: Optional[Union[Params, dict[str, Params]]] = None,
+        treatment_model_params: Optional[Union[Params, dict[str, Params]]] = None,
+        feature_set: Optional[Union[Features, dict[str, Features]]] = None,
         # TODO: Consider implementing selection of number of folds for various estimators.
         n_folds: int = 10,
     ):
@@ -92,7 +93,7 @@ class MetaLearner(ABC):
                 feature_set, nuisance_model_names + treatment_model_names
             )
 
-        self._nuisance_models: Dict[str, _ScikitModel] = {
+        self._nuisance_models: dict[str, _ScikitModel] = {
             name: CrossFitEstimator(
                 n_folds=self.n_folds,
                 estimator_factory=self.nuisance_model_factory[name],
@@ -100,7 +101,7 @@ class MetaLearner(ABC):
             )
             for name in nuisance_model_names
         }
-        self._treatment_models: Dict[str, _ScikitModel] = {
+        self._treatment_models: dict[str, _ScikitModel] = {
             name: CrossFitEstimator(
                 n_folds=self.n_folds,
                 estimator_factory=self.treatment_model_factory[name],
@@ -159,7 +160,7 @@ class MetaLearner(ABC):
         ...
 
     @abstractmethod
-    def evaluate(self, X: Matrix, y: Vector, w: Vector) -> Dict[str, Union[float, int]]:
+    def evaluate(self, X: Matrix, y: Vector, w: Vector) -> dict[str, Union[float, int]]:
         """Evaluate all models contained in a MetaLearner."""
         ...
 

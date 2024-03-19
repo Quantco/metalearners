@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 from sklearn.base import is_classifier
@@ -63,18 +63,18 @@ class CrossFitEstimator:
     """
 
     n_folds: int
-    estimator_factory: Type[_ScikitModel]
-    estimator_params: Dict = field(default_factory=dict)
+    estimator_factory: type[_ScikitModel]
+    estimator_params: dict = field(default_factory=dict)
     enable_overall: bool = True
-    _estimators: List[_ScikitModel] = field(init=False)
+    _estimators: list[_ScikitModel] = field(init=False)
     _overall_estimator: Optional[_ScikitModel] = field(init=False)
-    _test_indices: Optional[Tuple[np.ndarray]] = field(init=False)
+    _test_indices: Optional[tuple[np.ndarray]] = field(init=False)
 
     def __post__init__(self):
         _validate_n_folds(self.n_folds)
-        self._estimators: List[_ScikitModel] = []
+        self._estimators: list[_ScikitModel] = []
         self._overall_estimator: Optional[_ScikitModel] = None
-        self._test_indices: Optional[Tuple[np.ndarray]] = None
+        self._test_indices: Optional[tuple[np.ndarray]] = None
 
     def _train_overall_estimator(
         self, X: Matrix, y: Union[Matrix, Vector]
