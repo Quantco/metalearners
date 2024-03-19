@@ -75,3 +75,6 @@ check_untyped_defs = true
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --cov=metalearners --cov-report term-missing --color=yes"
+
+[tool.typos.default]
+extend-ignore-re = ["HTE"]
