@@ -8,6 +8,9 @@ Glossary
    * - Term
      - Definition
      - Reference
+   * - Base model
+     - TODO
+     - TODO
    * - Conditional Average Treatment Effect (CATE)
      - TODO
      - TODO
@@ -20,9 +23,27 @@ Glossary
    * - MetaLearner
      - TODO
      - TODO
+   * - Nuisance model
+     - TODO
+     - TODO
+   * - Observational data
+     - TODO
+     - TODO
+   * - Outcome model
+     - TODO
+     - TODO
    * - Potential Outcomes
      - TODO
      - TODO
+   * - Propensity model
+     - TODO
+     - TODO
    * - Propensity score
+     - TODO
+     - TODO
+   * - Randomized Control Trial (RCT)
+     - TODO
+     - TODO
+   * - Treatment model
      - TODO
      - TODO
