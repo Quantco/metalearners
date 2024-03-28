@@ -4,13 +4,49 @@ Motivation
 Why CATE estimation?
 --------------------
 
-TODO.
+By conditioning on covariates, CATE estimates capture heterogoneity that is not captured by population
+averages, such as the Average Treatment Effect (ATE). Yet, at times reality is heterogeneous by
+nature. Treating a population homogeneously means missing out on some potential.
+
+For instance, imagine two variants: playing Bach to a person or
+not playing Bach to a person. Let's say we care about the outcome of a
+person's joyfulness. If we now run an Randomized Control Trial (RCT) with both variants on a
+population, we might observe that playing Bach is, on average,
+slightly better for people's joyfulness than not playing Bach. Yet,
+within that population, there might have been some people who strongly
+disliked hearing Bach, while some really loved it. Therefore, overall,
+we could do much better by figuring out who enjoys Bach, who doesn't,
+and then giving each their preferred variant. In other words, we would
+like to define a heterogeneous policy based on heterogeneous
+preferences.
+
+An optimal policy can be easily defined once a
+CATE estimate is at hand by choosing the variant with the
+most favourable treatment effect compared to all others.
 
 
 Why MetaLearners?
 -----------------
 
-TODO.
+There are various ways for estimating CATEs, such as
+`Targeted Maximum Likelihood Estimation <https://academic.oup.com/aje/article/185/1/65/2662306?login=false>`_,
+`Causal Forests <https://arxiv.org/abs/1902.07409>`_ or MetaLearners.
+
+We've found MetaLearners to be a particularly compelling approach
+for CATE estimation because
+
+- they are conceptually simple
+- some of them come with strong statistical guarantees, see e.g.
+  `Nie et al. (2019) <https://arxiv.org/pdf/1712.04912.pdf>`_ for the
+  R-Learner or `Kennedy (2023) <https://arxiv.org/abs/2004.14497>`_ for the DR-Learner
+- they rely on existing, arbitrary prediction approaches
+
+The latter point is particularly important since it implies
+that battle-tested and production-grade code from existing prediction
+libraries such as ``scikit-learn``, ``lightgbm`` or ``xgboost`` can be
+reused. Given that the field of CATE estimation is still young and
+engineering efforts limited, this is a highly relevant factor.
+
 
 
 Why not ``causalml`` or ``econml``?
