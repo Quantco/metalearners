@@ -15,16 +15,18 @@ env:
 
 jobs:
   pre-commit-checks:
-    name: Pre-commit checks - Python 3.10
+    name: Pre-commit Checks
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          # needed for 'pre-commit-mirrors-insert-license'
+          fetch-depth: 0
       - name: Run pre-commit-conda
         uses: quantco/pre-commit-conda@v1
-        with:
-          python-version: "3.10"
 
   linux-unittests:
     name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
@@ -56,4 +58,4 @@ jobs:
         uses: quantco/pytest-action@v2
         with:
           report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
-          custom-arguments: --cov-report=xml ./tests
+          custom-arguments: --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes

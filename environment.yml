@@ -11,6 +11,7 @@ dependencies:
   - pip
   - python>=3.9
   - setuptools-scm
+  - mypy=1.9.0
   - setuptools>=61 # Adds support for pyproject.toml package declaration.
   ## Documentation
   - make

@@ -7,7 +7,6 @@ version_scheme = "post-release"
 [project]
 name = "metalearners"
 description = "MetaLearners for CATE estimation"
-readme = "README.md"
 dynamic = ["version"]
 authors = [
   {name = "QuantCo, Inc.", email = "noreply@quantco.com"},
@@ -72,9 +71,13 @@ ignore_missing_imports = true
 no_implicit_optional = true
 check_untyped_defs = true
 
+exclude = ["docs/"]
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --cov=metalearners --cov-report term-missing --color=yes"
+testpaths = [
+  "tests",
+]
 
 [tool.typos.default]
 extend-ignore-re = ["HTE"]
