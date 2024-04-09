@@ -8,6 +8,7 @@ Welcome to metalearners's documentation!
    Motivation <motivation.rst>
    Background <background.rst>
    Glossary <glossary.rst>
+   Examples <examples/examples.rst>
    API Reference <api/modules>
    Change Log <changelog.rst>
 
