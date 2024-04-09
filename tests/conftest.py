@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 from git_root import git_root
 
+from metalearners.data_generation import generate_covariates
+
 
 @pytest.fixture(scope="session")
 def rng():
@@ -44,4 +46,35 @@ def mindset_data():
         treatment_column,
         feature_columns,
         categorical_feature_columns,
+    )
+
+
+@pytest.fixture(scope="module")
+def n_numericals():
+    return 25
+
+
+@pytest.fixture(scope="module")
+def n_categoricals():
+    return 5
+
+
+@pytest.fixture(scope="module")
+def sample_size():
+    return 1_000_000
+
+
+@pytest.fixture(scope="module")
+def numerical_dataset(sample_size, n_numericals, rng):
+    return generate_covariates(sample_size, n_numericals, format="numpy", rng=rng)
+
+
+@pytest.fixture(scope="module")
+def simulated_dataset(sample_size, n_numericals, n_categoricals, rng):
+    return generate_covariates(
+        sample_size,
+        n_numericals + n_categoricals,
+        n_categoricals=n_categoricals,
+        format="pandas",
+        rng=rng,
     )
