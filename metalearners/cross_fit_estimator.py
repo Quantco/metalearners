@@ -177,6 +177,12 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         if not self._test_indices:
             raise ValueError()
+        if len(X) != sum(len(fold) for fold in self._test_indices):
+            raise ValueError(
+                "Trying to predict in-sample on data that is unlike data encountered in training."
+                f"Training data included {len(self._test_indices)} observations while prediction "
+                f"data includes {len(X)} observations."
+            )
         n_outputs = self._n_outputs(method)
         predictions = self._initialize_prediction_tensor(
             n_observations=len(X),
