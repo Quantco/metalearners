@@ -70,7 +70,7 @@ class CrossFitEstimator:
     _overall_estimator: Optional[_ScikitModel] = field(init=False)
     _test_indices: Optional[tuple[np.ndarray]] = field(init=False)
 
-    def __post__init__(self):
+    def __post_init__(self):
         _validate_n_folds(self.n_folds)
         self._estimators: list[_ScikitModel] = []
         self._overall_estimator: Optional[_ScikitModel] = None
@@ -109,7 +109,7 @@ class CrossFitEstimator:
         self._estimators = cv_result["estimator"]
         self._test_indices = cv_result["indices"]["test"]
         if self.enable_overall:
-            self.overall_estimator = self._train_overall_estimator(X, y)
+            self._overall_estimator = self._train_overall_estimator(X, y)
         return self
 
     def _initialize_prediction_tensor(
@@ -207,7 +207,7 @@ class CrossFitEstimator:
         if is_oos:
             _validate_oos_method(oos_method, self.enable_overall)
             if oos_method == "overall":
-                return getattr(self.overall_estimator, method)(X)
+                return getattr(self._overall_estimator, method)(X)
             if oos_method == "mean":
                 if method != "predict_proba" and any(
                     is_classifier(est) for est in self._estimators
