@@ -28,6 +28,8 @@ class _ScikitModel(Protocol):
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
+    if isinstance(rows, pd.Series):
+        rows = rows.to_numpy()
     if isinstance(matrix, pd.DataFrame):
         return matrix.iloc[rows]
     return matrix[rows, :]
