@@ -178,9 +178,22 @@ class MetaLearner(ABC):
 
     @abstractmethod
     def evaluate(
-        self, X: Matrix, y: Vector, w: Vector, is_regression: bool
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        is_regression: bool,
+        is_oos: bool,
+        oos_method: Optional[OosMethod] = None,
     ) -> dict[str, Union[float, int]]:
         """Evaluate all models contained in a MetaLearner."""
+        ...
+
+    @abstractmethod
+    def predict_potential_outcomes(
+        self, X: Matrix, is_oos: bool, oos_method: Optional[OosMethod] = None
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Predict the vectors of potential outcomes."""
         ...
 
     @abstractmethod

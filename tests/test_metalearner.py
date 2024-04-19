@@ -24,11 +24,14 @@ class _TestMetaLearner(MetaLearner):
             self._treatment_models[model_kind].fit(X, y)
         return self
 
-    def predict(self, X):
+    def predict(self, X, is_oos, oos_method=None):
         return np.zeros(len(X))
 
-    def evaluate(self, X, y, w):
+    def evaluate(self, X, y, w, is_regression, is_oos, oos_method=None):
         return {}
+
+    def predict_potential_outcomes(self, X, is_oos, oos_method=None):
+        return np.zeros(len(X)), np.zeros(len(X))
 
     def _pseudo_outcome(self, X):
         return np.zeros(len(X))
