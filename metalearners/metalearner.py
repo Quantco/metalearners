@@ -9,10 +9,11 @@ import numpy as np
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, _ScikitModel, validate_number_positive
-from metalearners.cross_fit_estimator import CrossFitEstimator
+from metalearners.cross_fit_estimator import CrossFitEstimator, OosMethod
 
 Params = dict[str, Union[int, float, str]]
 Features = Union[Collection[str], Collection[int]]
+ModelFactory = Union[type[_ScikitModel], dict[str, type[_ScikitModel]]]
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
@@ -33,8 +34,8 @@ class MetaLearner(ABC):
 
     def __init__(
         self,
-        nuisance_model_factory: Union[_ScikitModel, dict[str, _ScikitModel]],
-        treatment_model_factory: Union[_ScikitModel, dict[str, _ScikitModel]],
+        nuisance_model_factory: ModelFactory,
+        treatment_model_factory: ModelFactory,
         nuisance_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         treatment_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         feature_set: Optional[Union[Features, dict[str, Features]]] = None,
@@ -133,26 +134,42 @@ class MetaLearner(ABC):
         """Fit all models of a MetaLearner."""
         ...
 
-    def predict_nuisance(self, X: Matrix, model_kind: str) -> np.ndarray:
+    def predict_nuisance(
+        self,
+        X: Matrix,
+        model_kind: str,
+        is_oos: bool,
+        oos_method: Optional[OosMethod] = None,
+    ) -> np.ndarray:
         """Estimate based on a given nuisance model.
 
         Importantly, this method needs to implement the subselection of ``X`` based on
         the ``feature_set`` field of ``MetaLearner``.
         """
         X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
-        return self._nuisance_models[model_kind].predict(X_filtered)
+        return self._nuisance_models[model_kind].predict(X_filtered, is_oos, oos_method)
 
-    def predict_treatment(self, X: Matrix, model_kind: str) -> np.ndarray:
+    def predict_treatment(
+        self,
+        X: Matrix,
+        model_kind: str,
+        is_oos: bool,
+        oos_method: Optional[OosMethod] = None,
+    ) -> np.ndarray:
         """Estimate based on a given treatment model.
 
         Importantly, this method needs to implement the subselection of ``X`` based on
         the ``feature_set`` field of ``MetaLearner``.
         """
         X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
-        return self._treatment_models[model_kind].predict(X_filtered)
+        return self._treatment_models[model_kind].predict(
+            X_filtered, is_oos, oos_method
+        )
 
     @abstractmethod
-    def predict(self, X: Matrix) -> np.ndarray:
+    def predict(
+        self, X: Matrix, is_oos: bool, oos_method: Optional[OosMethod] = None
+    ) -> np.ndarray:
         """Estimate the Conditional Average Treatment Effect.
 
         This method can be identical to predict_treatment but doesn't need to.
@@ -160,7 +177,9 @@ class MetaLearner(ABC):
         ...
 
     @abstractmethod
-    def evaluate(self, X: Matrix, y: Vector, w: Vector) -> dict[str, Union[float, int]]:
+    def evaluate(
+        self, X: Matrix, y: Vector, w: Vector, is_regression: bool
+    ) -> dict[str, Union[float, int]]:
         """Evaluate all models contained in a MetaLearner."""
         ...
 

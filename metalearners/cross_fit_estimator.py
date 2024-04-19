@@ -15,12 +15,10 @@ _OOS_WHITELIST = ["overall", "median", "mean"]
 # As of 24/01/19, no convenient way of dynamically creating a literal collection that
 # mypy can deal with seems to exist. Therefore we duplicate the values.
 # See https://stackoverflow.com/questions/64522040/typing-dynamically-create-literal-alias-from-list-of-valid-values
-_OosMethod = Literal["overall", "median", "mean"]
+OosMethod = Literal["overall", "median", "mean"]
 
 
-def _validate_oos_method(
-    oos_method: Optional[_OosMethod], enable_overall: bool
-) -> None:
+def _validate_oos_method(oos_method: Optional[OosMethod], enable_overall: bool) -> None:
     if oos_method not in _OOS_WHITELIST:
         raise ValueError(
             f"oos_method {oos_method} not supported. Supported values are "
@@ -201,7 +199,7 @@ class CrossFitEstimator:
         X: Matrix,
         is_oos: bool,
         method: _PredictMethod,
-        oos_method: Optional[_OosMethod] = None,
+        oos_method: Optional[OosMethod] = None,
         w: Optional[Union[Vector, Matrix]] = None,
     ) -> np.ndarray:
         if is_oos:
@@ -227,7 +225,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         is_oos: bool,
-        oos_method: Optional[_OosMethod] = None,
+        oos_method: Optional[OosMethod] = None,
         **kwargs,
     ) -> np.ndarray:
         """Predict from ``X``.
@@ -249,7 +247,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         is_oos: bool,
-        oos_method: Optional[_OosMethod] = None,
+        oos_method: Optional[OosMethod] = None,
     ) -> np.ndarray:
         """Predict probability from ``X``.
 
