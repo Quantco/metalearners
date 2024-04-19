@@ -16,7 +16,7 @@ from metalearners.outcome_functions import (
 @pytest.mark.parametrize(
     "tau", [1, np.array([0.3, 2.5]), np.array([0, 1.4, 3.2, -0.4])]
 )
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 def test_constant_treatment_effect(dataset, tau, rng, ulow, uhigh, request):
     features, _, _ = request.getfixturevalue(dataset)
     dim = get_linear_dimension(features)
@@ -33,7 +33,7 @@ def test_constant_treatment_effect(dataset, tau, rng, ulow, uhigh, request):
 
 @pytest.mark.parametrize("ulow, uhigh", [(0, 1), (-1, 1), (2, 4.52)])
 @pytest.mark.parametrize("n_variants", [2, 5])
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 def test_no_treatment_effect(dataset, n_variants, rng, ulow, uhigh, request):
     features, _, _ = request.getfixturevalue(dataset)
     dim = get_linear_dimension(features)
@@ -48,7 +48,7 @@ def test_no_treatment_effect(dataset, n_variants, rng, ulow, uhigh, request):
 
 @pytest.mark.parametrize("ulow, uhigh", [(0, 1), (-1, 1), (2, 4.52)])
 @pytest.mark.parametrize("n_variants", [2, 5])
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 def test_linear_treatment_effect_smoke(dataset, n_variants, rng, ulow, uhigh, request):
     features, _, _ = request.getfixturevalue(dataset)
     dim = get_linear_dimension(features)
@@ -61,7 +61,7 @@ def test_linear_treatment_effect_smoke(dataset, n_variants, rng, ulow, uhigh, re
 
 @pytest.mark.parametrize("beta_value", [0, 1, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 def test_linear_treatment_effect_known_result(
     dataset, n_variants, rng, beta_value, request
 ):

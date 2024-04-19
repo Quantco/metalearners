@@ -173,7 +173,7 @@ def test_generate_treatment_known_result(propensity_scores, rng):
     )
 
 
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("sigma_y", [0.5, 1])
 @pytest.mark.parametrize("sigma_tau", [0.5, 1])
@@ -211,7 +211,7 @@ def test_compute_experiment_outputs(
         assert actual_std == pytest.approx(expected_std, abs=1e-2)
 
 
-@pytest.mark.parametrize("dataset", ["numerical_dataset", "simulated_dataset"])
+@pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])
 @pytest.mark.parametrize("sigma_y", [0.5, 1])
 @pytest.mark.parametrize("sigma_tau", [0.5, 1])
 @pytest.mark.parametrize("return_probability_cate", [False, True])

@@ -127,12 +127,12 @@ def sample_size():
 
 
 @pytest.fixture(scope="module")
-def numerical_dataset(sample_size, n_numericals, rng):
+def numerical_covariates(sample_size, n_numericals, rng):
     return generate_covariates(sample_size, n_numericals, format="numpy", rng=rng)
 
 
 @pytest.fixture(scope="module")
-def simulated_dataset(sample_size, n_numericals, n_categoricals, rng):
+def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
     return generate_covariates(
         sample_size,
         n_numericals + n_categoricals,
