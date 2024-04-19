@@ -158,15 +158,17 @@ class CrossFitEstimator:
             predictions[:, :, i] = np.reshape(
                 getattr(estimator, method)(X), (-1, n_outputs)
             )
+        if n_outputs == 1:
+            return predictions[:, 0, :]
         return predictions
 
     def _predict_mean(self, X: Matrix, method: _PredictMethod) -> np.ndarray:
         all_predictions = self._predict_all(X=X, method=method)
-        return np.mean(all_predictions, axis=2)
+        return np.mean(all_predictions, axis=-1)
 
     def _predict_median(self, X: Matrix, method: _PredictMethod) -> np.ndarray:
         all_predictions = self._predict_all(X=X, method=method)
-        return np.median(all_predictions, axis=2)
+        return np.median(all_predictions, axis=-1)
 
     def _predict_in_sample(
         self,
@@ -192,6 +194,8 @@ class CrossFitEstimator:
                 getattr(estimator, method)(index_matrix(X, indices)), (-1, n_outputs, 1)
             )
             predictions[indices] = fold_predictions
+        if n_outputs == 1:
+            return predictions[:, 0, 0]
         return predictions[:, :, 0]
 
     def _predict(
