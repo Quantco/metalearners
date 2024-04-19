@@ -216,6 +216,10 @@ class CrossFitEstimator:
                         "Cannot create a mean of classes. Please use a different oos_method."
                     )
                 return self._predict_mean(X, method=method)
+            if method == "predict_proba":
+                raise ValueError(
+                    "Cannot create median of class probabilities. Please use a different oos_method."
+                )
             return self._predict_median(X, method=method)
         return self._predict_in_sample(X, method=method)
 

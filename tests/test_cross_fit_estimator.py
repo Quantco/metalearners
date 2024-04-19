@@ -25,6 +25,8 @@ def test_crossfitestimator_oos_smoke(
         pytest.skip()
     if not is_oos and oos_method not in ["mean", "median"]:
         pytest.skip()
+    if use_clf and predict_proba and oos_method == "median" and is_oos:
+        pytest.skip()
 
     predict_method = "predict_proba" if predict_proba else "predict"
 
