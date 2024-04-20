@@ -113,7 +113,9 @@ def generate_numericals(
         raise ValueError("wishart_scale needs to be >= 0")
     if wishart_scale > 0:
         cov_matrix = wishart.rvs(
-            df=n_features, scale=wishart_scale * np.eye(n_features)
+            df=n_features,
+            scale=wishart_scale * np.eye(n_features),
+            random_state=rng,
         ).reshape(n_features, n_features)
     else:
         cov_matrix = np.eye(n_features)
