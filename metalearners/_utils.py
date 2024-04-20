@@ -16,6 +16,8 @@ default_rng = np.random.default_rng()
 
 
 class _ScikitModel(Protocol):
+    _estimator_type: str
+
     # https://stackoverflow.com/questions/54868698/what-type-is-a-sklearn-model/60542986#60542986
     def fit(self, X, y, *params, **kwargs): ...
 

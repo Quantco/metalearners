@@ -65,20 +65,28 @@ class CrossFitEstimator:
     estimator_params: dict = field(default_factory=dict)
     enable_overall: bool = True
     _estimators: list[_ScikitModel] = field(init=False)
+    _estimator_type: str = field(init=False)
     _overall_estimator: Optional[_ScikitModel] = field(init=False)
     _test_indices: Optional[tuple[np.ndarray]] = field(init=False)
+    _n_classes: Optional[int] = field(init=False)
 
     def __post_init__(self):
         _validate_n_folds(self.n_folds)
         self._estimators: list[_ScikitModel] = []
+        self._estimator_type: str = self.estimator_factory._estimator_type
         self._overall_estimator: Optional[_ScikitModel] = None
         self._test_indices: Optional[tuple[np.ndarray]] = None
+        self._n_classes: Optional[int] = None
 
     def _train_overall_estimator(
         self, X: Matrix, y: Union[Matrix, Vector]
     ) -> _ScikitModel:
         model = self.estimator_factory(**self.estimator_params)
         return model.fit(X, y)
+
+    @property
+    def _is_classification(self) -> bool:
+        return self.estimator_factory._estimator_type == "classifier"
 
     def fit(
         self,
@@ -108,6 +116,10 @@ class CrossFitEstimator:
         self._test_indices = cv_result["indices"]["test"]
         if self.enable_overall:
             self._overall_estimator = self._train_overall_estimator(X, y)
+
+        if self._is_classification:
+            self._n_classes = len(np.unique(y))
+
         return self
 
     def _initialize_prediction_tensor(
@@ -115,35 +127,8 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         return np.zeros((n_observations, n_outputs, n_folds))
 
-    @property
-    def _n_classes(self):
-        if not self._estimators:
-            raise RuntimeError(
-                "Number of classes can only be determined if estimators exist."
-            )
-        if (
-            not all(is_classifier(est) for est in self._estimators)
-            or not all(hasattr(est, "fitted_") for est in self._estimators)
-            or not all(hasattr(est, "n_classes_") for est in self._estimators)
-        ):
-            raise RuntimeError(
-                "Number of classes can only be determined if all estimators are "
-                "classifiers and have a fitted_ and n_classes_ attributes."
-            )
-        if not all(est.fitted_ for est in self._estimators):  # type: ignore
-            raise RuntimeError(
-                "Number of classes can only be determined once fit has been called ."
-            )
-        n_classes = [est.n_classes_ for est in self._estimators]  # type: ignore
-        if min(n_classes) != max(n_classes):
-            raise RuntimeError(
-                f"Fold estimators don't all have the same number of classes: "
-                f"{n_classes}"
-            )
-        return n_classes[0]
-
     def _n_outputs(self, method: _PredictMethod) -> int:
-        if method == "predict_proba":
+        if method == "predict_proba" and self._n_classes:
             return self._n_classes
         return 1
 
