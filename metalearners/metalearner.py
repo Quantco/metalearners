@@ -41,6 +41,7 @@ class MetaLearner(ABC):
         feature_set: Optional[Union[Features, dict[str, Features]]] = None,
         # TODO: Consider implementing selection of number of folds for various estimators.
         n_folds: int = 10,
+        random_state: Optional[int] = None,
     ):
         """Initialize a MetaLearner.
 
@@ -86,6 +87,7 @@ class MetaLearner(ABC):
 
         validate_number_positive(n_folds, "n_folds")
         self.n_folds = n_folds
+        self.random_state = random_state
 
         if feature_set is None:
             self.feature_set = None
@@ -99,6 +101,7 @@ class MetaLearner(ABC):
                 n_folds=self.n_folds,
                 estimator_factory=self.nuisance_model_factory[name],
                 estimator_params=self.nuisance_model_params[name],
+                random_state=self.random_state,
             )
             for name in nuisance_model_names
         }
@@ -107,6 +110,7 @@ class MetaLearner(ABC):
                 n_folds=self.n_folds,
                 estimator_factory=self.treatment_model_factory[name],
                 estimator_params=self.treatment_model_params[name],
+                random_state=self.random_state,
             )
             for name in treatment_model_names
         }

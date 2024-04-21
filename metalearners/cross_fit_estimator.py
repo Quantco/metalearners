@@ -6,7 +6,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 from sklearn.base import is_classifier
-from sklearn.model_selection import KFold, cross_validate
+from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, _ScikitModel, index_matrix
@@ -64,6 +64,7 @@ class CrossFitEstimator:
     estimator_factory: type[_ScikitModel]
     estimator_params: dict = field(default_factory=dict)
     enable_overall: bool = True
+    random_state: Optional[int] = None
     _estimators: list[_ScikitModel] = field(init=False)
     _estimator_type: str = field(init=False)
     _overall_estimator: Optional[_ScikitModel] = field(init=False)
@@ -100,15 +101,23 @@ class CrossFitEstimator:
 
         If ``enable_overall`` is set, an additional estimator is trained on all data.
         """
+        if self._is_classification:
+            cv = StratifiedKFold(
+                n_splits=self.n_folds,
+                shuffle=True,
+                random_state=self.random_state,
+            )
+        else:
+            cv = KFold(
+                n_splits=self.n_folds,
+                shuffle=True,
+                random_state=self.random_state,
+            )
         cv_result = cross_validate(
             self.estimator_factory(**self.estimator_params),
             X,
             y,
-            # TODO: Consider using StratifiedKFold for classifiers.
-            cv=KFold(
-                n_splits=self.n_folds,
-                shuffle=True,
-            ),
+            cv=cv,
             return_estimator=True,
             return_indices=True,
         )

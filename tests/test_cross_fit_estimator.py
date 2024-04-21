@@ -11,6 +11,8 @@ from sklearn.metrics import accuracy_score, log_loss
 
 from metalearners.cross_fit_estimator import CrossFitEstimator
 
+_SEED = 1337
+
 
 @pytest.mark.parametrize("use_clf", [False, True])
 @pytest.mark.parametrize("predict_proba", [True, False])
@@ -50,6 +52,7 @@ def test_crossfitestimator_oos_smoke(
         estimator_factory=estimator_factory,
         estimator_params=estimator_params,
         enable_overall=True,
+        random_state=_SEED,
     )
     cfe.fit(X=X, y=y)
     predictions = getattr(cfe, predict_method)(
