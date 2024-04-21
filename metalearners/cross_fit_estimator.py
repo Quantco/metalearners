@@ -17,6 +17,8 @@ _OOS_WHITELIST = ["overall", "median", "mean"]
 # See https://stackoverflow.com/questions/64522040/typing-dynamically-create-literal-alias-from-list-of-valid-values
 OosMethod = Literal["overall", "median", "mean"]
 
+PredictMethod = Literal["predict", "predict_proba"]
+
 
 def _validate_oos_method(oos_method: Optional[OosMethod], enable_overall: bool) -> None:
     if oos_method not in _OOS_WHITELIST:
@@ -36,9 +38,6 @@ def _validate_n_folds(n_folds: int) -> None:
         raise ValueError(
             f"n_folds needs to be a strictly positive integer but is {n_folds}."
         )
-
-
-_PredictMethod = Literal["predict", "predict_proba"]
 
 
 @dataclass
@@ -136,12 +135,12 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         return np.zeros((n_observations, n_outputs, n_folds))
 
-    def _n_outputs(self, method: _PredictMethod) -> int:
+    def _n_outputs(self, method: PredictMethod) -> int:
         if method == "predict_proba" and self._n_classes:
             return self._n_classes
         return 1
 
-    def _predict_all(self, X: Matrix, method: _PredictMethod) -> np.ndarray:
+    def _predict_all(self, X: Matrix, method: PredictMethod) -> np.ndarray:
         n_outputs = self._n_outputs(method)
         predictions = self._initialize_prediction_tensor(
             n_observations=len(X),
@@ -156,18 +155,18 @@ class CrossFitEstimator:
             return predictions[:, 0, :]
         return predictions
 
-    def _predict_mean(self, X: Matrix, method: _PredictMethod) -> np.ndarray:
+    def _predict_mean(self, X: Matrix, method: PredictMethod) -> np.ndarray:
         all_predictions = self._predict_all(X=X, method=method)
         return np.mean(all_predictions, axis=-1)
 
-    def _predict_median(self, X: Matrix, method: _PredictMethod) -> np.ndarray:
+    def _predict_median(self, X: Matrix, method: PredictMethod) -> np.ndarray:
         all_predictions = self._predict_all(X=X, method=method)
         return np.median(all_predictions, axis=-1)
 
     def _predict_in_sample(
         self,
         X: Matrix,
-        method: _PredictMethod,
+        method: PredictMethod,
     ) -> np.ndarray:
         if not self._test_indices:
             raise ValueError()
@@ -196,7 +195,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         is_oos: bool,
-        method: _PredictMethod,
+        method: PredictMethod,
         oos_method: Optional[OosMethod] = None,
         w: Optional[Union[Vector, Matrix]] = None,
     ) -> np.ndarray:
