@@ -9,7 +9,7 @@ import numpy as np
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, _ScikitModel, validate_number_positive
-from metalearners.cross_fit_estimator import CrossFitEstimator, OosMethod
+from metalearners.cross_fit_estimator import CrossFitEstimator, OosMethod, PredictMethod
 
 Params = dict[str, Union[int, float, str]]
 Features = Union[Collection[str], Collection[int]]
@@ -20,6 +20,19 @@ def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
     if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
         return argument
     return {name: argument for name in expected_names}
+
+
+def _validate_nuisance_predict_methods(factual: set[str], expected: set[str]) -> None:
+    if len(excess := (factual - expected)) > 0:
+        raise ValueError(
+            "Mapping from nuisance model kind to predict method contains excess keys:",
+            str(excess),
+        )
+    if len(lack := (expected - factual)) > 0:
+        raise ValueError(
+            "Mapping from nuisance model kind to predict method lacks keys:",
+            str(lack),
+        )
 
 
 class MetaLearner(ABC):
@@ -36,6 +49,9 @@ class MetaLearner(ABC):
         self,
         nuisance_model_factory: ModelFactory,
         treatment_model_factory: ModelFactory,
+        # TODO: Consider whether we can make this not a state of the MetaLearner
+        # but rather just a parameter of a predict call.
+        is_classification: bool,
         nuisance_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         treatment_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         feature_set: Optional[Union[Features, dict[str, Features]]] = None,
@@ -61,6 +77,8 @@ class MetaLearner(ABC):
         """
         nuisance_model_names = self.__class__.nuisance_model_names()
         treatment_model_names = self.__class__.treatment_model_names()
+
+        self.is_classification = is_classification
 
         self.nuisance_model_factory = _initialize_model_dict(
             nuisance_model_factory, nuisance_model_names
@@ -115,6 +133,34 @@ class MetaLearner(ABC):
             for name in treatment_model_names
         }
 
+        _validate_nuisance_predict_methods(
+            factual=set(self._nuisance_predict_methods.keys()),
+            expected=set(self.__class__.nuisance_model_names()),
+        )
+
+    @property
+    @abstractmethod
+    def _nuisance_predict_methods(self) -> dict[str, PredictMethod]:
+        """Map each nuisance ``model_kind`` to a ``PredictMethod``."""
+        ...
+
+    def _nuisance_tensors(self, n_obs: int) -> dict[str, np.ndarray]:
+        # TODO: This type ignoring hints at a design flaw.
+        # We should fix this.
+        def dimension(n_obs, model_kind, predict_method):
+            if (
+                n_outputs := self._nuisance_models[model_kind]._n_outputs(  # type: ignore
+                    predict_method
+                )
+            ) > 1:
+                return (n_obs, n_outputs)
+            return (n_obs,)
+
+        return {
+            model_kind: np.zeros(dimension(n_obs, model_kind, predict_method))
+            for (model_kind, predict_method) in self._nuisance_predict_methods.items()
+        }
+
     def fit_nuisance(self, X: Matrix, y: Vector, model_kind: str) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
@@ -151,7 +197,9 @@ class MetaLearner(ABC):
         the ``feature_set`` field of ``MetaLearner``.
         """
         X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
-        return self._nuisance_models[model_kind].predict(X_filtered, is_oos, oos_method)
+        predict_method_name = self._nuisance_predict_methods[model_kind]
+        predict_method = getattr(self._nuisance_models[model_kind], predict_method_name)
+        return predict_method(X_filtered, is_oos, oos_method)
 
     def predict_treatment(
         self,
@@ -172,7 +220,10 @@ class MetaLearner(ABC):
 
     @abstractmethod
     def predict(
-        self, X: Matrix, is_oos: bool, oos_method: Optional[OosMethod] = None
+        self,
+        X: Matrix,
+        is_oos: bool,
+        oos_method: Optional[OosMethod] = None,
     ) -> np.ndarray:
         """Estimate the Conditional Average Treatment Effect.
 

@@ -6,12 +6,47 @@ import pandas as pd
 import pytest
 from git_root import git_root
 
-from metalearners.data_generation import generate_covariates
+from metalearners._utils import get_linear_dimension
+from metalearners.data_generation import (
+    compute_experiment_outputs,
+    generate_covariates,
+    generate_treatment,
+)
+from metalearners.outcome_functions import linear_treatment_effect
+
+_SEED = 1337
+
+
+def _generate_rct_experiment_data_linear_te(
+    covariates, is_classification: bool, rng, propensity_score: float = 0.5
+):
+    propensity_scores = propensity_score * np.ones(covariates.shape[0])
+    treatment = generate_treatment(propensity_scores, rng=rng)
+    dim = get_linear_dimension(covariates)
+    outcome_function = linear_treatment_effect(dim, rng=rng)
+    potential_outcomes = outcome_function(covariates)
+
+    observed_outcomes, true_cate = compute_experiment_outputs(
+        potential_outcomes,
+        treatment,
+        is_classification=is_classification,
+        return_probability_cate=True,
+        rng=rng,
+    )
+
+    return (
+        covariates,
+        propensity_scores,
+        treatment,
+        observed_outcomes,
+        potential_outcomes,
+        true_cate,
+    )
 
 
 @pytest.fixture(scope="session")
 def rng():
-    return np.random.default_rng(42)
+    return np.random.default_rng(_SEED)
 
 
 @pytest.fixture(scope="session")
@@ -140,3 +175,21 @@ def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
         format="pandas",
         rng=rng,
     )
+
+
+@pytest.fixture(scope="module")
+def numerical_experiment_dataset_continuous_outcome(numerical_covariates, rng):
+    covariates, _, _ = numerical_covariates
+    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)
+
+
+@pytest.fixture(scope="module")
+def numerical_experiment_dataset_binary_outcome(numerical_covariates, rng):
+    covariates, _, _ = numerical_covariates
+    return _generate_rct_experiment_data_linear_te(covariates, True, rng, 0.5)
+
+
+@pytest.fixture(scope="module")
+def mixed_experiment_dataset_continuous_outcome(mixed_covariates, rng):
+    covariates, _, _ = mixed_covariates
+    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)
