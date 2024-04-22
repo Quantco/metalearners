@@ -55,7 +55,7 @@ class _TestMetaLearner(MetaLearner):
     def predict(self, X, is_oos, oos_method=None):
         return np.zeros(len(X))
 
-    def evaluate(self, X, y, w, is_regression, is_oos, oos_method=None):
+    def evaluate(self, X, y, w, is_oos, oos_method=None):
         return {}
 
     def predict_potential_outcomes(self, X, is_oos, oos_method=None):

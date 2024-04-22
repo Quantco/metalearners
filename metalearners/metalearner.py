@@ -237,7 +237,6 @@ class MetaLearner(ABC):
         X: Matrix,
         y: Vector,
         w: Vector,
-        is_regression: bool,
         is_oos: bool,
         oos_method: Optional[OosMethod] = None,
     ) -> dict[str, Union[float, int]]:
