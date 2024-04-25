@@ -32,7 +32,7 @@ def _validate_oos_method(oos_method: Optional[OosMethod], enable_overall: bool) 
             f"oos_method {oos_method} not supported. Supported values are "
             f"{_OOS_WHITELIST}."
         )
-    if oos_method == "overall" and not enable_overall:
+    if oos_method == OVERALL and not enable_overall:
         raise ValueError(
             "In order to use 'overall' prediction method, the estimator's "
             "enable_overall property has to be set to True."
