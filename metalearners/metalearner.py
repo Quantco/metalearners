@@ -9,7 +9,12 @@ import numpy as np
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, _ScikitModel, validate_number_positive
-from metalearners.cross_fit_estimator import CrossFitEstimator, OosMethod, PredictMethod
+from metalearners.cross_fit_estimator import (
+    OVERALL,
+    CrossFitEstimator,
+    OosMethod,
+    PredictMethod,
+)
 
 Params = dict[str, Union[int, float, str]]
 Features = Union[Collection[str], Collection[int]]
@@ -189,7 +194,7 @@ class MetaLearner(ABC):
         X: Matrix,
         model_kind: str,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         """Estimate based on a given nuisance model.
 
@@ -206,7 +211,7 @@ class MetaLearner(ABC):
         X: Matrix,
         model_kind: str,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         """Estimate based on a given treatment model.
 
@@ -223,7 +228,7 @@ class MetaLearner(ABC):
         self,
         X: Matrix,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         """Estimate the Conditional Average Treatment Effect.
 
@@ -238,14 +243,14 @@ class MetaLearner(ABC):
         y: Vector,
         w: Vector,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod = OVERALL,
     ) -> dict[str, Union[float, int]]:
         """Evaluate all models contained in a MetaLearner."""
         ...
 
     @abstractmethod
     def predict_potential_outcomes(
-        self, X: Matrix, is_oos: bool, oos_method: Optional[OosMethod] = None
+        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> tuple[np.ndarray, np.ndarray]:
         """Predict the vectors of potential outcomes."""
         ...

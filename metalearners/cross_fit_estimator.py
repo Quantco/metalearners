@@ -11,11 +11,17 @@ from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, _ScikitModel, index_matrix
 
-_OOS_WHITELIST = ["overall", "median", "mean"]
 # As of 24/01/19, no convenient way of dynamically creating a literal collection that
 # mypy can deal with seems to exist. Therefore we duplicate the values.
 # See https://stackoverflow.com/questions/64522040/typing-dynamically-create-literal-alias-from-list-of-valid-values
+# As of 24/04/25 there is no way either to reuse variables inside a Literal definition, see
+# https://mypy.readthedocs.io/en/stable/literal_types.html#limitations
 OosMethod = Literal["overall", "median", "mean"]
+
+OVERALL: OosMethod = "overall"
+_MEDIAN: OosMethod = "median"
+_MEAN: OosMethod = "mean"
+_OOS_WHITELIST = [OVERALL, _MEDIAN, _MEAN]
 
 PredictMethod = Literal["predict", "predict_proba"]
 
@@ -201,9 +207,9 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         if is_oos:
             _validate_oos_method(oos_method, self.enable_overall)
-            if oos_method == "overall":
+            if oos_method == OVERALL:
                 return getattr(self._overall_estimator, method)(X)
-            if oos_method == "mean":
+            if oos_method == _MEAN:
                 if method != "predict_proba" and any(
                     is_classifier(est) for est in self._estimators
                 ):
