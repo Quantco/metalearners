@@ -39,11 +39,11 @@ class MetaLearner(ABC):
 
     @classmethod
     @abstractmethod
-    def nuisance_model_names(cls) -> list[str]: ...
+    def nuisance_model_names(cls) -> set[str]: ...
 
     @classmethod
     @abstractmethod
-    def treatment_model_names(cls) -> list[str]: ...
+    def treatment_model_names(cls) -> set[str]: ...
 
     def __init__(
         self,
@@ -111,7 +111,7 @@ class MetaLearner(ABC):
             self.feature_set = None
         else:
             self.feature_set = _initialize_model_dict(
-                feature_set, nuisance_model_names + treatment_model_names
+                feature_set, nuisance_model_names | treatment_model_names
             )
 
         self._nuisance_models: dict[str, _ScikitModel] = {

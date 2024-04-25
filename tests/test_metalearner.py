@@ -35,11 +35,11 @@ def test_validate_nuisance_predict_methods(set1, set2, success):
 class _TestMetaLearner(MetaLearner):
     @classmethod
     def nuisance_model_names(cls):
-        return ["nuisance1", "nuisance2"]
+        return {"nuisance1", "nuisance2"}
 
     @classmethod
     def treatment_model_names(cls):
-        return ["treatment1", "treatment2"]
+        return {"treatment1", "treatment2"}
 
     @property
     def _nuisance_predict_methods(self):
@@ -197,3 +197,10 @@ def test_metalearner_format_consistent(
     np_cate_estimates = np_ml.predict(covariates, is_oos=False)
     pd_cate_estimates = np_ml.predict(pd.DataFrame(covariates), is_oos=False)
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
+
+
+@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+def test_metalearner_model_names(implementation):
+    set1 = implementation.nuisance_model_names()
+    set2 = implementation.treatment_model_names()
+    assert len(set1 | set2) == len(set1) + len(set2)
