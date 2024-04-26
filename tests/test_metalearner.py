@@ -59,7 +59,7 @@ class _TestMetaLearner(MetaLearner):
         return {}
 
     def predict_potential_outcomes(self, X, is_oos, oos_method=None):
-        return np.zeros(len(X)), np.zeros(len(X))
+        return np.zeros((len(X), 1))
 
     def _pseudo_outcome(self, X):
         return np.zeros(len(X))

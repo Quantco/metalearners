@@ -251,11 +251,14 @@ class MetaLearner(ABC):
     @abstractmethod
     def predict_potential_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Predict the vectors of potential outcomes."""
+    ) -> np.ndarray:
+        """Predict the vectors of potential outcomes.
+
+        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})`.
+        """
         ...
 
     @abstractmethod
     def _pseudo_outcome(self, *args, **kwargs) -> Vector:
-        """Compute the vector of pseudo outcomes of the respective MetaLearner ."""
+        """Compute the vector of pseudo outcomes of the respective MetaLearner."""
         ...
