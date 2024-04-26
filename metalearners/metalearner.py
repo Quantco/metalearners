@@ -254,7 +254,9 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Predict the vectors of potential outcomes.
 
-        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})`.
+        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})` if
+        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
+        n_{variants}, n_{classes})` if it's a classification problem.
         """
         ...
 
