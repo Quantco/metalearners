@@ -9,6 +9,7 @@ Welcome to metalearners's documentation!
    Background <background.rst>
    Glossary <glossary.rst>
    Examples <examples/examples.rst>
+   FAQ <faq.rst>
    API Reference <api/modules>
    Change Log <changelog.rst>
 
