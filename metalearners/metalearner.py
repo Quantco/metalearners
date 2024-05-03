@@ -53,10 +53,10 @@ class MetaLearner(ABC):
     def __init__(
         self,
         nuisance_model_factory: ModelFactory,
-        treatment_model_factory: ModelFactory,
+        is_classification: bool,
+        treatment_model_factory: Optional[ModelFactory] = None,
         # TODO: Consider whether we can make this not a state of the MetaLearner
         # but rather just a parameter of a predict call.
-        is_classification: bool,
         nuisance_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         treatment_model_params: Optional[Union[Params, dict[str, Params]]] = None,
         feature_set: Optional[Union[Features, dict[str, Features]]] = None,
@@ -249,10 +249,10 @@ class MetaLearner(ABC):
         ...
 
     @abstractmethod
-    def predict_potential_outcomes(
+    def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        """Predict the vectors of potential outcomes.
+        """Predict the vectors of conditional average outcomes.
 
         The returned matrix should be of shape :math:`(n_{obs}, n_{variants})` if
         there's only one output, i.e. a regression problem, or :math:`(n_{obs},

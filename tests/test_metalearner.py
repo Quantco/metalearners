@@ -11,6 +11,7 @@ from sklearn.linear_model import LinearRegression
 
 from metalearners.data_generation import insert_missing
 from metalearners.metalearner import MetaLearner, _validate_nuisance_predict_methods
+from metalearners.tlearner import TLearner
 
 
 @pytest.mark.parametrize(
@@ -58,7 +59,7 @@ class _TestMetaLearner(MetaLearner):
     def evaluate(self, X, y, w, is_oos, oos_method=None):
         return {}
 
-    def predict_potential_outcomes(self, X, is_oos, oos_method=None):
+    def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), 1))
 
     def _pseudo_outcome(self, X):
@@ -83,8 +84,8 @@ def test_metalearner_init(
 ):
     _TestMetaLearner(
         nuisance_model_factory=nuisance_model_factory,
-        treatment_model_factory=treatment_model_factory,
         is_classification=is_classification,
+        treatment_model_factory=treatment_model_factory,
         nuisance_model_params=nuisance_model_params,
         treatment_model_params=treatment_model_params,
         feature_set=feature_set,
@@ -92,7 +93,7 @@ def test_metalearner_init(
     )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
 def test_metalearner_categorical(
     mixed_experiment_dataset_continuous_outcome, implementation
 ):
@@ -101,8 +102,8 @@ def test_metalearner_categorical(
     )
     ml = implementation(
         LGBMRegressor,
+        False,
         LGBMRegressor,
-        is_classification=False,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
     )
@@ -125,7 +126,7 @@ def test_metalearner_categorical(
             )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
 def test_metalearner_missing_data_smoke(
     mixed_experiment_dataset_continuous_outcome, implementation, rng
 ):
@@ -138,15 +139,15 @@ def test_metalearner_missing_data_smoke(
     )
     ml = implementation(
         LGBMRegressor,
+        False,
         LGBMRegressor,
-        is_classification=False,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
     )
     ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
 def test_metalearner_missing_data_error(
     numerical_experiment_dataset_continuous_outcome, implementation, rng
 ):
@@ -157,14 +158,14 @@ def test_metalearner_missing_data_error(
         covariates, missing_probability=0.25, rng=rng
     )
 
-    ml = implementation(LinearRegression, LinearRegression, is_classification=False)
+    ml = implementation(LinearRegression, False, LGBMRegressor)
     with pytest.raises(
         ValueError, match=r"LinearRegression does not accept missing values*"
     ):
         ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
 def test_metalearner_format_consistent(
     numerical_experiment_dataset_continuous_outcome, implementation
 ):
@@ -174,15 +175,15 @@ def test_metalearner_format_consistent(
 
     np_ml = implementation(
         LGBMRegressor,
+        False,
         LGBMRegressor,
-        is_classification=False,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
     )
     pd_ml = implementation(
         LGBMRegressor,
+        False,
         LGBMRegressor,
-        is_classification=False,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
     )
@@ -199,7 +200,7 @@ def test_metalearner_format_consistent(
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
 def test_metalearner_model_names(implementation):
     set1 = implementation.nuisance_model_names()
     set2 = implementation.treatment_model_names()

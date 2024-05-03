@@ -44,7 +44,7 @@ def _generate_rct_experiment_data_linear_te(
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def rng():
     return np.random.default_rng(_SEED)
 
@@ -84,7 +84,7 @@ def mindset_data():
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def twins_data(rng):
     df = pd.read_csv(git_root("data/twins.zip"))
     drop_columns = [
@@ -161,12 +161,12 @@ def sample_size():
     return 1_000_000
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def numerical_covariates(sample_size, n_numericals, rng):
     return generate_covariates(sample_size, n_numericals, format="numpy", rng=rng)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
     return generate_covariates(
         sample_size,
@@ -177,19 +177,19 @@ def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def numerical_experiment_dataset_continuous_outcome(numerical_covariates, rng):
     covariates, _, _ = numerical_covariates
     return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def numerical_experiment_dataset_binary_outcome(numerical_covariates, rng):
     covariates, _, _ = numerical_covariates
     return _generate_rct_experiment_data_linear_te(covariates, True, rng, 0.5)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mixed_experiment_dataset_continuous_outcome(mixed_covariates, rng):
     covariates, _, _ = mixed_covariates
     return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)

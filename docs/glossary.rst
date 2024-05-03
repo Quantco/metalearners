@@ -14,6 +14,9 @@ Glossary
     See `Athey et al. (2016) <https://arxiv.org/abs/1607.00698>`_,
     Chapter 10.
 
+  Conditional Average Outcomes
+    :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant :math:`w`.
+
   Covariates
     The features :math:`X` based on which a CATE is estimated.
 

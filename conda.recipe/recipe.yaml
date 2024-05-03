@@ -36,6 +36,7 @@ tests:
         - metalearners.cross_fit_estimator
         - metalearners.data_generation
         - metalearners.outcome_functions
+        - metalearners.tlearner
       pip_check: true
 
 about:
