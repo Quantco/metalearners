@@ -50,6 +50,8 @@ class MetaLearner(ABC):
     @abstractmethod
     def treatment_model_names(cls) -> set[str]: ...
 
+    def _validate_params(self, **kwargs): ...
+
     def __init__(
         self,
         nuisance_model_factory: ModelFactory,
@@ -80,6 +82,17 @@ class MetaLearner(ABC):
         * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
         respective value
         """
+        self._validate_params(
+            nuisance_model_factory=nuisance_model_factory,
+            treatment_model_factory=treatment_model_factory,
+            is_classification=is_classification,
+            nuisance_model_params=nuisance_model_params,
+            treatment_model_params=treatment_model_params,
+            feature_set=feature_set,
+            n_folds=n_folds,
+            random_state=random_state,
+        )
+
         nuisance_model_names = self.__class__.nuisance_model_names()
         treatment_model_names = self.__class__.treatment_model_names()
 
