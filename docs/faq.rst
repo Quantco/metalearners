@@ -3,6 +3,7 @@ FAQ
 
 * **What's the difference between Double Machine Learning, Debiased Machine Learning,
   Orthogonal Machine Learning, Doubly-Robust Machine Learning and the R-Learner?**
+
     The Double Machine Learning blueprint relies on estimating two nuisance models in its
     first stage: a propensity model as well as an outcome model, both depending only on X.
     These models are then used to calculate the treatment and outcome residuals and finally

@@ -155,7 +155,7 @@ def generate_covariates(
     For ``mu`` and ``wishart_scale`` see the docstring for
     :func:`metalearners.data_generation.generate_numericals`.
 
-    For ``n_categories``, ``n_uniform``, ``p_binomial`` and  ``use_strings''
+    For ``n_categories``, ``n_uniform``, ``p_binomial`` and  ``use_strings``
     see the docstring for :func:`metalearners.data_generation.generate_categoricals`.
 
     ``use_strings`` can only be set to ``True`` when using ``format = "pandas"``.
