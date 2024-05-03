@@ -85,10 +85,11 @@ class CrossFitEstimator:
         self._n_classes: Optional[int] = None
 
     def _train_overall_estimator(
-        self, X: Matrix, y: Union[Matrix, Vector]
+        self, X: Matrix, y: Union[Matrix, Vector], fit_params: Optional[dict] = None
     ) -> _ScikitModel:
+        fit_params = fit_params or dict()
         model = self.estimator_factory(**self.estimator_params)
-        return model.fit(X, y)
+        return model.fit(X, y, **fit_params)
 
     @property
     def _is_classification(self) -> bool:
@@ -98,6 +99,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         y: Union[Vector, Matrix],
+        fit_params: Optional[dict] = None,
         **kwargs,
     ) -> Self:
         """Fit the underlying estimators.
@@ -106,6 +108,8 @@ class CrossFitEstimator:
 
         If ``enable_overall`` is set, an additional estimator is trained on all data.
         """
+        if fit_params is None:
+            fit_params = dict()
         if self._is_classification:
             cv = StratifiedKFold(
                 n_splits=self.n_folds,
@@ -125,11 +129,12 @@ class CrossFitEstimator:
             cv=cv,
             return_estimator=True,
             return_indices=True,
+            params=fit_params,
         )
         self._estimators = cv_result["estimator"]
         self._test_indices = cv_result["indices"]["test"]
         if self.enable_overall:
-            self._overall_estimator = self._train_overall_estimator(X, y)
+            self._overall_estimator = self._train_overall_estimator(X, y, fit_params)
 
         if self._is_classification:
             self._n_classes = len(np.unique(y))

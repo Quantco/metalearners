@@ -166,22 +166,26 @@ class MetaLearner(ABC):
             for (model_kind, predict_method) in self._nuisance_predict_methods.items()
         }
 
-    def fit_nuisance(self, X: Matrix, y: Vector, model_kind: str) -> Self:
+    def fit_nuisance(
+        self, X: Matrix, y: Vector, model_kind: str, fit_params: Optional[dict] = None
+    ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
         ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
         """
         X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
-        self._nuisance_models[model_kind].fit(X_filtered, y)
+        self._nuisance_models[model_kind].fit(X_filtered, y, fit_params=fit_params)
         return self
 
-    def fit_treatment(self, X: Matrix, y: Vector, model_kind: str) -> Self:
+    def fit_treatment(
+        self, X: Matrix, y: Vector, model_kind: str, fit_params: Optional[dict] = None
+    ) -> Self:
         """Fit the tratment model of a MetaLearner.
 
         ``y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         """
         X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
-        self._treatment_models[model_kind].fit(X_filtered, y)
+        self._treatment_models[model_kind].fit(X_filtered, y, fit_params=fit_params)
         return self
 
     @abstractmethod

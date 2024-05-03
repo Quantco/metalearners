@@ -110,3 +110,21 @@ def test_n_classes(estimator_factory, twins_data):
     y = df[outcome_column][~missing_indices]
     cfe.fit(X=X, y=y)
     assert cfe._n_classes == 2
+
+
+def test_fit_params(mindset_data):
+    df, outcome_column, _, feature_columns, _ = mindset_data
+
+    class NewEstimator(LGBMRegressor):
+        def fit(self, *args, **kwargs):
+            if "key" not in kwargs or kwargs["key"] != "val":
+                raise AssertionError("fit_params were not forwarded.")
+            del kwargs["key"]
+            return super().fit(*args, **kwargs)
+
+    cfe = CrossFitEstimator(
+        n_folds=2,
+        estimator_factory=NewEstimator,
+        enable_overall=False,
+    )
+    cfe.fit(X=df[feature_columns], y=df[outcome_column], fit_params={"key": "val"})
