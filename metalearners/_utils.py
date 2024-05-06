@@ -3,14 +3,15 @@
 
 import operator
 from operator import le, lt
-from typing import Optional, Protocol, Union
+from typing import Protocol, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import check_array, check_X_y
 
-Vector = Union[pd.Series, np.ndarray]
-Matrix = Union[pd.DataFrame, np.ndarray]
+# ruff is not happy about the usage of Union.
+Vector = Union[pd.Series, np.ndarray]  # noqa
+Matrix = Union[pd.DataFrame, np.ndarray]  # noqa
 
 default_rng = np.random.default_rng()
 
@@ -38,7 +39,7 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
 
 
 def validate_number_positive(
-    value: Union[int, float], name: str, strict: bool = False
+    value: int | float, name: str, strict: bool = False
 ) -> None:
     if strict:
         comparison = operator.lt
@@ -50,10 +51,10 @@ def validate_number_positive(
 
 def check_propensity_score(
     propensity_scores: Matrix,
-    features: Optional[Matrix] = None,
+    features: Matrix | None = None,
     n_variants: int = 2,
     sum_to_one: bool = False,
-    check_kwargs: Optional[dict] = None,
+    check_kwargs: dict | None = None,
     sum_tolerance: float = 0.001,
 ) -> None:
     """Ensure propensity scores match assumptions.
@@ -100,7 +101,7 @@ def check_propensity_score(
 
 
 def convert_and_pad_propensity_score(
-    propensity_scores: Union[Vector, Matrix], n_variants: int
+    propensity_scores: Vector | Matrix, n_variants: int
 ) -> np.ndarray:
     """Convert to ``np.ndarray`` and pad propensity scores, if necessary.
 

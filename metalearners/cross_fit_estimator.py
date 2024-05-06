@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 from sklearn.base import is_classifier
@@ -26,7 +26,7 @@ _OOS_WHITELIST = [OVERALL, _MEDIAN, _MEAN]
 PredictMethod = Literal["predict", "predict_proba"]
 
 
-def _validate_oos_method(oos_method: Optional[OosMethod], enable_overall: bool) -> None:
+def _validate_oos_method(oos_method: OosMethod | None, enable_overall: bool) -> None:
     if oos_method not in _OOS_WHITELIST:
         raise ValueError(
             f"oos_method {oos_method} not supported. Supported values are "
@@ -69,23 +69,23 @@ class CrossFitEstimator:
     estimator_factory: type[_ScikitModel]
     estimator_params: dict = field(default_factory=dict)
     enable_overall: bool = True
-    random_state: Optional[int] = None
+    random_state: int | None = None
     _estimators: list[_ScikitModel] = field(init=False)
     _estimator_type: str = field(init=False)
-    _overall_estimator: Optional[_ScikitModel] = field(init=False)
-    _test_indices: Optional[tuple[np.ndarray]] = field(init=False)
-    _n_classes: Optional[int] = field(init=False)
+    _overall_estimator: _ScikitModel | None = field(init=False)
+    _test_indices: tuple[np.ndarray] | None = field(init=False)
+    _n_classes: int | None = field(init=False)
 
     def __post_init__(self):
         _validate_n_folds(self.n_folds)
         self._estimators: list[_ScikitModel] = []
         self._estimator_type: str = self.estimator_factory._estimator_type
-        self._overall_estimator: Optional[_ScikitModel] = None
-        self._test_indices: Optional[tuple[np.ndarray]] = None
-        self._n_classes: Optional[int] = None
+        self._overall_estimator: _ScikitModel | None = None
+        self._test_indices: tuple[np.ndarray] | None = None
+        self._n_classes: int | None = None
 
     def _train_overall_estimator(
-        self, X: Matrix, y: Union[Matrix, Vector], fit_params: Optional[dict] = None
+        self, X: Matrix, y: Matrix | Vector, fit_params: dict | None = None
     ) -> _ScikitModel:
         fit_params = fit_params or dict()
         model = self.estimator_factory(**self.estimator_params)
@@ -98,8 +98,8 @@ class CrossFitEstimator:
     def fit(
         self,
         X: Matrix,
-        y: Union[Vector, Matrix],
-        fit_params: Optional[dict] = None,
+        y: Vector | Matrix,
+        fit_params: dict | None = None,
         **kwargs,
     ) -> Self:
         """Fit the underlying estimators.
@@ -207,8 +207,8 @@ class CrossFitEstimator:
         X: Matrix,
         is_oos: bool,
         method: PredictMethod,
-        oos_method: Optional[OosMethod] = None,
-        w: Optional[Union[Vector, Matrix]] = None,
+        oos_method: OosMethod | None = None,
+        w: Vector | Matrix | None = None,
     ) -> np.ndarray:
         if is_oos:
             _validate_oos_method(oos_method, self.enable_overall)
@@ -233,7 +233,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod | None = None,
         **kwargs,
     ) -> np.ndarray:
         """Predict from ``X``.
@@ -255,7 +255,7 @@ class CrossFitEstimator:
         self,
         X: Matrix,
         is_oos: bool,
-        oos_method: Optional[OosMethod] = None,
+        oos_method: OosMethod | None = None,
     ) -> np.ndarray:
         """Predict probability from ``X``.
 

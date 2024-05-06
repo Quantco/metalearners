@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Collection
-from typing import Optional, Union
 
 import numpy as np
 from typing_extensions import Self
@@ -16,9 +15,9 @@ from metalearners.cross_fit_estimator import (
     PredictMethod,
 )
 
-Params = dict[str, Union[int, float, str]]
-Features = Union[Collection[str], Collection[int]]
-ModelFactory = Union[type[_ScikitModel], dict[str, type[_ScikitModel]]]
+Params = dict[str, int | float | str]
+Features = Collection[str] | Collection[int]
+ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
@@ -56,15 +55,15 @@ class MetaLearner(ABC):
         self,
         nuisance_model_factory: ModelFactory,
         is_classification: bool,
-        treatment_model_factory: Optional[ModelFactory] = None,
+        treatment_model_factory: ModelFactory | None = None,
         # TODO: Consider whether we can make this not a state of the MetaLearner
         # but rather just a parameter of a predict call.
-        nuisance_model_params: Optional[Union[Params, dict[str, Params]]] = None,
-        treatment_model_params: Optional[Union[Params, dict[str, Params]]] = None,
-        feature_set: Optional[Union[Features, dict[str, Features]]] = None,
+        nuisance_model_params: Params | dict[str, Params] | None = None,
+        treatment_model_params: Params | dict[str, Params] | None = None,
+        feature_set: Features | dict[str, Features] | None = None,
         # TODO: Consider implementing selection of number of folds for various estimators.
         n_folds: int = 10,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ):
         """Initialize a MetaLearner.
 
@@ -180,7 +179,7 @@ class MetaLearner(ABC):
         }
 
     def fit_nuisance(
-        self, X: Matrix, y: Vector, model_kind: str, fit_params: Optional[dict] = None
+        self, X: Matrix, y: Vector, model_kind: str, fit_params: dict | None = None
     ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
@@ -191,7 +190,7 @@ class MetaLearner(ABC):
         return self
 
     def fit_treatment(
-        self, X: Matrix, y: Vector, model_kind: str, fit_params: Optional[dict] = None
+        self, X: Matrix, y: Vector, model_kind: str, fit_params: dict | None = None
     ) -> Self:
         """Fit the tratment model of a MetaLearner.
 
@@ -261,7 +260,7 @@ class MetaLearner(ABC):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, Union[float, int]]:
+    ) -> dict[str, float | int]:
         """Evaluate all models contained in a MetaLearner."""
         ...
 

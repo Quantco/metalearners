@@ -1,7 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -24,11 +24,11 @@ _FORMATS = ["numpy", "pandas"]
 def generate_categoricals(
     n_obs: int,
     n_features: int,
-    n_categories: Optional[Union[int, np.ndarray]] = None,
-    n_uniform: Optional[int] = None,
+    n_categories: int | np.ndarray | None = None,
+    n_uniform: int | None = None,
     p_binomial: float = 0.5,
     use_strings: bool = False,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Generate a dataset of categorical features.
 
@@ -87,9 +87,9 @@ def generate_categoricals(
 def generate_numericals(
     n_obs: int,
     n_features: int,
-    mu: Optional[Union[float, np.ndarray]] = None,
+    mu: float | np.ndarray | None = None,
     wishart_scale: float = 1,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
     r"""Generate a dataset of numerical features.
 
@@ -130,13 +130,13 @@ def generate_covariates(
     n_features: int,
     n_categoricals: int = 0,
     format: Literal["pandas", "numpy"] = "pandas",
-    mu: Optional[Union[float, np.ndarray]] = None,
+    mu: float | np.ndarray | None = None,
     wishart_scale: float = 1,
-    n_categories: Optional[Union[int, np.ndarray]] = None,
-    n_uniform: Optional[int] = None,
+    n_categories: int | np.ndarray | None = None,
+    n_uniform: int | None = None,
     p_binomial: float = 0.5,
     use_strings: bool = False,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> tuple[Matrix, list[int], np.ndarray]:
     r"""Generates a dataset of covariates with both numerical and categorical features.
 
@@ -225,7 +225,7 @@ def generate_covariates(
 def insert_missing(
     X: Matrix,
     missing_probability: float = 0.1,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> Matrix:
     """Inserts missing values into the dataset.
 
@@ -246,7 +246,7 @@ def insert_missing(
 
 
 def generate_treatment(
-    propensity_scores: np.ndarray, rng: Optional[np.random.Generator] = None
+    propensity_scores: np.ndarray, rng: np.random.Generator | None = None
 ) -> np.ndarray:
     """Generates a treatment assignment based on the provided propensity scores.
 
@@ -283,11 +283,11 @@ def compute_experiment_outputs(
     treatment: Vector,
     sigma_y: float = 1,
     sigma_tau: float = 0.5,
-    n_variants: Optional[int] = None,
+    n_variants: int | None = None,
     is_classification: bool = False,
     positive_proportion: float = 0.5,
     return_probability_cate: bool = False,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Compute the experiment's observed outcomes y and the true CATE.
 

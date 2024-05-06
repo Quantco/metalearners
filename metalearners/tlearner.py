@@ -1,7 +1,6 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
-from typing import Union
 
 import numpy as np
 from sklearn.metrics import log_loss, root_mean_squared_error
@@ -156,7 +155,7 @@ class TLearner(MetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, Union[float, int]]:
+    ) -> dict[str, float | int]:
         """Evaluate all models contained in the T-Learner."""
         # TODO: Parametrize evaluation approaches.
         conditional_average_outcomes = self.predict_conditional_average_outcomes(

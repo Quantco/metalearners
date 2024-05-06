@@ -1,7 +1,6 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
-from typing import Union
 
 import numpy as np
 import pytest
@@ -31,7 +30,7 @@ def _linear_base_learner(is_classification: bool):
 
 def _linear_base_learner_params(
     is_classification: bool,
-) -> dict[str, Union[int, float, str]]:
+) -> dict[str, int | float | str]:
     if is_classification:
         # Using the default value for max_iter sometimes
         # didn't lead to convergence.

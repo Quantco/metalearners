@@ -1,7 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -10,17 +10,17 @@ from metalearners._utils import Matrix, default_rng
 
 
 def _beta(
-    ulow: float, uhigh: float, dim: Union[tuple, int], rng: np.random.Generator
+    ulow: float, uhigh: float, dim: tuple | int, rng: np.random.Generator
 ) -> np.ndarray:
     return rng.uniform(low=ulow, high=uhigh, size=dim)
 
 
 def constant_treatment_effect(
     dim: int,
-    tau: Union[float, np.ndarray],
+    tau: float | np.ndarray,
     ulow: float = 0,
     uhigh: float = 1,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> Callable:
     r"""Generate a potential outcomes function with constant treatment effect.
 
@@ -43,7 +43,7 @@ def constant_treatment_effect(
         rng = default_rng
 
     beta = _beta(ulow, uhigh, dim, rng)
-    if isinstance(tau, (int, float)):
+    if isinstance(tau, int | float):
         tau = np.array([tau])
     tau = tau.reshape(1, -1)
 
@@ -65,7 +65,7 @@ def no_treatment_effect(
     n_variants: int = 2,
     ulow: float = 0,
     uhigh: float = 1,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> Callable:
     r"""Generate a potential outcomes function with no treatment effect.
 
@@ -93,7 +93,7 @@ def linear_treatment_effect(
     n_variants: int = 2,
     ulow: float = 0,
     uhigh: float = 1,
-    rng: Optional[np.random.Generator] = None,
+    rng: np.random.Generator | None = None,
 ) -> Callable:
     r"""Generate a potential outcomes function with linear treatment effect.
 
