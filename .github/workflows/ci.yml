@@ -27,15 +27,35 @@ jobs:
           fetch-depth: 0
       - name: Run pre-commit-conda
         uses: quantco/pre-commit-conda@v1
+  mypy-type-checks:
+    name: Mypy Type Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Set up Conda env
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
+        with:
+          condarc-file: .github/assets/.condarc
+          environment-file: environment.yml
+          cache-environment: true
+      - name: Install repository
+        run: python -m pip install --no-build-isolation --no-deps --disable-pip-version-check -e .
+      - name: Run mypy
+        run: mypy .
 
-  linux-unittests:
-    name: "Unit tests - Python ${{ matrix.PYTHON_VERSION }}"
+  unit-tests:
+    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest-8core' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
     timeout-minutes: 30
-    runs-on: ubuntu-latest-8core
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        PYTHON_VERSION: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest-8core]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -49,7 +69,7 @@ jobs:
           environment-file: environment.yml
           cache-environment: true
           create-args: >-
-            python=${{ matrix.PYTHON_VERSION }}
+            python=${{ matrix.python-version }}
             pytest-md
             pytest-emoji
       - name: Install repository
@@ -57,7 +77,7 @@ jobs:
       - name: Run unittests
         uses: quantco/pytest-action@v2
         with:
-          report-title: "Unit tests Linux - Python ${{ matrix.PYTHON_VERSION }}"
+          report-title: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
           custom-arguments: --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.3.1

@@ -14,11 +14,11 @@ repos:
     hooks:
       - id: docformatter-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-ruff
-    rev: 0.3.4
+    rev: 0.4.2
     hooks:
       - id: ruff-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-black
-    rev: 24.3.0
+    rev: 24.4.2
     hooks:
       - id: black-conda
   - repo: https://github.com/Quantco/pre-commit-mirrors-mypy
@@ -32,13 +32,13 @@ repos:
       - id: prettier-conda
         files: \.(md|yml|yaml)$
   - repo: https://github.com/Quantco/pre-commit-mirrors-pre-commit-hooks
-    rev: 4.5.0
+    rev: 4.6.0
     hooks:
       - id: trailing-whitespace-conda
       - id: end-of-file-fixer-conda
       - id: check-merge-conflict-conda
         args: ["--assume-in-merge"]
   - repo: https://github.com/Quantco/pre-commit-mirrors-typos
-    rev: 1.19.0
+    rev: 1.20.10
     hooks:
       - id: typos-conda

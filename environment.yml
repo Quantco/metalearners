@@ -11,16 +11,17 @@ dependencies:
   - pip
   - python>=3.10
   - setuptools-scm
-  - mypy=1.9.0
-  - setuptools>=61 # Adds support for pyproject.toml package declaration.
-  ## Documentation
+  - setuptools >=61 # Adds support for pyproject.toml package declaration.
+  # Documentation
   - make
   - numpydoc
   - sphinx
   - sphinxcontrib-apidoc
   - sphinx_rtd_theme
-  ## Testing
-  - pytest>=6 # Adds --import-mode option
+  # Development
+  - mypy =1.9.0
+  # Testing
+  - pytest >=6 # Adds --import-mode option
   - pytest-cov
   ##  Numerical
   # First version to add the return_indices parameter to cross_validate.

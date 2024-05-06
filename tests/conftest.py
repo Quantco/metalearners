@@ -62,7 +62,7 @@ def mindset_data():
     categorical_feature_columns = [
         "ethnicity",
         "gender",
-        "frst_in_family",
+        "frst_in_family",  # spellchecker:disable-line
         "school_urbanicity",
         "schoolid",
     ]

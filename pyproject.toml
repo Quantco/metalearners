@@ -45,6 +45,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 88
+
 [tool.ruff.lint]
 ignore = [
   "N803",  # https://docs.astral.sh/ruff/rules/invalid-argument-name
@@ -79,4 +80,4 @@ testpaths = [
 ]
 
 [tool.typos.default]
-extend-ignore-re = ["HTE", "crace"]
+extend-ignore-re = ["HTE", "crace", "(?Rm)^.*#\\s*spellchecker:disable-line$"]
