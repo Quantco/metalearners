@@ -1,35 +1,97 @@
 FAQ
-========
+===
 
-* **What's the difference between Double Machine Learning, Debiased Machine Learning,
-  Orthogonal Machine Learning, Doubly-Robust Machine Learning and the R-Learner?**
+* **What is the difference between Average treatment effect estimation
+  and conditional average treatment effect estimation?**
 
-    The Double Machine Learning blueprint relies on estimating two nuisance models in its
-    first stage: a propensity model as well as an outcome model, both depending only on X.
-    These models are then used to calculate the treatment and outcome residuals and finally
-    the outcome residuals are regressed against the treatment residuals. See
-    `Chernozhukov et al. (2016) <https://arxiv.org/abs/1608.00060>`_ for more details.
-    Some implementations of Double Machine Learning are the
+    The Average Treatment Effect (ATE) is a scalar summary statistic that summarises the effect of an
+    intervention on a population. The conditional average treatment effect (CATE)
+    summarises the affect of the intervention an individual or subgroup, as defined
+    by the conditioning covariate.
+
+    When conditioning covariates are discrete then the CATE is finite dimensional,
+    e.g. there is a a single CATE value for each population subgroup with the same covariate values.
+    However, when the conditioning covariates are continuous, then the CATE is infinite dimensional,
+    i.e. it is a function, similar to a regression function, that maps inputs to a predicted/ expected
+    treatment effect for each individual.
+
+    This distinction is important since the statistical methods used to estimate finite dimensional
+    statistics may be different to those that we use to estimate regression functions.
+    In particular, Double/ debiased machine learning was developed for statistical inference of finite
+    quantities (unbiased estimation, standard error estimation, confidence interval estimation), whilst
+    metalearning (e.g. R-, S-, T- DR- learning) is used for function learning.
+
+    In the context of casual inference, however, the line between function learning
+    and estimating summary statistics is somewhat blurred since summary estimators usually rely on
+    some preliminary function learning.
+
+* **What is Double/ Debiased Machine Learning?**
+    Double machine learning is an ATE estimation technique, pioneered by
+    `Chernozhukov et al. (2016) <https://arxiv.org/abs/1608.00060>`_.
+    It is 'double' in the sense that it relies on two preliminary models: one for the probability of
+    receiving treatment given covariates (the propensity score), and one for the outcome given treatment and covariates.
+
+    Double ML is also referred to as 'debiased' ML, since the propensity score model is used to 'debias'
+    a naive estimator that uses the outcome model to predict the expected outcome under treatment, and under no treatment,
+    for each individual.
+
+    Double/ Debiased ML estimators of the ATE are also called 'double robust' since the error in the final ATE estimate
+    may converges 'quickly' provided that the one of the propensity score or outcome learners is sufficiently accurate.
+    This property is desirable since it means that one can trade-off accuracy in the propensity score and outcome learners,
+    and there are some settings where the propensity score model is known, e.g. in a randomised experiment.
+
+    Some implementations of Double Machine Learning include the
     `DoubleML Library <https://docs.doubleml.org/stable/index.html>`_ or the
     `DML module of EconML <https://econml.azurewebsites.net/_autosummary/econml.dml.DML.html>`_.
 
-    Debiased Machine Learning and Orthogonal Machine Learning usually refer to the same
-    algorithms as Double Machine Learning as their goal is to *debias* the used nuisance
-    models with *orthogonalization*.
+* **What is MetaLearning?**
+    Following the definition by `Kunzel et al. <https://doi.org/10.1073/pnas.1804597116>`_, MetaLearning
+    refers to any technique where a functional learning problem is decomposed into a sequence of
+    simpler learning/ regression tasks.
 
-    The R-Learner is a generalization of the Double Machine Learning framework where instead
-    of regressing the outcome residuals against the treatment residuals, usually with
-    Linear Regression in DML, these are used
-    to build a loss function which can be used with any Machine Learning which supports
-    weighted loss functions. See `Nie and Wager (2017) <https://arxiv.org/abs/1712.04912>`_
-    for more details. The main drawback of this method against Double Machine Learning is
-    the fact that in its standard form it can only be used with binary or single-dimensional
-    continuous treatments, some adaptations can be done to work with categorical treatments
-    but model choice for the final model becomes highly restricted. On the other hand,
-    Double Machine Learning can be used with categorical or continuous treatment.
+    For instance, there are several ways to represent the CATE as the minimiser of a loss function, but these losses
+    usually include unknown functions, such as the predicted mean outcome or the propensity score.
+    A metalearner might therefore first learn the components of the unknown loss, then minimise the estimated loss in a second-stage.
 
-    On the other hand, Doubly-Robust Machine Learning differs from all the previous methods
-    by the fact that the outcome nuisance models depends not only on the variables X,
-    but also on the treatments T. Then these models are used to build pseudo outcomes which
-    their expected value is the true CATE and a final model is used to learn the CATE
-    from them. See `Kennedy (2020) <https://arxiv.org/abs/2004.14497>`_ for more details.
+    There maybe several theoretical or practical reasons to prefer one CATE decomposition over another, which
+    is why so many CATE metalearners have been developed.
+
+* **What MetaLearners are available for CATE estimation?**
+    CATE metalearners usually follow the naming convention of `Kunzel et al. <https://doi.org/10.1073/pnas.1804597116>`_,
+    who proposed the S-, T-, and X-learners, and, in a `longer version of their paper <https://arxiv.org/abs/1706.03461>`_,
+    the U- and F-learners. Of these, the S- and T-learners are the simplest, which respectively fit a
+    (S-) single outcome learner in the whole population and (T-) two outcome learners for each of the treated an untreated subpopulations.
+
+    The R-Learner, due to `Nie and Wager (2017) <https://arxiv.org/abs/1712.04912>`_, uses a loss based on residuals from
+    an outcome learner (fitted on covariates but not treatment), and residuals from a propensity score learner. The R-Learner
+    loss is orthogonal, in the sense described by `Foster and Syrgkanis <https://arxiv.org/abs/1901.09036>`_.
+    This orthogonality means that the error bound for the CATE may decay faster than the error bounds of the component models.
+
+    The DR-learner, due to `Kennedy (2020) <https://arxiv.org/abs/2004.14497>`_,  uses a mean squared error loss, where the outcome
+    is an estimated pseudo-outcome based an initial outcome learner (fitted on covariates and treatment), and a propensity score learner.
+    The DR-learner is so called because it has similar double-robust properties to the Double/ debiased ML estimator,
+    but in the function estimation setting.
+
+    Some other implementations of Metalearning include `causalml <https://github.com/uber/causalml>`_.
+
+* **Why do we cross-fit for all MetaLearners?**
+    Cross-fitting is described as a central part of the learning process
+    for some metaLearners. For instance, the outcome and propensity score models that make up the R-Learner loss for a single
+    observation, are usually obtained a split of the data that does not include that observation.
+
+    Some metalearners, such as the T-Learner, do not require cross-fitting, but are often cross-fitted when the resulting predictions
+    are intended to be used in Double/ Debiased ML estimators (e.g. for the ATE). This is because, Debiased ML estimators usually
+    require cross-fitting to control for biases related to overfitting of the component models,
+    when component models are used for 'in-sample' prediction.
+
+    We suggest to use cross-fitting when estimating the CATEs
+    'in-sample' (on the training data) in order to avoid
+    overfitting. When estimating CATEs 'out-of-sample' (on test or
+    production data), we allow for the usage of the cross-fitted
+    models via consensus algorithms: typically the mean or median.
+    `Jacob (2020) <https://arxiv.org/pdf/2007.02852>`_ and
+    `Chernozhukov (2018) <https://academic.oup.com/ectj/article/21/1/C1/5056401>`_
+    discuss this approach in further detail.
+
+    See :class:`metalearners.cross_fit_estimator.CrossFitEstimator`
+    for our implementation of cross-fitting.
