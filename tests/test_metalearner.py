@@ -42,6 +42,8 @@ class _TestMetaLearner(MetaLearner):
     def treatment_model_names(cls):
         return {"treatment1", "treatment2"}
 
+    def _validate_models(self) -> None: ...
+
     @property
     def _nuisance_predict_methods(self):
         return {"nuisance1": "predict", "nuisance2": "predict"}

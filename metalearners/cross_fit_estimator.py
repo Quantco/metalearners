@@ -91,10 +91,6 @@ class CrossFitEstimator:
         model = self.estimator_factory(**self.estimator_params)
         return model.fit(X, y, **fit_params)
 
-    @property
-    def _is_classification(self) -> bool:
-        return self.estimator_factory._estimator_type == "classifier"
-
     def fit(
         self,
         X: Matrix,
@@ -110,7 +106,7 @@ class CrossFitEstimator:
         """
         if fit_params is None:
             fit_params = dict()
-        if self._is_classification:
+        if is_classifier(self):
             cv = StratifiedKFold(
                 n_splits=self.n_folds,
                 shuffle=True,
@@ -136,7 +132,7 @@ class CrossFitEstimator:
         if self.enable_overall:
             self._overall_estimator = self._train_overall_estimator(X, y, fit_params)
 
-        if self._is_classification:
+        if is_classifier(self):
             self._n_classes = len(np.unique(y))
 
         return self

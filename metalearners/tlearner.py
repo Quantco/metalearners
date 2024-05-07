@@ -3,6 +3,7 @@
 
 
 import numpy as np
+from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
@@ -33,6 +34,36 @@ class TLearner(MetaLearner):
     def treatment_model_names(cls) -> set[str]:
         """Return the names of all second-stage models."""
         return set()
+
+    def _validate_models(self) -> None:
+        if self.is_classification and not is_classifier(
+            self._nuisance_models[_TREATMENT_MODEL]
+        ):
+            raise ValueError(
+                f"is_classification is set to True but the {_TREATMENT_MODEL} "
+                "is not a classifier."
+            )
+        if self.is_classification and not is_classifier(
+            self._nuisance_models[_CONTROL_MODEL]
+        ):
+            raise ValueError(
+                f"is_classification is set to True but the {_CONTROL_MODEL} "
+                "is not a classifier."
+            )
+        if not self.is_classification and not is_regressor(
+            self._nuisance_models[_TREATMENT_MODEL]
+        ):
+            raise ValueError(
+                f"is_classification is set to False but the {_TREATMENT_MODEL} "
+                "is not a regressor."
+            )
+        if not self.is_classification and not is_regressor(
+            self._nuisance_models[_CONTROL_MODEL]
+        ):
+            raise ValueError(
+                f"is_classification is set to False but the {_CONTROL_MODEL} "
+                "is not a regressor."
+            )
 
     @property
     def _nuisance_predict_methods(self) -> dict[str, PredictMethod]:

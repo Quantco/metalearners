@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -184,3 +184,16 @@ def test_tlearner_evaluate(outcome_kind, request):
     else:
         assert "treatment_rmse" in evaluation
         assert "effect_rmse" in evaluation
+
+
+def test_validate_models():
+    with pytest.raises(
+        ValueError,
+        match="is_classification is set to True but the treatment_model is not a classifier.",
+    ):
+        TLearner(LGBMRegressor, True)
+    with pytest.raises(
+        ValueError,
+        match="is_classification is set to False but the treatment_model is not a regressor.",
+    ):
+        TLearner(LGBMClassifier, False)

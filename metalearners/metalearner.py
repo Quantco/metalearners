@@ -51,6 +51,11 @@ class MetaLearner(ABC):
 
     def _validate_params(self, **kwargs): ...
 
+    @abstractmethod
+    def _validate_models(self) -> None:
+        """Validate that the models are of the correct type (classifier or regressor)"""
+        ...
+
     def __init__(
         self,
         nuisance_model_factory: ModelFactory,
@@ -154,6 +159,8 @@ class MetaLearner(ABC):
             factual=set(self._nuisance_predict_methods.keys()),
             expected=set(self.__class__.nuisance_model_names()),
         )
+
+        self._validate_models()
 
     @property
     @abstractmethod
