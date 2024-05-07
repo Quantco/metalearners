@@ -64,9 +64,6 @@ class _TestMetaLearner(MetaLearner):
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), 1))
 
-    def _pseudo_outcome(self, X):
-        return np.zeros(len(X))
-
 
 @pytest.mark.parametrize("nuisance_model_factory", [LGBMRegressor])
 @pytest.mark.parametrize("treatment_model_factory", [LGBMRegressor])

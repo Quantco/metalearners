@@ -209,8 +209,3 @@ class TLearner(MetaLearner):
             ),
             "effect_cross_entropy": log_loss(y[w == 0], effect_outcomes[w == 0][:, 1]),
         }
-
-    def _pseudo_outcome(self):
-        raise NotImplementedError(
-            "Pseudo outcomes can't be calculated when using TLearner."
-        )

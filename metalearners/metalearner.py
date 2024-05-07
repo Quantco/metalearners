@@ -282,8 +282,3 @@ class MetaLearner(ABC):
         n_{variants}, n_{classes})` if it's a classification problem.
         """
         ...
-
-    @abstractmethod
-    def _pseudo_outcome(self, *args, **kwargs) -> Vector:
-        """Compute the vector of pseudo outcomes of the respective MetaLearner."""
-        ...
