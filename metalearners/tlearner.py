@@ -37,28 +37,28 @@ class TLearner(MetaLearner):
 
     def _validate_models(self) -> None:
         if self.is_classification and not is_classifier(
-            self._nuisance_models[_TREATMENT_MODEL]
+            self.nuisance_model_factory[_TREATMENT_MODEL]
         ):
             raise ValueError(
                 f"is_classification is set to True but the {_TREATMENT_MODEL} "
                 "is not a classifier."
             )
         if self.is_classification and not is_classifier(
-            self._nuisance_models[_CONTROL_MODEL]
+            self.nuisance_model_factory[_CONTROL_MODEL]
         ):
             raise ValueError(
                 f"is_classification is set to True but the {_CONTROL_MODEL} "
                 "is not a classifier."
             )
         if not self.is_classification and not is_regressor(
-            self._nuisance_models[_TREATMENT_MODEL]
+            self.nuisance_model_factory[_TREATMENT_MODEL]
         ):
             raise ValueError(
                 f"is_classification is set to False but the {_TREATMENT_MODEL} "
                 "is not a regressor."
             )
         if not self.is_classification and not is_regressor(
-            self._nuisance_models[_CONTROL_MODEL]
+            self.nuisance_model_factory[_CONTROL_MODEL]
         ):
             raise ValueError(
                 f"is_classification is set to False but the {_CONTROL_MODEL} "
