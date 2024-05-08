@@ -6,11 +6,15 @@ from itertools import chain
 import numpy as np
 import pandas as pd
 import pytest
-from lightgbm import LGBMRegressor
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression
 
 from metalearners.data_generation import insert_missing
-from metalearners.metalearner import MetaLearner, _validate_nuisance_predict_methods
+from metalearners.metalearner import (
+    MetaLearner,
+    _combine_propensity_and_nuisance_specs,
+    _validate_nuisance_predict_methods,
+)
 from metalearners.tlearner import TLearner
 
 
@@ -70,14 +74,30 @@ class _TestMetaLearner(MetaLearner):
 @pytest.mark.parametrize("is_classification", [True, False])
 @pytest.mark.parametrize("nuisance_model_params", [None, {}, {"n_estimators": 5}])
 @pytest.mark.parametrize("treatment_model_params", [None, {}, {"n_estimators": 5}])
-@pytest.mark.parametrize("feature_set", [None])
+@pytest.mark.parametrize(
+    "feature_set",
+    [
+        None,
+        {
+            "nuisance1": ["X1"],
+            "nuisance2": ["X2"],
+            "propensity_model": ["Xp"],
+            "treatment1": ["X1"],
+            "treatment2": ["X2"],
+        },
+    ],
+)
 @pytest.mark.parametrize("n_folds", [5])
+@pytest.mark.parametrize("propensity_model_factory", [None, LGBMClassifier])
+@pytest.mark.parametrize("propensity_model_params", [None, {}, {"n_estimators": 5}])
 def test_metalearner_init(
     nuisance_model_factory,
     treatment_model_factory,
+    propensity_model_factory,
     is_classification,
     nuisance_model_params,
     treatment_model_params,
+    propensity_model_params,
     feature_set,
     n_folds,
 ):
@@ -85,8 +105,10 @@ def test_metalearner_init(
         nuisance_model_factory=nuisance_model_factory,
         is_classification=is_classification,
         treatment_model_factory=treatment_model_factory,
+        propensity_model_factory=propensity_model_factory,
         nuisance_model_params=nuisance_model_params,
         treatment_model_params=treatment_model_params,
+        propensity_model_params=propensity_model_params,
         feature_set=feature_set,
         n_folds=n_folds,
     )
@@ -204,3 +226,51 @@ def test_metalearner_model_names(implementation):
     set1 = implementation.nuisance_model_names()
     set2 = implementation.treatment_model_names()
     assert len(set1 | set2) == len(set1) + len(set2)
+
+
+@pytest.mark.parametrize(
+    "propensity_specs, nuisance_specs, nuisance_model_names, expected",
+    [
+        (
+            None,
+            LGBMRegressor,
+            {"nuisance1", "nuisance2"},
+            {"nuisance1": LGBMRegressor, "nuisance2": LGBMRegressor},
+        ),
+        (
+            LGBMClassifier,
+            LGBMRegressor,
+            {"nuisance1", "nuisance2"},
+            {"nuisance1": LGBMRegressor, "nuisance2": LGBMRegressor},
+        ),
+        (
+            LGBMClassifier,
+            LGBMRegressor,
+            {"nuisance1", "nuisance2", "propensity_model"},
+            {
+                "nuisance1": LGBMRegressor,
+                "nuisance2": LGBMRegressor,
+                "propensity_model": LGBMClassifier,
+            },
+        ),
+        (
+            LGBMClassifier,
+            {"nuisance1": LGBMRegressor, "nuisance2": LGBMClassifier},
+            {"nuisance1", "nuisance2", "propensity_model"},
+            {
+                "nuisance1": LGBMRegressor,
+                "nuisance2": LGBMClassifier,
+                "propensity_model": LGBMClassifier,
+            },
+        ),
+    ],
+)
+def test_combine_propensity_and_nuisance_specs(
+    propensity_specs, nuisance_specs, nuisance_model_names, expected
+):
+    assert (
+        _combine_propensity_and_nuisance_specs(
+            propensity_specs, nuisance_specs, nuisance_model_names
+        )
+        == expected
+    )

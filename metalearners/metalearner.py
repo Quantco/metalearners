@@ -18,6 +18,7 @@ from metalearners.cross_fit_estimator import (
 Params = dict[str, int | float | str]
 Features = Collection[str] | Collection[int]
 ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
+PROPENSITY_MODEL = "propensity_model"
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
@@ -37,6 +38,19 @@ def _validate_nuisance_predict_methods(factual: set[str], expected: set[str]) ->
             "Mapping from nuisance model kind to predict method lacks keys:",
             str(lack),
         )
+
+
+def _combine_propensity_and_nuisance_specs(
+    propensity_specs, nuisance_specs, nuisance_model_names: set[str]
+) -> dict:
+    if PROPENSITY_MODEL in nuisance_model_names:
+        non_propensity_nuisance_model_names = nuisance_model_names - {PROPENSITY_MODEL}
+        non_propensity_model_dict = _initialize_model_dict(
+            nuisance_specs, non_propensity_nuisance_model_names
+        )
+        return non_propensity_model_dict | {PROPENSITY_MODEL: propensity_specs}
+
+    return _initialize_model_dict(nuisance_specs, nuisance_model_names)
 
 
 class MetaLearner(ABC):
@@ -60,11 +74,13 @@ class MetaLearner(ABC):
         self,
         nuisance_model_factory: ModelFactory,
         is_classification: bool,
-        treatment_model_factory: ModelFactory | None = None,
         # TODO: Consider whether we can make this not a state of the MetaLearner
         # but rather just a parameter of a predict call.
+        treatment_model_factory: ModelFactory | None = None,
+        propensity_model_factory: type[_ScikitModel] | None = None,
         nuisance_model_params: Params | dict[str, Params] | None = None,
         treatment_model_params: Params | dict[str, Params] | None = None,
+        propensity_model_params: Params | None = None,
         feature_set: Features | dict[str, Features] | None = None,
         # TODO: Consider implementing selection of number of folds for various estimators.
         n_folds: int = 10,
@@ -89,9 +105,11 @@ class MetaLearner(ABC):
         self._validate_params(
             nuisance_model_factory=nuisance_model_factory,
             treatment_model_factory=treatment_model_factory,
+            propensity_model_factory=propensity_model_factory,
             is_classification=is_classification,
             nuisance_model_params=nuisance_model_params,
             treatment_model_params=treatment_model_params,
+            propensity_model_params=propensity_model_params,
             feature_set=feature_set,
             n_folds=n_folds,
             random_state=random_state,
@@ -100,19 +118,48 @@ class MetaLearner(ABC):
         nuisance_model_names = self.__class__.nuisance_model_names()
         treatment_model_names = self.__class__.treatment_model_names()
 
+        if PROPENSITY_MODEL in treatment_model_names:
+            raise ValueError(
+                f"{PROPENSITY_MODEL} can't be used as a treatment model name"
+            )
+        if (
+            isinstance(nuisance_model_factory, dict)
+            and PROPENSITY_MODEL in nuisance_model_factory.keys()
+        ):
+            raise ValueError(
+                "Propensity model factory should be defined using propensity_model_factory "
+                "and not nuisance_model_factory."
+            )
+        if (
+            isinstance(nuisance_model_params, dict)
+            and PROPENSITY_MODEL in nuisance_model_params.keys()
+        ):
+            raise ValueError(
+                "Propensity model params should be defined using propensity_model_params "
+                "and not nuisance_model_params."
+            )
+        if (
+            PROPENSITY_MODEL in nuisance_model_names
+            and propensity_model_factory is None
+        ):
+            raise ValueError(
+                f"propensity_model_factory needs to be defined as the {self.__class__.__name__}"
+                "has a propensity model."
+            )
+
         self.is_classification = is_classification
 
-        self.nuisance_model_factory = _initialize_model_dict(
-            nuisance_model_factory, nuisance_model_names
+        self.nuisance_model_factory = _combine_propensity_and_nuisance_specs(
+            propensity_model_factory, nuisance_model_factory, nuisance_model_names
         )
         if nuisance_model_params is None:
-            self.nuisance_model_params = _initialize_model_dict(
-                {}, nuisance_model_names
-            )
-        else:
-            self.nuisance_model_params = _initialize_model_dict(
-                nuisance_model_params, nuisance_model_names
-            )
+            nuisance_model_params = {}  # type: ignore
+        if propensity_model_params is None:
+            propensity_model_params = {}
+        self.nuisance_model_params = _combine_propensity_and_nuisance_specs(
+            propensity_model_params, nuisance_model_params, nuisance_model_names
+        )
+
         self.treatment_model_factory = _initialize_model_dict(
             treatment_model_factory, treatment_model_names
         )
@@ -133,7 +180,8 @@ class MetaLearner(ABC):
             self.feature_set = None
         else:
             self.feature_set = _initialize_model_dict(
-                feature_set, nuisance_model_names | treatment_model_names
+                feature_set,
+                nuisance_model_names | treatment_model_names,
             )
 
         self._nuisance_models: dict[str, _ScikitModel] = {
@@ -199,7 +247,7 @@ class MetaLearner(ABC):
     def fit_treatment(
         self, X: Matrix, y: Vector, model_kind: str, fit_params: dict | None = None
     ) -> Self:
-        """Fit the tratment model of a MetaLearner.
+        """Fit the treatment model of a MetaLearner.
 
         ``y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         """
