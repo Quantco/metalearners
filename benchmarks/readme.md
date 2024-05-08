@@ -25,7 +25,7 @@ on ground truth CATEs:
 
 |                                   | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
 | :-------------------------------- | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome |          0.0153079 |    0.0152885 |        0.0153079 |  0.0152885 |              0.0155772 |        0.0152885 |
-| synthetic_data_binary_outcome     |          0.0156171 |    0.0155887 |              nan |        nan |              0.0157499 |        0.0155887 |
-| twins_pandas                      |            0.35937 |     0.366364 |              nan |        nan |               0.350377 |         0.342073 |
-| twins_numpy                       |           0.300211 |     0.338768 |              nan |        nan |               0.345016 |         0.338768 |
+| synthetic_data_continuous_outcome |          0.0121381 |      0.01212 |        0.0121381 |    0.01212 |              0.0124729 |          0.01212 |
+| synthetic_data_binary_outcome     |          0.0149216 |    0.0148903 |              nan |        nan |              0.0149779 |        0.0148903 |
+| twins_pandas                      |            0.34843 |     0.362315 |              nan |        nan |               0.354783 |         0.348551 |
+| twins_numpy                       |           0.308362 |     0.345602 |              nan |        nan |               0.349543 |         0.345602 |

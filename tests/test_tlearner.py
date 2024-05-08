@@ -39,7 +39,7 @@ def _linear_base_learner_params(
 
 
 @pytest.mark.parametrize(
-    "outcome_kind, reference_value", [("binary", 0.0156), ("continuous", 0.0153)]
+    "outcome_kind, reference_value", [("binary", 0.0149), ("continuous", 0.0121)]
 )
 def test_tlearner_synthetic_in_sample(outcome_kind, reference_value, request):
     dataset = request.getfixturevalue(
@@ -69,7 +69,7 @@ def test_tlearner_synthetic_in_sample(outcome_kind, reference_value, request):
 
 
 @pytest.mark.parametrize(
-    "outcome_kind, reference_value", [("binary", 0.0156), ("continuous", 0.0153)]
+    "outcome_kind, reference_value", [("binary", 0.0149), ("continuous", 0.0121)]
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
 def test_tlearner_synthetic_oos(outcome_kind, reference_value, oos_method, request):
@@ -160,7 +160,7 @@ def test_tlearner_twins(twins_data, oos_method, rng):
     )[:, 1]
     rmse = root_mean_squared_error(true_cate_test, cate_estimates)
     # See the benchmarking directory for reference values.
-    assert rmse < 0.3663 * (1 + _REFERENCE_VALUE_TOLERANCE)
+    assert rmse < 0.3623 * (1 + _REFERENCE_VALUE_TOLERANCE)
 
 
 @pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])

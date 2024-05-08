@@ -18,7 +18,7 @@ _SEED = 1337
 
 
 def _generate_rct_experiment_data_linear_te(
-    covariates, is_classification: bool, rng, propensity_score: float = 0.5
+    covariates, is_classification: bool, rng, propensity_score: float = 0.3
 ):
     propensity_scores = propensity_score * np.ones(covariates.shape[0])
     treatment = generate_treatment(propensity_scores, rng=rng)
@@ -122,7 +122,7 @@ def twins_data(rng):
         )
 
     n_twins_pairs = df.shape[0] // 2
-    chosen_twin = rng.binomial(n=1, p=0.5, size=n_twins_pairs)
+    chosen_twin = rng.binomial(n=1, p=0.3, size=n_twins_pairs)
 
     selected_rows = []
     for i in range(0, len(df), 2):
@@ -180,16 +180,16 @@ def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
 @pytest.fixture(scope="function")
 def numerical_experiment_dataset_continuous_outcome(numerical_covariates, rng):
     covariates, _, _ = numerical_covariates
-    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)
+    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.3)
 
 
 @pytest.fixture(scope="function")
 def numerical_experiment_dataset_binary_outcome(numerical_covariates, rng):
     covariates, _, _ = numerical_covariates
-    return _generate_rct_experiment_data_linear_te(covariates, True, rng, 0.5)
+    return _generate_rct_experiment_data_linear_te(covariates, True, rng, 0.3)
 
 
 @pytest.fixture(scope="function")
 def mixed_experiment_dataset_continuous_outcome(mixed_covariates, rng):
     covariates, _, _ = mixed_covariates
-    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.5)
+    return _generate_rct_experiment_data_linear_te(covariates, False, rng, 0.3)

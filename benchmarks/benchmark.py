@@ -32,7 +32,7 @@ def _synthetic_data(
     covariates, _, _ = generate_covariates(
         sample_size, n_numericals, format="numpy", rng=rng
     )
-    propensity_scores = 0.5 * np.ones(sample_size)
+    propensity_scores = 0.3 * np.ones(sample_size)
     treatment = generate_treatment(propensity_scores, rng=rng)
     dim = get_linear_dimension(covariates)
     outcome_function = linear_treatment_effect(dim, rng=rng)
@@ -111,7 +111,7 @@ def _twins_data(rng, use_numpy=False, test_fraction=0.2):
         )
 
     n_twins_pairs = df.shape[0] // 2
-    chosen_twin = rng.binomial(n=1, p=0.5, size=n_twins_pairs)
+    chosen_twin = rng.binomial(n=1, p=0.3, size=n_twins_pairs)
 
     selected_rows = []
     for i in range(0, len(df), 2):
