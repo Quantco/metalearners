@@ -23,6 +23,7 @@ dependencies:
   # Testing
   - pytest >=6 # Adds --import-mode option
   - pytest-cov
+  - pytest-xdist
   ##  Numerical
   # First version to add the return_indices parameter to cross_validate.
   - scikit-learn>=1.3
