@@ -8,6 +8,10 @@ from typing import Protocol, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import check_array, check_X_y
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 
 # ruff is not happy about the usage of Union.
 Vector = Union[pd.Series, np.ndarray]  # noqa
@@ -190,3 +194,52 @@ def check_probability(p: float, zero_included=False, one_included=False) -> None
         raise ValueError("Probability p must be greater than or equal to 0.")
     if not right_operator(p, 1):
         raise ValueError("Probability p must be less than or equal to 1.")
+
+
+def convert_treatment(treatment: Vector) -> np.ndarray:
+    """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
+    if isinstance(treatment, np.ndarray):
+        new_treatment = treatment.copy()
+    elif isinstance(treatment, pd.Series):
+        new_treatment = treatment.to_numpy()
+    if new_treatment.dtype == bool:
+        return new_treatment.astype(int)
+    elif new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
+        return new_treatment.astype(int)
+    elif new_treatment.dtype != int:
+        raise TypeError(
+            "Treatment must be boolean, integer or float with integer values."
+        )
+    return new_treatment
+
+
+def supports_categoricals(model: _ScikitModel) -> bool:
+    if (
+        isinstance(model, HistGradientBoostingClassifier)
+        or isinstance(model, HistGradientBoostingRegressor)
+    ) and model.categorical_features == "from_dtype":
+        return True
+    try:
+        from lightgbm import LGBMClassifier, LGBMRegressor
+
+        if isinstance(model, LGBMClassifier | LGBMRegressor):
+            return True
+    except ImportError:
+        pass
+
+    try:
+        from xgboost import XGBClassifier, XGBRegressor
+
+        if isinstance(model, XGBClassifier | XGBRegressor) and model.enable_categorical:
+            return True
+    except (ImportError, AttributeError):  # enable_categorical was added in v1.5.0
+        pass
+    try:
+        from glum import GeneralizedLinearRegressor, GeneralizedLinearRegressorCV
+
+        if isinstance(model, GeneralizedLinearRegressor | GeneralizedLinearRegressorCV):
+            return True
+    except ImportError:
+        pass
+    # TODO: Add support for Catboost? The problem is that we need the cat features names and reinit the model
+    return False

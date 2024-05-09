@@ -38,6 +38,7 @@ tests:
         - metalearners.data_generation
         - metalearners.outcome_functions
         - metalearners.tlearner
+        - metalearners.slearner
       pip_check: true
 
 about:

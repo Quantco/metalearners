@@ -4,12 +4,20 @@
 from contextlib import nullcontext as does_not_raise
 
 import numpy as np
+import pandas as pd
 import pytest
+from glum import GeneralizedLinearRegressor, GeneralizedLinearRegressorCV
+from lightgbm import LGBMRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.linear_model import LinearRegression
+from xgboost import XGBClassifier, XGBRegressor
 
 from metalearners._utils import (
     check_probability,
     check_propensity_score,
+    convert_treatment,
     get_linear_dimension,
+    supports_categoricals,
 )
 from metalearners.data_generation import generate_covariates
 
@@ -125,3 +133,53 @@ def test_check_probability(value, zero_included, one_included):
         context = does_not_raise()  # type: ignore
     with context:
         check_probability(value, zero_included, one_included)
+
+
+@pytest.mark.parametrize(
+    "treatment",
+    [
+        np.array([0, 1, 0, 2]),
+        np.array([0.0, 1.0, 2.0]),
+        np.array([False, True, False]),
+    ],
+)
+@pytest.mark.parametrize("use_pd", [False, True])
+def test_convert_treatment(treatment, use_pd):
+    if use_pd:
+        treatment = pd.Series(treatment)
+    new_treatment = convert_treatment(treatment)
+    assert isinstance(new_treatment, np.ndarray)
+    assert new_treatment.dtype == int
+
+
+@pytest.mark.parametrize("use_pd", [False, True])
+def test_convert_treatment_raise(use_pd):
+    if use_pd:
+        treatment = pd.Series([1.2, 0.5])
+    else:
+        treatment = np.array([1.2, 0.5])
+    with pytest.raises(
+        TypeError,
+        match="Treatment must be boolean, integer or float with integer values.",
+    ):
+        convert_treatment(treatment)
+
+
+@pytest.mark.parametrize(
+    "model, expected",
+    [
+        (LinearRegression(), False),
+        (
+            HistGradientBoostingClassifier(),
+            False,
+        ),  # The default for categorical_features will change to "from_dtype" in v1.6
+        (HistGradientBoostingClassifier(categorical_features="from_dtype"), True),
+        (LGBMRegressor(), True),
+        (XGBRegressor(), False),
+        (XGBClassifier(enable_categorical=True), True),
+        (GeneralizedLinearRegressor(), True),
+        (GeneralizedLinearRegressorCV(), True),
+    ],
+)
+def test_supports_categoricals(model, expected):
+    assert supports_categoricals(model) == expected

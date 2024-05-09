@@ -30,3 +30,5 @@ dependencies:
   - pandas
   - typing-extensions
   - lightgbm
+  - xgboost
+  - glum

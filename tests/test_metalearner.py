@@ -15,6 +15,7 @@ from metalearners.metalearner import (
     _combine_propensity_and_nuisance_specs,
     _validate_nuisance_predict_methods,
 )
+from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
 
 
@@ -114,12 +115,13 @@ def test_metalearner_init(
     )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
 def test_metalearner_categorical(
-    mixed_experiment_dataset_continuous_outcome, implementation
+    mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
+    implementation,
 ):
     covariates, _, treatment, observed_outcomes, _, _ = (
-        mixed_experiment_dataset_continuous_outcome
+        mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
     ml = implementation(
         LGBMRegressor,
@@ -133,6 +135,9 @@ def test_metalearner_categorical(
         covariates.columns.get_loc(col)
         for col in covariates.select_dtypes(include="category").columns
     ]
+    if implementation == SLearner:
+        # We need to add the treatment columns as LGBM supports categoricals
+        categorical_columns.append(len(covariates.columns))
     for cf_estimator in chain(
         ml._nuisance_models.values(), ml._treatment_models.values()
     ):
@@ -147,12 +152,14 @@ def test_metalearner_categorical(
             )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
 def test_metalearner_missing_data_smoke(
-    mixed_experiment_dataset_continuous_outcome, implementation, rng
+    mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
+    implementation,
+    rng,
 ):
     covariates, _, treatment, observed_outcomes, _, _ = (
-        mixed_experiment_dataset_continuous_outcome
+        mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
 
     covariates_with_missing = insert_missing(
@@ -168,12 +175,14 @@ def test_metalearner_missing_data_smoke(
     ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
 def test_metalearner_missing_data_error(
-    numerical_experiment_dataset_continuous_outcome, implementation, rng
+    numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
+    implementation,
+    rng,
 ):
     covariates, _, treatment, observed_outcomes, _, _ = (
-        numerical_experiment_dataset_continuous_outcome
+        numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
     covariates_with_missing = insert_missing(
         covariates, missing_probability=0.25, rng=rng
@@ -186,12 +195,13 @@ def test_metalearner_missing_data_error(
         ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
 def test_metalearner_format_consistent(
-    numerical_experiment_dataset_continuous_outcome, implementation
+    numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
+    implementation,
 ):
     covariates, _, treatment, observed_outcomes, _, _ = (
-        numerical_experiment_dataset_continuous_outcome
+        numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
 
     np_ml = implementation(
@@ -221,7 +231,7 @@ def test_metalearner_format_consistent(
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner])
+@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
 def test_metalearner_model_names(implementation):
     set1 = implementation.nuisance_model_names()
     set2 = implementation.treatment_model_names()
