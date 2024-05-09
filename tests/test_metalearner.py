@@ -47,6 +47,10 @@ class _TestMetaLearner(MetaLearner):
     def treatment_model_names(cls):
         return {"treatment1", "treatment2"}
 
+    @classmethod
+    def _supports_multi_treatment(cls) -> bool:
+        return False
+
     def _validate_models(self) -> None: ...
 
     @property

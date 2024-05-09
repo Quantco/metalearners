@@ -74,6 +74,10 @@ class SLearner(MetaLearner):
         """Return the names of all second-stage, treatment models."""
         return set()
 
+    @classmethod
+    def _supports_multi_treatment(cls) -> bool:
+        return True
+
     def _validate_params(self, feature_set, **kwargs):
         if feature_set is not None:
             # For SLearner it does not make sense to allow feature set as we only have one model

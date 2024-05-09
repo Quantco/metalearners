@@ -65,6 +65,28 @@ class MetaLearner(ABC):
 
     def _validate_params(self, **kwargs): ...
 
+    @classmethod
+    @abstractmethod
+    def _supports_multi_treatment(cls) -> bool: ...
+
+    @classmethod
+    def _check_treatment(cls, w: Vector) -> None:
+        if (
+            (n_variants := len(np.unique(w))) > 2
+        ) and not cls._supports_multi_treatment():
+            raise NotImplementedError(
+                f"Current implementation of {cls.__name__} only supports binary "
+                f"treatment variants. Yet, we found {n_variants} different "
+                "variants."
+            )
+        # TODO: add support for different encoding of treatment variants (str, not consecutive ints...)
+        if set(np.unique(w)) != set(range(n_variants)):
+            raise ValueError(
+                "Treatment variant should be encoded with values "
+                f"{{0...{n_variants -1}}} and all variants should be present. "
+                f"Yet we found the values {set(np.unique(w))}."
+            )
+
     @abstractmethod
     def _validate_models(self) -> None:
         """Validate that the models are of the correct type (classifier or regressor)"""

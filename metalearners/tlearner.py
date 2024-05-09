@@ -35,6 +35,10 @@ class TLearner(MetaLearner):
         """Return the names of all second-stage models."""
         return set()
 
+    @classmethod
+    def _supports_multi_treatment(cls) -> bool:
+        return False
+
     def _validate_models(self) -> None:
         if self.is_classification and not is_classifier(
             self.nuisance_model_factory[_TREATMENT_MODEL]
@@ -74,17 +78,7 @@ class TLearner(MetaLearner):
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the T-Learner."""
-        if (n_variants := len(np.unique(w))) > 2:
-            raise NotImplementedError(
-                "Current implementation of T-Learner only supports binary "
-                f"treatment variants. Yet, we found {n_variants} different "
-                "variants."
-            )
-        if set(w) != {0, 1}:
-            raise ValueError(
-                "Current implementation of T-Learner only supports binary treatment "
-                f"represented as 0/1 values. Yet we found the following values: {set(w)}."
-            )
+        self._check_treatment(w)
         self._treatment_indices = w == 1
         self._control_indices = w == 0
         # TODO: Consider multiprocessing
