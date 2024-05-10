@@ -157,6 +157,12 @@ def _twins_data(rng, use_numpy=False, test_fraction=0.2):
     treatment = chosen_df[treatment_column]
     true_cate = mu_1 - mu_0
 
+    if use_numpy:
+        covariates = covariates.to_numpy()
+        observed_outcomes = observed_outcomes.to_numpy()
+        treatment = treatment.to_numpy()
+        true_cate = true_cate.to_numpy()
+
     (
         covariates_train,
         covariates_test,
@@ -174,10 +180,6 @@ def _twins_data(rng, use_numpy=False, test_fraction=0.2):
         test_size=test_fraction,
         random_state=_SEED,
     )
-
-    if use_numpy:
-        covariates_train = covariates_train.to_numpy()
-        covariates_test = covariates_test.to_numpy()
 
     return (
         covariates_train,
@@ -211,6 +213,13 @@ def causalml_estimates(
         )
     if metalearner == "T":
         causal_factory = BaseTClassifier if is_classification else BaseTRegressor
+        if is_classification and hasattr(covariates_test, "to_numpy"):
+            # https://github.com/uber/causalml/blob/a0315660d9b14f5d943aa688d8242eb621d2ba76/causalml/inference/meta/tlearner.py#L375
+            # In causalml there's a bug where they don't convert pandas to numpy when calling
+            # predict in BaseTClassifier, also lightgbm does not behave the same way
+            # with pandas than with numpy (not sure why) and therefore this gave different
+            # predictions
+            covariates_test = covariates_test.to_numpy()
     elif metalearner == "S":
         causal_factory = BaseSClassifier if is_classification else BaseSRegressor
     else:
