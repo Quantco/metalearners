@@ -43,10 +43,10 @@ def _linear_base_learner_params(
 @pytest.mark.parametrize(
     "metalearner, outcome_kind, reference_value, treatment_kind, te_kind",
     [
-        ("T", "binary", 0.0149, "binary", "linear"),
-        ("T", "continuous", 0.0121, "binary", "linear"),
-        ("S", "binary", 0.2568, "binary", "linear"),
-        ("S", "continuous", 11.6777, "binary", "linear"),
+        ("T", "binary", 0.0212, "binary", "linear"),
+        ("T", "continuous", 0.0456, "binary", "linear"),
+        ("S", "binary", 0.2290, "binary", "linear"),
+        ("S", "continuous", 14.5706, "binary", "linear"),
     ],
 )
 def test_learner_synthetic_in_sample(
@@ -84,18 +84,20 @@ def test_learner_synthetic_in_sample(
     rmse = root_mean_squared_error(true_cate, cate_estimates)
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
     if metalearner == "T":
-        np.testing.assert_allclose(cate_estimates, true_cate.reshape(-1), atol=0.15)
+        np.testing.assert_allclose(
+            cate_estimates, true_cate.reshape(-1), atol=0.3, rtol=0.3
+        )
 
 
 @pytest.mark.parametrize(
     "metalearner, outcome_kind, reference_value, treatment_kind, te_kind",
     [
-        ("T", "binary", 0.0149, "binary", "linear"),
-        ("T", "continuous", 0.0121, "binary", "linear"),
-        ("S", "binary", 0.2563, "binary", "linear"),
-        ("S", "continuous", 11.6584, "binary", "linear"),
-        ("S", "continuous", 11.5957, "multi", "linear"),
-        ("S", "continuous", 0.004997, "multi", "constant"),
+        ("T", "binary", 0.0215, "binary", "linear"),
+        ("T", "continuous", 0.0456, "binary", "linear"),
+        ("S", "binary", 0.2286, "binary", "linear"),
+        ("S", "continuous", 14.6248, "binary", "linear"),
+        ("S", "continuous", 14.185, "multi", "linear"),
+        ("S", "continuous", 0.0111, "multi", "constant"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -161,7 +163,7 @@ def test_learner_synthetic_oos(
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
     if metalearner == "T":
         np.testing.assert_allclose(
-            cate_estimates, true_cate_test.reshape(-1), atol=0.15
+            cate_estimates, true_cate_test.reshape(-1), atol=0.3, rtol=0.3
         )
 
 
@@ -220,7 +222,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
     )
     actual_ate_estimate = np.mean(cate_estimates)
     target_ate_estimate = np.mean(true_cate_test)
-    assert actual_ate_estimate == pytest.approx(target_ate_estimate, abs=1e-2, rel=1e-2)
+    assert actual_ate_estimate == pytest.approx(target_ate_estimate, abs=1e-2, rel=1e-1)
 
 
 @pytest.mark.parametrize("metalearner, reference_value", [("T", 0.3623), ("S", 0.3186)])

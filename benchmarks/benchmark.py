@@ -38,7 +38,7 @@ _SEED = 1337
 def _synthetic_data(
     is_classification,
     rng,
-    sample_size=1_000_000,
+    sample_size=100_000,
     n_numericals=25,
     test_fraction=0.2,
     propensity_score=0.3,

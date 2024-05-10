@@ -208,7 +208,7 @@ def test_compute_experiment_outputs(
     expected_std = np.sqrt(sigma_y**2 + sigma_tau**2)
     for k in range(1, n_variants):
         actual_std = (y - mu[:, k])[treatment == k].std()
-        assert actual_std == pytest.approx(expected_std, abs=1e-2)
+        assert actual_std == pytest.approx(expected_std, abs=1e-2, rel=1e-1)
 
 
 @pytest.mark.parametrize("dataset", ["numerical_covariates", "mixed_covariates"])

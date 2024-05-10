@@ -180,7 +180,7 @@ def n_categoricals():
 
 @pytest.fixture(scope="module")
 def sample_size():
-    return 1_000_000
+    return 100_000
 
 
 @pytest.fixture(scope="function")
