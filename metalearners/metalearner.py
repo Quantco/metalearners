@@ -70,6 +70,10 @@ class MetaLearner(ABC):
     def _supports_multi_treatment(cls) -> bool: ...
 
     @classmethod
+    @abstractmethod
+    def _supports_multi_class(cls) -> bool: ...
+
+    @classmethod
     def _check_treatment(cls, w: Vector) -> None:
         if (
             (n_variants := len(np.unique(w))) > 2
@@ -85,6 +89,17 @@ class MetaLearner(ABC):
                 "Treatment variant should be encoded with values "
                 f"{{0...{n_variants -1}}} and all variants should be present. "
                 f"Yet we found the values {set(np.unique(w))}."
+            )
+
+    def _check_outcome(self, y: Vector) -> None:
+        if (
+            self.is_classification
+            and not self._supports_multi_class()
+            and len(np.unique(y)) > 2
+        ):
+            raise ValueError(
+                f"{self.__class__.__name__} does not support multiclass classification."
+                f" Yet we found {len(np.unique(y))} classes."
             )
 
     @abstractmethod

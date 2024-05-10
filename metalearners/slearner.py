@@ -78,6 +78,10 @@ class SLearner(MetaLearner):
     def _supports_multi_treatment(cls) -> bool:
         return True
 
+    @classmethod
+    def _supports_multi_class(cls) -> bool:
+        return True
+
     def _validate_params(self, feature_set, **kwargs):
         if feature_set is not None:
             # For SLearner it does not make sense to allow feature set as we only have one model
@@ -112,15 +116,10 @@ class SLearner(MetaLearner):
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the S-Learner."""
+        self._check_treatment(w)
+        self._check_outcome(y)
         self._n_variants = len(np.unique(w))
         self._fitted_treatments = convert_treatment(w)
-        # TODO: add support for different encoding of treatment variants (str, not consecutive ints...)
-        if set(np.unique(w)) != set(range(self._n_variants)):
-            raise ValueError(
-                "Treatment variant should be encoded with values "
-                f"{{0...{self._n_variants -1}}} and all variants should be present. "
-                f"Yet we found the values {set(np.unique(w))}."
-            )
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](
             **self.nuisance_model_params[_BASE_MODEL]

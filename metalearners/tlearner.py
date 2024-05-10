@@ -39,6 +39,10 @@ class TLearner(MetaLearner):
     def _supports_multi_treatment(cls) -> bool:
         return False
 
+    @classmethod
+    def _supports_multi_class(cls) -> bool:
+        return True
+
     def _validate_models(self) -> None:
         if self.is_classification and not is_classifier(
             self.nuisance_model_factory[_TREATMENT_MODEL]
@@ -79,6 +83,7 @@ class TLearner(MetaLearner):
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the T-Learner."""
         self._check_treatment(w)
+        self._check_outcome(y)
         self._treatment_indices = w == 1
         self._control_indices = w == 0
         # TODO: Consider multiprocessing

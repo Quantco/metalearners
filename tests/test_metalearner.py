@@ -51,6 +51,10 @@ class _TestMetaLearner(MetaLearner):
     def _supports_multi_treatment(cls) -> bool:
         return False
 
+    @classmethod
+    def _supports_multi_class(cls) -> bool:
+        return False
+
     def _validate_models(self) -> None: ...
 
     @property
