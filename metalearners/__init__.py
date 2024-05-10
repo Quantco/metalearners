@@ -4,6 +4,15 @@
 import importlib.metadata
 import warnings
 
+from .slearner import SLearner
+from .tlearner import TLearner
+
+__all__ = [
+    "SLearner",
+    "TLearner",
+]
+
+
 try:
     __version__ = importlib.metadata.version(__name__)
 except importlib.metadata.PackageNotFoundError as e:  # pragma: no cover
