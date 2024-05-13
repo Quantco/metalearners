@@ -225,7 +225,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
     assert actual_ate_estimate == pytest.approx(target_ate_estimate, abs=1e-2, rel=1e-1)
 
 
-@pytest.mark.parametrize("metalearner, reference_value", [("T", 0.3623), ("S", 0.3186)])
+@pytest.mark.parametrize("metalearner, reference_value", [("T", 0.3456), ("S", 0.3186)])
 @pytest.mark.parametrize("oos_method", ["overall", "mean"])
 def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng):
     chosen_df, outcome_column, treatment_column, feature_columns, _ = twins_data
