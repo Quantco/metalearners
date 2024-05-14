@@ -9,7 +9,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
 
-from metalearners.cross_fit_estimator import CrossFitEstimator
+from metalearners.cross_fit_estimator import CrossFitEstimator, _PredictContext
 
 _SEED = 1337
 
@@ -128,3 +128,36 @@ def test_fit_params(mindset_data):
         enable_overall=False,
     )
     cfe.fit(X=df[feature_columns], y=df[outcome_column], fit_params={"key": "val"})
+
+
+def test_predict_context(rng):
+    model = CrossFitEstimator(10, LogisticRegression)
+    n_train_obs = 1000
+    n_test_obs = 500
+    X = rng.standard_normal((n_train_obs, 5))
+    y = rng.integers(2, size=n_train_obs)
+    X_test = rng.standard_normal((n_test_obs, 5))
+    model.fit(X, y)
+    in_sample_pred = model.predict(X, False)
+    in_sample_pred_proba = model.predict_proba(X, False)
+    with _PredictContext(model, False, None) as modified_model:
+        assert np.all(in_sample_pred == modified_model.predict(X))
+        assert np.all(in_sample_pred_proba == modified_model.predict_proba(X))
+
+    oos_pred = model.predict(X_test, True, "overall")
+    oos_pred_proba = model.predict_proba(X_test, True, "overall")
+    with _PredictContext(model, True, "overall") as modified_model:
+        assert np.all(oos_pred == modified_model.predict(X_test))
+        assert np.all(oos_pred_proba == modified_model.predict_proba(X_test))
+
+    # test that the original methods are restored
+    with pytest.raises(
+        TypeError,
+        match="CrossFitEstimator.predict\\(\\) missing 1 required positional argument: 'is_oos'",
+    ):
+        model.predict(X)  # type: ignore
+    with pytest.raises(
+        TypeError,
+        match="CrossFitEstimator.predict_proba\\(\\) missing 1 required positional argument: 'is_oos'",
+    ):
+        model.predict_proba(X)  # type: ignore

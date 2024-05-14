@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Literal
 
 import numpy as np
@@ -273,3 +274,35 @@ class CrossFitEstimator:
 
     def set_params(self, **params):
         raise NotImplementedError()
+
+
+class _PredictContext:
+    def __init__(
+        self,
+        model: CrossFitEstimator,
+        is_oos: bool,
+        oos_method: OosMethod | None = None,
+    ):
+        if is_oos and oos_method is None:
+            raise ValueError(
+                "Can not use _PredictContext with is_oos set to True and oos_method ",
+                "not defined.",
+            )
+        self.model = model
+        self.is_oos = is_oos
+        self.oos_method = oos_method
+        self.original_predict = model.predict
+        self.original_predict_proba = model.predict_proba
+
+    def __enter__(self):
+        self.model.predict = partial(  # type: ignore
+            self.model.predict, is_oos=self.is_oos, oos_method=self.oos_method
+        )
+        self.model.predict_proba = partial(  # type: ignore
+            self.model.predict_proba, is_oos=self.is_oos, oos_method=self.oos_method
+        )
+        return self.model
+
+    def __exit__(self, *args):
+        self.model.predict = self.original_predict  # type: ignore
+        self.model.predict_proba = self.original_predict_proba  # type: ignore
