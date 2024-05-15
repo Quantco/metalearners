@@ -1,6 +1,5 @@
 name: metalearners
 channels:
-  - qc-internal
   - conda-forge
   - nodefaults
 dependencies:
