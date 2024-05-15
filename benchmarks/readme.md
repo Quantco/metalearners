@@ -38,3 +38,10 @@ on ground truth CATEs:
 | twins_numpy                                                   |           0.314253 |     0.318554 |              nan |        nan |               0.361345 |         0.318554 |
 | synthetic_data_continuous_outcome_multi_treatment_linear_te   |                nan |          nan |          14.1468 |     14.185 |                14.1478 |          14.1853 |
 | synthetic_data_continuous_outcome_multi_treatment_constant_te |                nan |          nan |        0.0110779 |  0.0110778 |              0.0104649 |       0.00897915 |
+
+| X-learner                                                    | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
+| :----------------------------------------------------------- | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te |          0.0458966 |    0.0456347 |        0.0458966 |  0.0456347 |               0.046185 |        0.0456347 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te     |           0.304592 |     0.301882 |              nan |        nan |               0.304634 |         0.301833 |
+| twins_pandas                                                 |           0.325027 |     0.335259 |              nan |        nan |               0.334088 |          0.33426 |
+| twins_numpy                                                  |           0.325027 |     0.335259 |              nan |        nan |               0.330992 |         0.330445 |

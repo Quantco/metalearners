@@ -20,9 +20,9 @@ from metalearners._utils import Matrix, Vector, _ScikitModel, index_matrix
 OosMethod = Literal["overall", "median", "mean"]
 
 OVERALL: OosMethod = "overall"
-_MEDIAN: OosMethod = "median"
+MEDIAN: OosMethod = "median"
 _MEAN: OosMethod = "mean"
-_OOS_WHITELIST = [OVERALL, _MEDIAN, _MEAN]
+_OOS_WHITELIST = [OVERALL, MEDIAN, _MEAN]
 
 PredictMethod = Literal["predict", "predict_proba"]
 

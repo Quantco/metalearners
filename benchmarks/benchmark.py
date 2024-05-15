@@ -11,16 +11,16 @@ from causalml.inference.meta import (
     BaseSRegressor,
     BaseTClassifier,
     BaseTRegressor,
+    BaseXClassifier,
+    BaseXRegressor,
 )
-from econml.metalearners import SLearner, TLearner
+from econml.metalearners import SLearner, TLearner, XLearner
 from git_root import git_root
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from metalearners import slearner as sl
-from metalearners import tlearner as tl
 from metalearners._utils import get_linear_dimension
 from metalearners.data_generation import (
     compute_experiment_outputs,
@@ -31,6 +31,7 @@ from metalearners.outcome_functions import (
     constant_treatment_effect,
     linear_treatment_effect,
 )
+from metalearners.utils import metalearner_factory
 
 _SEED = 1337
 
@@ -199,11 +200,13 @@ def causalml_estimates(
     treatment_train,
     covariates_train,
     covariates_test,
-    base_learner_factory,
+    regressor_learner_factory,
+    classifier_learner_factory,
     is_classification,
     n_variants,
     *args,
-    base_learner_params=None,
+    regressor_learner_params=None,
+    classifier_learner_params=None,
     **kwargs,
 ):
     if n_variants > 2:
@@ -211,23 +214,50 @@ def causalml_estimates(
             "Causalml does a different model for each variant and "
             "hence it's not comparable"
         )
+    regressor_learner_params = regressor_learner_params or {}
+    classifier_learner_params = classifier_learner_params or {}
     if metalearner == "T":
-        causal_factory = BaseTClassifier if is_classification else BaseTRegressor
-        if is_classification and hasattr(covariates_test, "to_numpy"):
-            # https://github.com/uber/causalml/blob/a0315660d9b14f5d943aa688d8242eb621d2ba76/causalml/inference/meta/tlearner.py#L375
-            # In causalml there's a bug where they don't convert pandas to numpy when calling
-            # predict in BaseTClassifier, also lightgbm does not behave the same way
-            # with pandas than with numpy (not sure why) and therefore this gave different
-            # predictions
-            covariates_test = covariates_test.to_numpy()
+        if is_classification:
+            learner = BaseTClassifier(
+                classifier_learner_factory(**classifier_learner_params)
+            )
+            if hasattr(covariates_test, "to_numpy"):
+                # https://github.com/uber/causalml/blob/a0315660d9b14f5d943aa688d8242eb621d2ba76/causalml/inference/meta/tlearner.py#L375
+                # In causalml there's a bug where they don't convert pandas to numpy when calling
+                # predict in BaseTClassifier, also lightgbm does not behave the same way
+                # with pandas than with numpy (not sure why) and therefore this gave different
+                # predictions
+                covariates_test = covariates_test.to_numpy()
+        else:
+            learner = BaseTRegressor(
+                regressor_learner_factory(**regressor_learner_params)
+            )
     elif metalearner == "S":
-        causal_factory = BaseSClassifier if is_classification else BaseSRegressor
+        if is_classification:
+            learner = BaseSClassifier(
+                classifier_learner_factory(**classifier_learner_params)
+            )
+        else:
+            learner = BaseSRegressor(
+                regressor_learner_factory(**regressor_learner_params)
+            )
+    elif metalearner == "X":
+        if is_classification:
+            learner = BaseXClassifier(
+                outcome_learner=classifier_learner_factory(**classifier_learner_params),
+                effect_learner=regressor_learner_factory(**regressor_learner_params),
+            )
+        else:
+            learner = BaseXRegressor(
+                learner=regressor_learner_factory(**regressor_learner_params),
+            )
+        # The default model does CV so it's not comparable
+        learner.model_p = classifier_learner_factory(**classifier_learner_params)
     else:
         raise NotImplementedError
-    base_learner_params = base_learner_params or {}
-    tlearner = causal_factory(base_learner_factory(**base_learner_params))
-    tlearner.fit(covariates_train, treatment_train, observed_outcomes_train)
-    return tlearner.predict(covariates_test)
+
+    learner.fit(covariates_train, treatment_train, observed_outcomes_train)
+    return learner.predict(covariates_test)
 
 
 def econml_estimates(
@@ -236,22 +266,33 @@ def econml_estimates(
     treatment_train,
     covariates_train,
     covariates_test,
-    base_learner_factory,
+    regressor_learner_factory,
+    classifier_learner_factory,
     is_classification,
     n_variants,
     *args,
-    base_learner_params=None,
+    regressor_learner_params=None,
+    classifier_learner_params=None,
     **kwargs,
 ):
-    base_learner_params = base_learner_params or {}
+    regressor_learner_params = regressor_learner_params or {}
     if metalearner == "T":
         est = TLearner(
-            models=base_learner_factory(**base_learner_params), allow_missing=True
+            models=regressor_learner_factory(**regressor_learner_params),
+            allow_missing=True,
         )
     elif metalearner == "S":
         est = SLearner(
-            overall_model=base_learner_factory(**base_learner_params),
+            overall_model=regressor_learner_factory(**regressor_learner_params),
             allow_missing=True,
+        )
+    elif metalearner == "X":
+        # econml does not support classification so we always use regressor for
+        # outcomes and effect models
+        est = XLearner(
+            models=regressor_learner_factory(**regressor_learner_params),
+            allow_missing=True,
+            propensity_model=classifier_learner_factory(**classifier_learner_params),
         )
     est.fit(observed_outcomes_train, treatment_train, X=covariates_train)
     if n_variants > 2:
@@ -269,20 +310,30 @@ def metalearner_estimates(
     treatment_train,
     covariates_train,
     covariates_test,
-    base_learner_factory,
+    regressor_learner_factory,
+    classifier_learner_factory,
     is_classification,
     n_variants,
     is_oos,
-    base_learner_params=None,
+    regressor_learner_params=None,
+    classifier_learner_params=None,
 ):
-    if metalearner == "T":
-        metalearner_factory = tl.TLearner
-    elif metalearner == "S":
-        metalearner_factory = sl.SLearner  # type: ignore
-    learner = metalearner_factory(
-        base_learner_factory,
-        is_classification,
-        nuisance_model_params=base_learner_params,
+    factory = metalearner_factory(metalearner)
+
+    nuisance_learner_factory = (
+        classifier_learner_factory if is_classification else regressor_learner_factory
+    )
+    nuisance_learner_params = (
+        classifier_learner_params if is_classification else regressor_learner_params
+    )
+    learner = factory(
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
+        treatment_model_factory=regressor_learner_factory,
+        propensity_model_factory=classifier_learner_factory,
+        nuisance_model_params=nuisance_learner_params,
+        treatment_model_params=regressor_learner_params,
+        propensity_model_params=classifier_learner_params,
         random_state=_SEED,
     )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
@@ -296,9 +347,11 @@ def eval(
     data,
     is_classification,
     metalearner,
-    factory,
+    regressor_factory,
+    classifier_factory,
     n_variants,
-    base_learner_params=None,
+    regressor_learner_params=None,
+    classifier_learner_params=None,
 ):
     (
         covariates_train,
@@ -336,11 +389,13 @@ def eval(
                 treatment_train,
                 covariates_train,
                 covariates_eval,
-                base_learner_factory=factory,
+                regressor_learner_factory=regressor_factory,
+                classifier_learner_factory=classifier_factory,
                 is_classification=is_classification,
                 n_variants=n_variants,
                 is_oos=is_oos,
-                base_learner_params=base_learner_params,
+                regressor_learner_params=regressor_learner_params,
+                classifier_learner_params=classifier_learner_params,
             )
             ground_truth = true_cate_test if is_oos else true_cate_train
             losses[library + "_" + eval_kind] = root_mean_squared_error(
@@ -357,27 +412,40 @@ def losses_synthetic_data(
     data = _synthetic_data(
         is_classification, rng, propensity_score=propensity_score, tau=tau
     )
-    factory = LogisticRegression if is_classification else LinearRegression
-    base_learner_params = (
-        {"random_state": _SEED, "max_iter": 500} if is_classification else {}
-    )
+    regressor_factory = LinearRegression
+    classifier_factory = LogisticRegression
+    regressor_learner_params: dict = {}
+    classifier_learner_params = {"random_state": _SEED, "max_iter": 500}
     n_variants = len(propensity_score) if isinstance(propensity_score, list) else 2
     return eval(
         data,
         is_classification,
         metalearner,
-        factory,
+        regressor_factory,
+        classifier_factory,
         n_variants,
-        base_learner_params=base_learner_params,
+        regressor_learner_params=regressor_learner_params,
+        classifier_learner_params=classifier_learner_params,
     )
 
 
 def losses_twins_data(metalearner, use_numpy=False):
     rng = np.random.default_rng(_SEED)
     data = _twins_data(rng, use_numpy=use_numpy)
-    base_learner = LGBMClassifier
-    base_learner_params = {"verbose": -1, "random_state": rng}
-    return eval(data, True, metalearner, base_learner, 2, base_learner_params)
+    classifier_factory = LGBMClassifier
+    classifier_learner_params = {"verbose": -1, "random_state": rng}
+    regressor_factory = LGBMRegressor
+    regressor_learner_params: dict = {"verbose": -1, "random_state": rng}
+    return eval(
+        data,
+        True,
+        metalearner,
+        regressor_factory,
+        classifier_factory,
+        2,
+        regressor_learner_params=regressor_learner_params,
+        classifier_learner_params=classifier_learner_params,
+    )
 
 
 def print_separator(n_dashes=15):
@@ -407,7 +475,7 @@ def dict_to_markdown_file(d, filename="comparison.md"):
 if __name__ == "__main__":
     losses: dict[str, dict] = {}
 
-    for metalearner in ["T", "S"]:
+    for metalearner in ["T", "S", "X"]:
         print(f"{metalearner}-learner...")
         print_separator()
         print_separator()

@@ -17,6 +17,7 @@ from metalearners.metalearner import (
 )
 from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
+from metalearners.xlearner import XLearner
 
 
 @pytest.mark.parametrize(
@@ -123,7 +124,9 @@ def test_metalearner_init(
     )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
+@pytest.mark.parametrize(
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+)
 def test_metalearner_categorical(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
     implementation,
@@ -132,11 +135,13 @@ def test_metalearner_categorical(
         mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
     ml = implementation(
-        LGBMRegressor,
-        False,
-        LGBMRegressor,
+        nuisance_model_factory=LGBMRegressor,
+        is_classification=False,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
+        propensity_model_params={"n_estimators": 1},
     )
     ml.fit(X=covariates, y=observed_outcomes, w=treatment)
     categorical_columns = [
@@ -160,7 +165,9 @@ def test_metalearner_categorical(
             )
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
+@pytest.mark.parametrize(
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+)
 def test_metalearner_missing_data_smoke(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
     implementation,
@@ -174,16 +181,20 @@ def test_metalearner_missing_data_smoke(
         covariates, missing_probability=0.25, rng=rng
     )
     ml = implementation(
-        LGBMRegressor,
-        False,
-        LGBMRegressor,
+        nuisance_model_factory=LGBMRegressor,
+        is_classification=False,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
+        propensity_model_params={"n_estimators": 1},
     )
     ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
+@pytest.mark.parametrize(
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+)
 def test_metalearner_missing_data_error(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
     implementation,
@@ -195,15 +206,24 @@ def test_metalearner_missing_data_error(
     covariates_with_missing = insert_missing(
         covariates, missing_probability=0.25, rng=rng
     )
-
-    ml = implementation(LinearRegression, False, LGBMRegressor)
+    ml = implementation(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
+        nuisance_model_params=None,
+        treatment_model_params={"n_estimators": 1},  # Just to make the test faster
+        propensity_model_params={"n_estimators": 1},
+    )
     with pytest.raises(
         ValueError, match=r"LinearRegression does not accept missing values*"
     ):
         ml.fit(X=covariates_with_missing, y=observed_outcomes, w=treatment)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
+@pytest.mark.parametrize(
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+)
 def test_metalearner_format_consistent(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
     implementation,
@@ -213,18 +233,22 @@ def test_metalearner_format_consistent(
     )
 
     np_ml = implementation(
-        LGBMRegressor,
-        False,
-        LGBMRegressor,
+        nuisance_model_factory=LGBMRegressor,
+        is_classification=False,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
+        propensity_model_params={"n_estimators": 1},
     )
     pd_ml = implementation(
-        LGBMRegressor,
-        False,
-        LGBMRegressor,
+        nuisance_model_factory=LGBMRegressor,
+        is_classification=False,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
         treatment_model_params={"n_estimators": 1},
+        propensity_model_params={"n_estimators": 1},
     )
 
     np_ml.fit(X=covariates, y=observed_outcomes, w=treatment)
@@ -239,7 +263,9 @@ def test_metalearner_format_consistent(
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
 
 
-@pytest.mark.parametrize("implementation", [_TestMetaLearner, TLearner, SLearner])
+@pytest.mark.parametrize(
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+)
 def test_metalearner_model_names(implementation):
     set1 = implementation.nuisance_model_names()
     set2 = implementation.treatment_model_names()

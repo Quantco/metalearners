@@ -181,7 +181,7 @@ class MetaLearner(ABC):
         ):
             raise ValueError(
                 f"propensity_model_factory needs to be defined as the {self.__class__.__name__}"
-                "has a propensity model."
+                " has a propensity model."
             )
 
         self.is_classification = is_classification

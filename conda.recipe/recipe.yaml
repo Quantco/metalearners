@@ -39,6 +39,7 @@ tests:
         - metalearners.outcome_functions
         - metalearners.tlearner
         - metalearners.slearner
+        - metalearners.xlearner
       pip_check: true
 
 about:

@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -12,6 +12,8 @@ from sklearn.model_selection import train_test_split
 from metalearners.metalearner import MetaLearner
 from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
+from metalearners.utils import metalearner_factory
+from metalearners.xlearner import XLearner
 
 # Chosen arbitrarily.
 _REFERENCE_VALUE_TOLERANCE = 0.05
@@ -47,6 +49,8 @@ def _linear_base_learner_params(
         ("T", "continuous", 0.0456, "binary", "linear"),
         ("S", "binary", 0.2290, "binary", "linear"),
         ("S", "continuous", 14.5706, "binary", "linear"),
+        ("X", "binary", 0.3046, "binary", "linear"),
+        ("X", "continuous", 0.0459, "binary", "linear"),
     ],
 )
 def test_learner_synthetic_in_sample(
@@ -59,22 +63,29 @@ def test_learner_synthetic_in_sample(
     covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
 
     is_classification = _is_classification(outcome_kind)
-    base_learner = _linear_base_learner(is_classification)
-    base_learner_params = _linear_base_learner_params(is_classification)
-    if metalearner == "S":
-        learner = SLearner(
-            base_learner,
-            is_classification,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
-    elif metalearner == "T":
-        learner = TLearner(  # type: ignore
-            base_learner,
-            is_classification,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
+
+    classifier_learner_factory = _linear_base_learner(True)
+    regressor_learner_factory = _linear_base_learner(False)
+    classifier_learner_params = _linear_base_learner_params(True)
+    regressor_learner_params = _linear_base_learner_params(False)
+    nuisance_learner_factory = (
+        classifier_learner_factory if is_classification else regressor_learner_factory
+    )
+    nuisance_learner_params = (
+        classifier_learner_params if is_classification else regressor_learner_params
+    )
+
+    factory = metalearner_factory(metalearner)
+    learner = factory(
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
+        treatment_model_factory=regressor_learner_factory,
+        propensity_model_factory=classifier_learner_factory,
+        nuisance_model_params=nuisance_learner_params,
+        treatment_model_params=regressor_learner_params,
+        propensity_model_params=classifier_learner_params,
+        random_state=_SEED,
+    )
 
     learner.fit(covariates, observed_outcomes, treatment)
     cate_estimates = learner.predict(covariates, is_oos=False)
@@ -98,6 +109,8 @@ def test_learner_synthetic_in_sample(
         ("S", "continuous", 14.6248, "binary", "linear"),
         ("S", "continuous", 14.185, "multi", "linear"),
         ("S", "continuous", 0.0111, "multi", "constant"),
+        ("X", "binary", 0.3019, "binary", "linear"),
+        ("X", "continuous", 0.0456, "binary", "linear"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -119,22 +132,28 @@ def test_learner_synthetic_oos(
     covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
 
     is_classification = _is_classification(outcome_kind)
-    base_learner = _linear_base_learner(is_classification)
-    base_learner_params = _linear_base_learner_params(is_classification)
-    if metalearner == "S":
-        learner = SLearner(
-            base_learner,
-            is_classification,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
-    elif metalearner == "T":
-        learner = TLearner(  # type: ignore
-            base_learner,
-            is_classification,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
+    classifier_learner_factory = _linear_base_learner(True)
+    regressor_learner_factory = _linear_base_learner(False)
+    classifier_learner_params = _linear_base_learner_params(True)
+    regressor_learner_params = _linear_base_learner_params(False)
+    nuisance_learner_factory = (
+        classifier_learner_factory if is_classification else regressor_learner_factory
+    )
+    nuisance_learner_params = (
+        classifier_learner_params if is_classification else regressor_learner_params
+    )
+
+    factory = metalearner_factory(metalearner)
+    learner = factory(
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
+        treatment_model_factory=regressor_learner_factory,
+        propensity_model_factory=classifier_learner_factory,
+        nuisance_model_params=nuisance_learner_params,
+        treatment_model_params=regressor_learner_params,
+        propensity_model_params=classifier_learner_params,
+        random_state=_SEED,
+    )
     (
         covariates_train,
         covariates_test,
@@ -225,7 +244,9 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
     assert actual_ate_estimate == pytest.approx(target_ate_estimate, abs=1e-2, rel=1e-1)
 
 
-@pytest.mark.parametrize("metalearner, reference_value", [("T", 0.3456), ("S", 0.3186)])
+@pytest.mark.parametrize(
+    "metalearner, reference_value", [("T", 0.3456), ("S", 0.3186), ("X", 0.3353)]
+)
 @pytest.mark.parametrize("oos_method", ["overall", "mean"])
 def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng):
     chosen_df, outcome_column, treatment_column, feature_columns, _ = twins_data
@@ -253,23 +274,17 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
         random_state=_SEED,
     )
 
-    base_learner = LGBMClassifier
-    base_learner_params = {"random_state": rng}
-
-    if metalearner == "S":
-        learner = SLearner(
-            base_learner,
-            True,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
-    elif metalearner == "T":
-        learner = TLearner(  # type: ignore
-            base_learner,
-            True,
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
+    factory = metalearner_factory(metalearner)
+    learner = factory(
+        nuisance_model_factory=LGBMClassifier,
+        is_classification=True,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LGBMClassifier,
+        nuisance_model_params={"random_state": rng},
+        treatment_model_params={"random_state": rng},
+        propensity_model_params={"random_state": rng},
+        random_state=_SEED,
+    )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
     cate_estimates = learner.predict(
         covariates_test, is_oos=True, oos_method=oos_method
@@ -309,3 +324,153 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
         elif metalearner == "T":
             assert "treatment_rmse" in evaluation
             assert "effect_rmse" in evaluation
+
+
+@pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
+@pytest.mark.parametrize("is_oos", [True, False])
+def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
+    """This test is to check that the conditional average outcomes predictions are the
+    same for the TLearner and the XLearner as the nuisance models of the XLearner should
+    be the same as the TLearner (except the propensity model)"""
+    dataset = request.getfixturevalue(
+        f"numerical_experiment_dataset_{outcome_kind}_outcome_binary_treatment_linear_te"
+    )
+    covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
+    (
+        covariates_train,
+        covariates_test,
+        observed_outcomes_train,
+        observed_outcomes_test,
+        treatment_train,
+        treatment_test,
+        true_cate_train,
+        true_cate_test,
+    ) = train_test_split(
+        covariates,
+        observed_outcomes,
+        treatment,
+        true_cate,
+        test_size=_TEST_FRACTION,
+        random_state=_SEED,
+    )
+
+    is_classification = _is_classification(outcome_kind)
+    classifier_learner_factory = _linear_base_learner(True)
+    regressor_learner_factory = _linear_base_learner(False)
+    classifier_learner_params = _linear_base_learner_params(True)
+    regressor_learner_params = _linear_base_learner_params(False)
+    nuisance_learner_factory = (
+        classifier_learner_factory if is_classification else regressor_learner_factory
+    )
+    nuisance_learner_params = (
+        classifier_learner_params if is_classification else regressor_learner_params
+    )
+
+    tlearner = TLearner(
+        nuisance_learner_factory,
+        is_classification,
+        nuisance_model_params=nuisance_learner_params,
+        random_state=_SEED,
+    )
+    xlearner = XLearner(
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
+        treatment_model_factory=regressor_learner_factory,
+        propensity_model_factory=classifier_learner_factory,
+        nuisance_model_params=nuisance_learner_params,
+        treatment_model_params=regressor_learner_params,
+        propensity_model_params=classifier_learner_params,
+        random_state=_SEED,
+    )
+    tlearner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    xlearner.fit(covariates_train, observed_outcomes_train, treatment_train)
+
+    if not is_oos:
+        covariates_test = covariates_train
+
+    tlearner_cond_avg_outcomes = tlearner.predict_conditional_average_outcomes(
+        covariates_test, is_oos=is_oos
+    )
+    xlearner_cond_avg_outcomes = xlearner.predict_conditional_average_outcomes(
+        covariates_test, is_oos=is_oos
+    )
+    np.testing.assert_allclose(xlearner_cond_avg_outcomes, tlearner_cond_avg_outcomes)
+
+
+@pytest.mark.parametrize(
+    "metalearner_prefix,success",
+    [
+        ("S", True),
+        ("T", False),
+        ("X", False),
+    ],
+)
+def test_check_treatment_error_multi(metalearner_prefix, success):
+    covariates = np.zeros((10, 1))
+    w = np.array(range(10))
+    y = np.zeros(10)
+
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        n_folds=2,
+    )
+
+    if success:
+        learner.fit(covariates, y, w)
+    else:
+        with pytest.raises(NotImplementedError, match="Current implementation of"):
+            learner.fit(covariates, y, w)
+
+
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+def test_check_treatment_error_encoding(metalearner_prefix):
+    covariates = np.zeros((10, 1))
+    w = np.array([1, 2] * 5)
+    y = np.zeros(10)
+
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        n_folds=2,
+    )
+
+    with pytest.raises(ValueError, match="Treatment variant should be encoded"):
+        learner.fit(covariates, y, w)
+
+
+@pytest.mark.parametrize(
+    "metalearner_prefix,success",
+    [
+        ("S", True),
+        ("T", True),
+        ("X", False),
+    ],
+)
+def test_check_multi_class(metalearner_prefix, success):
+    covariates = np.zeros((10, 1))
+    w = np.array([0, 1] * 5)
+    y = np.array([0, 1] * 4 + [2] * 2)
+
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=LogisticRegression,
+        is_classification=True,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        n_folds=2,
+    )
+
+    if success:
+        learner.fit(covariates, y, w)
+    else:
+        with pytest.raises(
+            ValueError, match="does not support multiclass classification."
+        ):
+            learner.fit(covariates, y, w)
