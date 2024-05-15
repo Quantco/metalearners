@@ -32,6 +32,12 @@ def _linear_base_learner(is_classification: bool):
     return LinearRegression
 
 
+def _tree_base_learner(is_classification: bool):
+    if is_classification:
+        return LGBMClassifier
+    return LGBMRegressor
+
+
 def _linear_base_learner_params(
     is_classification: bool,
 ) -> dict[str, int | float | str]:
@@ -474,3 +480,40 @@ def test_check_multi_class(metalearner_prefix, success):
             ValueError, match="does not support multiclass classification."
         ):
             learner.fit(covariates, y, w)
+
+
+@pytest.mark.parametrize("is_classification", [True, False])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+def test_conditional_average_outcomes_smoke(
+    metalearner_prefix, is_classification, request
+):
+    (
+        df,
+        outcome_column,
+        treatment_column,
+        feature_columns,
+        categorical_feature_columns,
+    ) = request.getfixturevalue("twins_data" if is_classification else "mindset_data")
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=_tree_base_learner(is_classification),
+        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        is_classification=is_classification,
+        treatment_model_factory=LGBMRegressor,
+        treatment_model_params={"n_estimators": 1},  # type: ignore
+        propensity_model_factory=LGBMClassifier,
+        propensity_model_params={"n_estimators": 1},  # type: ignore
+        n_folds=2,
+    )
+    learner.fit(df[feature_columns], df[outcome_column], df[treatment_column])
+    result = learner.predict_conditional_average_outcomes(  # type: ignore
+        df[feature_columns], is_oos=False
+    )
+    if is_classification:
+        assert result.shape == (
+            len(df),
+            df[treatment_column].nunique(),
+            df[outcome_column].nunique(),
+        )
+    else:
+        assert result.shape == (len(df), df[treatment_column].nunique())

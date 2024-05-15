@@ -355,15 +355,3 @@ class MetaLearner(ABC):
     ) -> dict[str, float | int]:
         """Evaluate all models contained in a MetaLearner."""
         ...
-
-    @abstractmethod
-    def predict_conditional_average_outcomes(
-        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
-    ) -> np.ndarray:
-        """Predict the vectors of conditional average outcomes.
-
-        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})` if
-        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
-        n_{variants}, n_{classes})` if it's a classification problem.
-        """
-        ...
