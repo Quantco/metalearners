@@ -15,6 +15,7 @@ from metalearners.metalearner import (
     _combine_propensity_and_nuisance_specs,
     _validate_nuisance_predict_methods,
 )
+from metalearners.rlearner import RLearner
 from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
 from metalearners.xlearner import XLearner
@@ -125,7 +126,7 @@ def test_metalearner_init(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_categorical(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -166,7 +167,7 @@ def test_metalearner_categorical(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_missing_data_smoke(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -193,7 +194,7 @@ def test_metalearner_missing_data_smoke(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_missing_data_error(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -222,7 +223,7 @@ def test_metalearner_missing_data_error(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_format_consistent(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -264,7 +265,7 @@ def test_metalearner_format_consistent(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner]
+    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_model_names(implementation):
     set1 = implementation.nuisance_model_names()
