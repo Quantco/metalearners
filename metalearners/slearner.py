@@ -11,8 +11,8 @@ from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, convert_treatment, supports_categoricals
-from metalearners.cross_fit_estimator import OVERALL, OosMethod, PredictMethod
-from metalearners.metalearner import MetaLearner
+from metalearners.cross_fit_estimator import OVERALL, OosMethod
+from metalearners.metalearner import MetaLearner, _ModelSpecifications
 
 _BASE_MODEL = "base_model"
 
@@ -65,14 +65,21 @@ class SLearner(MetaLearner):
     """S-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_."""
 
     @classmethod
-    def nuisance_model_names(cls) -> set[str]:
+    def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         """Return the names of all first-stage, nuisance models."""
-        return {_BASE_MODEL}
+        return {
+            _BASE_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda ml: (
+                    "predict_proba" if ml.is_classification else "predict"
+                ),
+            )
+        }
 
     @classmethod
-    def treatment_model_names(cls) -> set[str]:
+    def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         """Return the names of all second-stage, treatment models."""
-        return set()
+        return dict()
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
@@ -105,15 +112,6 @@ class SLearner(MetaLearner):
                 "is not a regressor."
             )
 
-    @property
-    def _nuisance_predict_methods(
-        self,
-    ) -> dict[str, PredictMethod]:
-        predict_method: PredictMethod = (
-            "predict_proba" if self.is_classification else "predict"
-        )
-        return {key: predict_method for key in self.nuisance_model_names()}
-
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the S-Learner."""
         self._check_treatment(w)
@@ -133,6 +131,7 @@ class SLearner(MetaLearner):
             X=X_with_w,
             y=y,
             model_kind=_BASE_MODEL,
+            model_ord=0,
         )
         return self
 
@@ -180,7 +179,7 @@ class SLearner(MetaLearner):
             X, w, self._supports_categoricals, self._n_variants
         )
         y_pred = self.predict_nuisance(
-            X=X_with_w, model_kind=_BASE_MODEL, is_oos=is_oos
+            X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=is_oos
         )
         if self.is_classification:
             return {"cross_entropy": log_loss(y, y_pred)}
@@ -224,7 +223,7 @@ class SLearner(MetaLearner):
                 self._n_variants,
             )
             in_sample_pred = self.predict_nuisance(
-                X=X_with_w, model_kind=_BASE_MODEL, is_oos=False
+                X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=False
             )
 
         for v in range(self._n_variants):
@@ -233,7 +232,11 @@ class SLearner(MetaLearner):
                 X, w, self._supports_categoricals, self._n_variants
             )
             variant_predictions = self.predict_nuisance(
-                X=X_with_w, model_kind=_BASE_MODEL, is_oos=True, oos_method=oos_method
+                X=X_with_w,
+                model_kind=_BASE_MODEL,
+                model_ord=0,
+                is_oos=True,
+                oos_method=oos_method,
             )
             if not is_oos:
                 variant_predictions[self._fitted_treatments == v] = in_sample_pred[

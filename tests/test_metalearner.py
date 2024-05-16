@@ -13,7 +13,7 @@ from metalearners.data_generation import insert_missing
 from metalearners.metalearner import (
     MetaLearner,
     _combine_propensity_and_nuisance_specs,
-    _validate_nuisance_predict_methods,
+    _ModelSpecifications,
 )
 from metalearners.rlearner import RLearner
 from metalearners.slearner import SLearner
@@ -21,37 +21,32 @@ from metalearners.tlearner import TLearner
 from metalearners.xlearner import XLearner
 
 
-@pytest.mark.parametrize(
-    "set1,set2,success",
-    [
-        ({"a", "b"}, {"a", "b"}, True),
-        ({"a"}, {"a", "b"}, False),
-        ({"a", "b"}, {"a"}, False),
-    ],
-)
-def test_validate_nuisance_predict_methods(set1, set2, success):
-    if success:
-        _validate_nuisance_predict_methods(set1, set2)
-    else:
-        "Mapping from nuisance model"
-        with pytest.raises(
-            ValueError, match=r"Mapping from nuisance model kind to predict method"
-        ):
-            _validate_nuisance_predict_methods(set1, set2)
-
-
 class _TestMetaLearner(MetaLearner):
     @classmethod
-    def nuisance_model_names(cls):
-        return {"nuisance1", "nuisance2"}
+    def nuisance_model_specifications(cls):
+        return {
+            "nuisance1": _ModelSpecifications(
+                cardinality=lambda ml: ml.n_variants, predict_method=lambda _: "predict"
+            ),
+            "nuisance2": _ModelSpecifications(
+                cardinality=lambda _: 1, predict_method=lambda _: "predict"
+            ),
+        }
 
     @classmethod
-    def treatment_model_names(cls):
-        return {"treatment1", "treatment2"}
+    def treatment_model_specifications(cls):
+        return {
+            "treatment1": _ModelSpecifications(
+                cardinality=lambda _: 1, predict_method=lambda _: "predict"
+            ),
+            "treatment2": _ModelSpecifications(
+                cardinality=lambda _: 1, predict_method=lambda _: "predict"
+            ),
+        }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
-        return False
+        return True
 
     @classmethod
     def _supports_multi_class(cls) -> bool:
@@ -59,15 +54,17 @@ class _TestMetaLearner(MetaLearner):
 
     def _validate_models(self) -> None: ...
 
-    @property
-    def _nuisance_predict_methods(self):
-        return {"nuisance1": "predict", "nuisance2": "predict"}
-
     def fit(self, X, y, w):
-        for model_kind in self.__class__.nuisance_model_names():
-            self._nuisance_models[model_kind].fit(X, y)
-        for model_kind in self.__class__.treatment_model_names():
-            self._treatment_models[model_kind].fit(X, y)
+        for model_kind in self.__class__.nuisance_model_specifications():
+            for model_ord in range(
+                self.nuisance_model_specifications()[model_kind]["cardinality"](self)
+            ):
+                self._nuisance_models[model_kind][model_ord].fit(X, y)
+        for model_kind in self.__class__.treatment_model_specifications():
+            for model_ord in range(
+                self.treatment_model_specifications()[model_kind]["cardinality"](self)
+            ):
+                self._treatment_models[model_kind][model_ord].fit(X, y)
         return self
 
     def predict(self, X, is_oos, oos_method=None):
@@ -101,11 +98,13 @@ class _TestMetaLearner(MetaLearner):
 @pytest.mark.parametrize("n_folds", [5])
 @pytest.mark.parametrize("propensity_model_factory", [None, LGBMClassifier])
 @pytest.mark.parametrize("propensity_model_params", [None, {}, {"n_estimators": 5}])
+@pytest.mark.parametrize("n_variants", [2, 5, 10])
 def test_metalearner_init(
     nuisance_model_factory,
     treatment_model_factory,
     propensity_model_factory,
     is_classification,
+    n_variants,
     nuisance_model_params,
     treatment_model_params,
     propensity_model_params,
@@ -115,6 +114,7 @@ def test_metalearner_init(
     _TestMetaLearner(
         nuisance_model_factory=nuisance_model_factory,
         is_classification=is_classification,
+        n_variants=n_variants,
         treatment_model_factory=treatment_model_factory,
         propensity_model_factory=propensity_model_factory,
         nuisance_model_params=nuisance_model_params,
@@ -138,6 +138,7 @@ def test_metalearner_categorical(
     ml = implementation(
         nuisance_model_factory=LGBMRegressor,
         is_classification=False,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
@@ -152,18 +153,21 @@ def test_metalearner_categorical(
     if implementation == SLearner:
         # We need to add the treatment columns as LGBM supports categoricals
         categorical_columns.append(len(covariates.columns))
-    for cf_estimator in chain(
+    for cf_estimator_list in chain(
         ml._nuisance_models.values(), ml._treatment_models.values()
     ):
-        assert (
-            categorical_columns
-            == cf_estimator._estimators[0]._Booster.params["categorical_column"]
-        )
-        if cf_estimator.enable_overall:
+        for cf_estimator in cf_estimator_list:
             assert (
                 categorical_columns
-                == cf_estimator._overall_estimator._Booster.params["categorical_column"]
+                == cf_estimator._estimators[0]._Booster.params["categorical_column"]
             )
+            if cf_estimator.enable_overall:
+                assert (
+                    categorical_columns
+                    == cf_estimator._overall_estimator._Booster.params[
+                        "categorical_column"
+                    ]
+                )
 
 
 @pytest.mark.parametrize(
@@ -184,6 +188,7 @@ def test_metalearner_missing_data_smoke(
     ml = implementation(
         nuisance_model_factory=LGBMRegressor,
         is_classification=False,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
@@ -210,6 +215,7 @@ def test_metalearner_missing_data_error(
     ml = implementation(
         nuisance_model_factory=LinearRegression,
         is_classification=False,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params=None,
@@ -236,6 +242,7 @@ def test_metalearner_format_consistent(
     np_ml = implementation(
         nuisance_model_factory=LGBMRegressor,
         is_classification=False,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
@@ -245,6 +252,7 @@ def test_metalearner_format_consistent(
     pd_ml = implementation(
         nuisance_model_factory=LGBMRegressor,
         is_classification=False,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
@@ -268,8 +276,8 @@ def test_metalearner_format_consistent(
     "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
 )
 def test_metalearner_model_names(implementation):
-    set1 = implementation.nuisance_model_names()
-    set2 = implementation.treatment_model_names()
+    set1 = set(implementation.nuisance_model_specifications().keys())
+    set2 = set(implementation.treatment_model_specifications().keys())
     assert len(set1 | set2) == len(set1) + len(set2)
 
 

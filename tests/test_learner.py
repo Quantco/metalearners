@@ -87,6 +87,7 @@ def test_learner_synthetic_in_sample(
     learner = factory(
         nuisance_model_factory=nuisance_learner_factory,
         is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=regressor_learner_factory,
         propensity_model_factory=classifier_learner_factory,
         nuisance_model_params=nuisance_learner_params,
@@ -157,6 +158,7 @@ def test_learner_synthetic_oos(
     learner = factory(
         nuisance_model_factory=nuisance_learner_factory,
         is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=regressor_learner_factory,
         propensity_model_factory=classifier_learner_factory,
         nuisance_model_params=nuisance_learner_params,
@@ -219,6 +221,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
         learner = SLearner(
             base_learner,
             is_classification,
+            len(np.unique(treatment)),
             nuisance_model_params=base_learner_params,
             random_state=_SEED,
         )
@@ -226,6 +229,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
         learner = TLearner(
             base_learner,
             is_classification,
+            len(np.unique(treatment)),
             nuisance_model_params=base_learner_params,
             random_state=_SEED,
         )
@@ -290,6 +294,7 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
     learner = factory(
         nuisance_model_factory=LGBMClassifier,
         is_classification=True,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LGBMClassifier,
         nuisance_model_params={"random_state": rng},
@@ -322,6 +327,7 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
     learner = factory(
         nuisance_model_factory=base_learner,
         is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=LinearRegression,
         propensity_model_factory=LogisticRegression,
         n_folds=2,
@@ -393,12 +399,14 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
     tlearner = TLearner(
         nuisance_learner_factory,
         is_classification,
+        n_variants=len(np.unique(treatment)),
         nuisance_model_params=nuisance_learner_params,
         random_state=_SEED,
     )
     xlearner = XLearner(
         nuisance_model_factory=nuisance_learner_factory,
         is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
         treatment_model_factory=regressor_learner_factory,
         propensity_model_factory=classifier_learner_factory,
         nuisance_model_params=nuisance_learner_params,
@@ -430,25 +438,45 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("R", False),
     ],
 )
-def test_check_treatment_error_multi(metalearner_prefix, success):
-    covariates = np.zeros((10, 1))
-    w = np.array(range(10))
-    y = np.zeros(10)
-
+def test_check_n_variants_error_multi(metalearner_prefix, success):
     factory = metalearner_factory(metalearner_prefix)
-    learner = factory(
-        nuisance_model_factory=LinearRegression,
-        is_classification=False,
-        treatment_model_factory=LinearRegression,
-        propensity_model_factory=LogisticRegression,
-        n_folds=2,
-    )
-
+    n_variants = 10
     if success:
-        learner.fit(covariates, y, w)
+        _ = factory(
+            nuisance_model_factory=LinearRegression,
+            is_classification=False,
+            n_variants=n_variants,
+            treatment_model_factory=LinearRegression,
+            propensity_model_factory=LogisticRegression,
+            n_folds=2,
+        )
     else:
         with pytest.raises(NotImplementedError, match="Current implementation of"):
-            learner.fit(covariates, y, w)
+            _ = factory(
+                nuisance_model_factory=LinearRegression,
+                is_classification=False,
+                n_variants=n_variants,
+                treatment_model_factory=LinearRegression,
+                propensity_model_factory=LogisticRegression,
+                n_folds=2,
+            )
+
+
+@pytest.mark.parametrize("n_variants", [2.0, 1])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+def test_check_n_variants_error_format(metalearner_prefix, n_variants):
+    factory = metalearner_factory(metalearner_prefix)
+    with pytest.raises(
+        ValueError, match="n_variants needs to be an integer strictly greater than 1."
+    ):
+        _ = factory(
+            nuisance_model_factory=LinearRegression,
+            is_classification=False,
+            n_variants=n_variants,
+            treatment_model_factory=LinearRegression,
+            propensity_model_factory=LogisticRegression,
+            n_folds=2,
+        )
 
 
 @pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
@@ -461,12 +489,34 @@ def test_check_treatment_error_encoding(metalearner_prefix):
     learner = factory(
         nuisance_model_factory=LinearRegression,
         is_classification=False,
+        n_variants=len(np.unique(w)),
         treatment_model_factory=LinearRegression,
         propensity_model_factory=LogisticRegression,
         n_folds=2,
     )
 
     with pytest.raises(ValueError, match="Treatment variant should be encoded"):
+        learner.fit(covariates, y, w)
+
+
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+def test_check_treatment_error_different_instantiation(metalearner_prefix):
+    covariates = np.zeros((10, 1))
+    w = np.array(range(10))
+    y = np.zeros(10)
+
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        n_variants=2,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        n_folds=2,
+    )
+    with pytest.raises(
+        ValueError, match="Number of variants present in the treatment are different"
+    ):
         learner.fit(covariates, y, w)
 
 
@@ -480,14 +530,15 @@ def test_check_treatment_error_encoding(metalearner_prefix):
     ],
 )
 def test_check_multi_class(metalearner_prefix, success):
-    covariates = np.zeros((10, 1))
-    w = np.array([0, 1] * 5)
-    y = np.array([0, 1] * 4 + [2] * 2)
+    covariates = np.zeros((20, 1))
+    w = np.array([0, 1] * 10)
+    y = np.array([0, 1] * 8 + [2] * 4)
 
     factory = metalearner_factory(metalearner_prefix)
     learner = factory(
         nuisance_model_factory=LogisticRegression,
         is_classification=True,
+        n_variants=len(np.unique(w)),
         treatment_model_factory=LinearRegression,
         propensity_model_factory=LogisticRegression,
         n_folds=2,
@@ -519,6 +570,7 @@ def test_conditional_average_outcomes_smoke(
         nuisance_model_factory=_tree_base_learner(is_classification),
         nuisance_model_params={"n_estimators": 1},  # type: ignore
         is_classification=is_classification,
+        n_variants=len(np.unique(df[treatment_column])),
         treatment_model_factory=LGBMRegressor,
         treatment_model_params={"n_estimators": 1},  # type: ignore
         propensity_model_factory=LGBMClassifier,
@@ -557,6 +609,7 @@ def test_conditional_average_outcomes_smoke_multi_class(
     learner = factory(
         nuisance_model_factory=_tree_base_learner(True),
         nuisance_model_params={"n_estimators": 1},  # type: ignore
+        n_variants=n_variants,
         is_classification=True,
         n_folds=2,
     )
@@ -572,7 +625,7 @@ def test_conditional_average_outcomes_smoke_multi_class(
     np.testing.assert_allclose(result.sum(axis=-1), 1)
 
 
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
 @pytest.mark.parametrize("n_classes", [2, 5, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])
@@ -595,6 +648,7 @@ def test_predict_smoke(
     learner = factory(
         nuisance_model_factory=_tree_base_learner(is_classification),
         nuisance_model_params={"n_estimators": 1},  # type: ignore
+        n_variants=n_variants,
         is_classification=is_classification,
         treatment_model_factory=LGBMRegressor,
         treatment_model_params={"n_estimators": 1},  # type: ignore

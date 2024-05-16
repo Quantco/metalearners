@@ -7,8 +7,8 @@ from sklearn.base import is_classifier, is_regressor
 from typing_extensions import Self
 
 from metalearners._utils import Matrix, Vector, index_matrix
-from metalearners.cross_fit_estimator import MEDIAN, OVERALL, OosMethod, PredictMethod
-from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner
+from metalearners.cross_fit_estimator import MEDIAN, OVERALL, OosMethod
+from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner, _ModelSpecifications
 
 CONTROL_OUTCOME_MODEL = "control_outcome_model"
 TREATMENT_OUTCOME_MODEL = "treatment_outcome_model"
@@ -26,12 +26,39 @@ class XLearner(MetaLearner):
     """
 
     @classmethod
-    def nuisance_model_names(cls) -> set[str]:
-        return {CONTROL_OUTCOME_MODEL, TREATMENT_OUTCOME_MODEL, PROPENSITY_MODEL}
+    def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+
+        return {
+            CONTROL_OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda ml: (
+                    "predict_proba" if ml.is_classification else "predict"
+                ),
+            ),
+            TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda ml: (
+                    "predict_proba" if ml.is_classification else "predict"
+                ),
+            ),
+            PROPENSITY_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda _: "predict_proba",
+            ),
+        }
 
     @classmethod
-    def treatment_model_names(cls) -> set[str]:
-        return {CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
+    def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+        return {
+            CONTROL_EFFECT_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda _: "predict",
+            ),
+            TREATMENT_EFFECT_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda _: "predict",
+            ),
+        }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
@@ -78,20 +105,6 @@ class XLearner(MetaLearner):
         if not is_regressor(self.treatment_model_factory[TREATMENT_EFFECT_MODEL]):
             raise ValueError(f"{TREATMENT_EFFECT_MODEL} is not a regressor.")
 
-    @property
-    def _nuisance_predict_methods(
-        self,
-    ) -> dict[str, PredictMethod]:
-        predict_method: PredictMethod = (
-            "predict_proba" if self.is_classification else "predict"
-        )
-
-        return {
-            CONTROL_OUTCOME_MODEL: predict_method,
-            TREATMENT_OUTCOME_MODEL: predict_method,
-            PROPENSITY_MODEL: "predict_proba",
-        }
-
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         self._check_treatment(w)
         self._check_outcome(y)
@@ -103,16 +116,19 @@ class XLearner(MetaLearner):
             X=index_matrix(X, self._treatment_indices),
             y=y[self._treatment_indices],
             model_kind=TREATMENT_OUTCOME_MODEL,
+            model_ord=0,
         )
         self.fit_nuisance(
             X=index_matrix(X, self._control_indices),
             y=y[self._control_indices],
             model_kind=CONTROL_OUTCOME_MODEL,
+            model_ord=0,
         )
         self.fit_nuisance(
             X=X,
             y=w,
             model_kind=PROPENSITY_MODEL,
+            model_ord=0,
         )
 
         pseudo_outcome = self._pseudo_outcome(X, y, w)
@@ -121,11 +137,13 @@ class XLearner(MetaLearner):
             X=index_matrix(X, self._treatment_indices),
             y=pseudo_outcome[self._treatment_indices],
             model_kind=TREATMENT_EFFECT_MODEL,
+            model_ord=0,
         )
         self.fit_treatment(
             X=index_matrix(X, self._control_indices),
             y=pseudo_outcome[self._control_indices],
             model_kind=CONTROL_EFFECT_MODEL,
+            model_ord=0,
         )
 
         return self
@@ -140,12 +158,14 @@ class XLearner(MetaLearner):
             tau_hat_treatment = self.predict_treatment(
                 X=X,
                 model_kind=TREATMENT_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=is_oos,
                 oos_method=oos_method,
             )
             tau_hat_control = self.predict_treatment(
                 X=X,
                 model_kind=CONTROL_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=is_oos,
                 oos_method=oos_method,
             )
@@ -153,11 +173,13 @@ class XLearner(MetaLearner):
             treatment_effect_treated = self.predict_treatment(
                 X=index_matrix(X, self._treatment_indices),
                 model_kind=TREATMENT_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=False,
             )
             control_effect_treated = self.predict_treatment(
                 X=index_matrix(X, self._treatment_indices),
                 model_kind=CONTROL_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=True,
                 oos_method=oos_method,
             )
@@ -165,12 +187,14 @@ class XLearner(MetaLearner):
             treatment_effect_control = self.predict_treatment(
                 X=index_matrix(X, self._control_indices),
                 model_kind=TREATMENT_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=True,
                 oos_method=oos_method,
             )
             control_effect_control = self.predict_treatment(
                 X=index_matrix(X, self._control_indices),
                 model_kind=CONTROL_EFFECT_MODEL,
+                model_ord=0,
                 is_oos=False,
             )
 
@@ -187,6 +211,7 @@ class XLearner(MetaLearner):
         propensity_score = self.predict_nuisance(
             X=X,
             model_kind=PROPENSITY_MODEL,
+            model_ord=0,
             is_oos=is_oos,
             oos_method=propensity_score_oos,
         )[:, 1]
@@ -224,12 +249,14 @@ class XLearner(MetaLearner):
             treatment_outcomes = self.predict_nuisance(
                 X=X,
                 model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=is_oos,
                 oos_method=oos_method,
             )
             control_outcomes = self.predict_nuisance(
                 X=X,
                 model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=is_oos,
                 oos_method=oos_method,
             )
@@ -237,11 +264,13 @@ class XLearner(MetaLearner):
             treatment_outcomes_treated = self.predict_nuisance(
                 X=index_matrix(X, self._treatment_indices),
                 model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=False,
             )
             control_outcomes_treated = self.predict_nuisance(
                 X=index_matrix(X, self._treatment_indices),
                 model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=True,
                 oos_method=oos_method,
             )
@@ -249,19 +278,21 @@ class XLearner(MetaLearner):
             treatment_outcomes_control = self.predict_nuisance(
                 X=index_matrix(X, self._control_indices),
                 model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=True,
                 oos_method=oos_method,
             )
             control_outcomes_control = self.predict_nuisance(
                 X=index_matrix(X, self._control_indices),
                 model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
                 is_oos=False,
             )
 
             nuisance_tensors = self._nuisance_tensors(len(X))
 
-            treatment_outcomes = nuisance_tensors[TREATMENT_OUTCOME_MODEL]
-            control_outcomes = nuisance_tensors[CONTROL_OUTCOME_MODEL]
+            treatment_outcomes = nuisance_tensors[TREATMENT_OUTCOME_MODEL][0]
+            control_outcomes = nuisance_tensors[CONTROL_OUTCOME_MODEL][0]
 
             treatment_outcomes[self._control_indices] = treatment_outcomes_control
             treatment_outcomes[self._treatment_indices] = treatment_outcomes_treated
@@ -280,12 +311,14 @@ class XLearner(MetaLearner):
         control_outcome = self.predict_nuisance(
             X=index_matrix(X, treatment_indices),
             model_kind=CONTROL_OUTCOME_MODEL,
+            model_ord=0,
             is_oos=True,
             oos_method=OVERALL,
         )
         treatment_outcome = self.predict_nuisance(
             X=index_matrix(X, control_indices),
             model_kind=TREATMENT_OUTCOME_MODEL,
+            model_ord=0,
             is_oos=True,
             oos_method=OVERALL,
         )

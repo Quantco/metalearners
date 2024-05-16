@@ -12,9 +12,9 @@ def test_validate_models():
         ValueError,
         match="is_classification is set to True but the treatment_model is not a classifier.",
     ):
-        TLearner(LGBMRegressor, True)
+        TLearner(LGBMRegressor, True, 2)
     with pytest.raises(
         ValueError,
         match="is_classification is set to False but the treatment_model is not a regressor.",
     ):
-        TLearner(LGBMClassifier, False)
+        TLearner(LGBMClassifier, False, 2)

@@ -13,8 +13,8 @@ from metalearners._utils import (
     function_has_argument,
     validate_all_vectors_same_index,
 )
-from metalearners.cross_fit_estimator import OVERALL, OosMethod, PredictMethod
-from metalearners.metalearner import MetaLearner
+from metalearners.cross_fit_estimator import OVERALL, OosMethod
+from metalearners.metalearner import MetaLearner, _ModelSpecifications
 
 PROPENSITY_MODEL = "propensity_model"
 OUTCOME_MODEL = "outcome_model"
@@ -114,12 +114,30 @@ class RLearner(MetaLearner):
             raise ValueError(f"{TREATMENT_MODEL} is not a regressor.")
 
     @classmethod
-    def nuisance_model_names(cls) -> set[str]:
-        return {PROPENSITY_MODEL, OUTCOME_MODEL}
+    def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+        """Return the names of all first-stage models."""
+
+        return {
+            PROPENSITY_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1, predict_method=lambda _: "predict_proba"
+            ),
+            OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda ml: (
+                    "predict_proba" if ml.is_classification else "predict"
+                ),
+            ),
+        }
 
     @classmethod
-    def treatment_model_names(cls) -> set[str]:
-        return {TREATMENT_MODEL}
+    def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+        """Return the names of all second-stage models."""
+        return {
+            TREATMENT_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 1,
+                predict_method=lambda _: "predict",
+            )
+        }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
@@ -128,16 +146,6 @@ class RLearner(MetaLearner):
     @classmethod
     def _supports_multi_class(cls) -> bool:
         return False
-
-    @property
-    def _nuisance_predict_methods(self) -> dict[str, PredictMethod]:
-        outcome_predict_method: PredictMethod = (
-            "predict_proba" if self.is_classification else "predict"
-        )
-        return {
-            PROPENSITY_MODEL: "predict_proba",
-            OUTCOME_MODEL: outcome_predict_method,
-        }
 
     def fit(
         self,
@@ -153,11 +161,13 @@ class RLearner(MetaLearner):
             X=X,
             y=w,
             model_kind=PROPENSITY_MODEL,
+            model_ord=0,
         )
         self.fit_nuisance(
             X=X,
             y=y,
             model_kind=OUTCOME_MODEL,
+            model_ord=0,
         )
 
         pseudo_outcomes, weights = self._pseudo_outcome_and_weights(
@@ -168,6 +178,7 @@ class RLearner(MetaLearner):
             X=X,
             y=pseudo_outcomes,
             model_kind=TREATMENT_MODEL,
+            model_ord=0,
             fit_params={_SAMPLE_WEIGHT: weights},
         )
         return self
@@ -179,7 +190,11 @@ class RLearner(MetaLearner):
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         estimates = self.predict_treatment(
-            X, is_oos=is_oos, oos_method=oos_method, model_kind=TREATMENT_MODEL
+            X,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            model_kind=TREATMENT_MODEL,
+            model_ord=0,
         )
         if self.is_classification:
             # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
@@ -203,12 +218,14 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             model_kind=PROPENSITY_MODEL,
+            model_ord=0,
         )[:, 1]
         y_hat = self.predict_nuisance(
             X=X,
             is_oos=is_oos,
             oos_method=oos_method,
             model_kind=OUTCOME_MODEL,
+            model_ord=0,
         )
         if self.is_classification:
             y_hat = y_hat[:, 1]
@@ -217,6 +234,7 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             model_kind=TREATMENT_MODEL,
+            model_ord=0,
         )
 
         outcome_evaluation = (
@@ -248,16 +266,21 @@ class RLearner(MetaLearner):
         Since the pseudo outcome is a fraction of residuals, we add a small
         constant ``epsilon`` to the denominator in order to avoid numerical problems.
         """
-        y_estimates = self.predict_nuisance(X=X, is_oos=False, model_kind=OUTCOME_MODEL)
+        y_estimates = self.predict_nuisance(
+            X=X,
+            is_oos=False,
+            model_kind=OUTCOME_MODEL,
+            model_ord=0,
+        )
         if self.is_classification:
             y_estimates = y_estimates[:, 1]
         y_residuals = y - y_estimates
 
         w_residuals = (
             w
-            - self.predict_nuisance(X=X, is_oos=False, model_kind=PROPENSITY_MODEL)[
-                :, 1
-            ]
+            - self.predict_nuisance(
+                X=X, is_oos=False, model_kind=PROPENSITY_MODEL, model_ord=0
+            )[:, 1]
         )
 
         # We want to avoid a case in which adding epsilon actually causes numerical

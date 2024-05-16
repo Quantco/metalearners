@@ -345,6 +345,7 @@ def metalearner_estimates(
     learner = factory(
         nuisance_model_factory=nuisance_learner_factory,
         is_classification=is_classification,
+        n_variants=n_variants,
         treatment_model_factory=regressor_learner_factory,
         propensity_model_factory=classifier_learner_factory,
         nuisance_model_params=nuisance_learner_params,

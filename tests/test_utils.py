@@ -11,7 +11,9 @@ from metalearners.utils import metalearner_factory
 @pytest.mark.parametrize("prefix", ["T"])
 def test_metalearner_factory_smoke(prefix):
     factory = metalearner_factory(prefix)
-    model = factory(nuisance_model_factory=LGBMRegressor, is_classification=False)
+    model = factory(
+        nuisance_model_factory=LGBMRegressor, is_classification=False, n_variants=2
+    )
     assert isinstance(model, MetaLearner)
 
 

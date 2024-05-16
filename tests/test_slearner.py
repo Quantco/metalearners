@@ -14,7 +14,7 @@ def test_feature_set_raise():
     with pytest.raises(
         ValueError, match="SLearner does not support feature set definition."
     ):
-        SLearner(LinearRegression, False, feature_set="")
+        SLearner(LinearRegression, False, 2, feature_set="")
 
 
 def test_validate_models():
@@ -22,12 +22,12 @@ def test_validate_models():
         ValueError,
         match="is_classification is set to True but the base_model is not a classifier.",
     ):
-        SLearner(LGBMRegressor, True)
+        SLearner(LGBMRegressor, True, 2)
     with pytest.raises(
         ValueError,
         match="is_classification is set to False but the base_model is not a regressor.",
     ):
-        SLearner(LGBMClassifier, False)
+        SLearner(LGBMClassifier, False, 2)
 
 
 @pytest.mark.parametrize(
