@@ -7,7 +7,18 @@
 Changelog
 =========
 
-1.0.0 (2023-MM-DD)
+0.1.0 (2024-05-16)
 ------------------
 
-Initial release.
+Alpha release with
+
+* :class:`metalearners.TLearner` with support for binary
+  classification and regressionoutcomes and binary treatment variants.
+* :class:`metalearners.SLearner` with support for binary
+  classification and regression outcomes and discrete treatment
+  variants.
+* :class:`metalearners.XLearner` with support for binary
+  classification and regression outcomes and binary treatment
+  variants.
+* :class:`metalearners.RLearner` with support for binary
+  classification and regression otucomes and binary treatment variants.
