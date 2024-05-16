@@ -523,15 +523,17 @@ def test_conditional_average_outcomes_smoke(
     "metalearner_prefix", ["S", "T"]
 )  # the ones that support multiclass
 @pytest.mark.parametrize("n_classes", [5, 10])
+@pytest.mark.parametrize("n_variants", [2, 5])
 def test_conditional_average_outcomes_smoke_multi_class(
-    metalearner_prefix, rng, sample_size, n_classes
+    metalearner_prefix, rng, sample_size, n_classes, n_variants
 ):
-    X = rng.standard_normal((sample_size, 10))
-    w = rng.binomial(
-        1, 0.5, sample_size
-    )  # TODO: Add multitreatment when TLearner supports it
-    y = rng.integers(0, n_classes, size=sample_size)
     factory = metalearner_factory(metalearner_prefix)
+    if n_variants > 2 and not factory._supports_multi_treatment():
+        pytest.skip()
+
+    X = rng.standard_normal((sample_size, 10))
+    w = rng.integers(0, n_variants, size=sample_size)
+    y = rng.integers(0, n_classes, size=sample_size)
     learner = factory(
         nuisance_model_factory=_tree_base_learner(True),
         nuisance_model_params={"n_estimators": 1},  # type: ignore
@@ -547,3 +549,49 @@ def test_conditional_average_outcomes_smoke_multi_class(
         len(np.unique(w)),
         len(np.unique(y)),
     )
+    np.testing.assert_allclose(result.sum(axis=-1), 1)
+
+
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+@pytest.mark.parametrize("n_classes", [2, 5, 10])
+@pytest.mark.parametrize("n_variants", [2, 5])
+@pytest.mark.parametrize("is_classification", [True, False])
+def test_predict_smoke(
+    metalearner_prefix, is_classification, rng, sample_size, n_classes, n_variants
+):
+    factory = metalearner_factory(metalearner_prefix)
+    if n_variants > 2 and not factory._supports_multi_treatment():
+        pytest.skip()
+    if n_classes != 2 and not is_classification:
+        pytest.skip()  # skip repeated tests
+    if is_classification and n_classes > 2 and not factory._supports_multi_class():
+        pytest.skip()
+    X = rng.standard_normal((sample_size, 10))
+    w = rng.integers(0, n_variants, size=sample_size)
+    if is_classification:
+        y = rng.integers(0, n_classes, size=sample_size)
+    else:
+        y = rng.standard_normal(sample_size)
+    learner = factory(
+        nuisance_model_factory=_tree_base_learner(is_classification),
+        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        is_classification=is_classification,
+        treatment_model_factory=LGBMRegressor,
+        treatment_model_params={"n_estimators": 1},  # type: ignore
+        propensity_model_factory=LGBMClassifier,
+        propensity_model_params={"n_estimators": 1},  # type: ignore
+        n_folds=2,
+    )
+    learner.fit(X, y, w)
+    result = learner.predict(X, is_oos=False)
+    if is_classification:
+        if n_variants > 2:
+            assert result.shape == (len(X), n_variants - 1, n_classes)
+        else:
+            assert result.shape == (len(X), n_classes)
+        np.testing.assert_allclose(result.sum(axis=-1), 0, atol=1e-10)
+    else:
+        if n_variants > 2:
+            assert result.shape == (len(X), n_variants - 1)
+        else:
+            assert result.shape == (len(X),)

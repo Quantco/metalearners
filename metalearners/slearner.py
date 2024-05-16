@@ -163,7 +163,7 @@ class SLearner(MetaLearner):
             )
         else:
             return conditional_average_outcomes[:, 1:] - (
-                conditional_average_outcomes[:, 0].reshape(-1, 1)
+                conditional_average_outcomes[:, [0]]
             )
 
     def evaluate(
