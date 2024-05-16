@@ -517,3 +517,33 @@ def test_conditional_average_outcomes_smoke(
         )
     else:
         assert result.shape == (len(df), df[treatment_column].nunique())
+
+
+@pytest.mark.parametrize(
+    "metalearner_prefix", ["S", "T"]
+)  # the ones that support multiclass
+@pytest.mark.parametrize("n_classes", [5, 10])
+def test_conditional_average_outcomes_smoke_multi_class(
+    metalearner_prefix, rng, sample_size, n_classes
+):
+    X = rng.standard_normal((sample_size, 10))
+    w = rng.binomial(
+        1, 0.5, sample_size
+    )  # TODO: Add multitreatment when TLearner supports it
+    y = rng.integers(0, n_classes, size=sample_size)
+    factory = metalearner_factory(metalearner_prefix)
+    learner = factory(
+        nuisance_model_factory=_tree_base_learner(True),
+        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        is_classification=True,
+        n_folds=2,
+    )
+    learner.fit(X, y, w)
+    result = learner.predict_conditional_average_outcomes(  # type: ignore
+        X, is_oos=False
+    )
+    assert result.shape == (
+        len(X),
+        len(np.unique(w)),
+        len(np.unique(y)),
+    )
