@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 import operator
+from collections.abc import Callable
+from inspect import signature
 from operator import le, lt
 from typing import Protocol, Union
 
@@ -40,6 +42,38 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     if isinstance(matrix, pd.DataFrame):
         return matrix.iloc[rows]
     return matrix[rows, :]
+
+
+def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:
+    if len(args) < 2:
+        return True
+    reference_index = args[0].index
+    for data_structure in args[1:]:
+        if any(data_structure.index != reference_index):
+            return False
+    return True
+
+
+def is_pd_df_or_series(arg) -> bool:
+    return isinstance(arg, pd.DataFrame) or isinstance(arg, pd.Series)
+
+
+def validate_all_vectors_same_index(*args: Vector) -> None:
+    if len(args) < 2:
+        return None
+    pd_args = list(filter(is_pd_df_or_series, args))
+    if len(pd_args) > 1:
+        if not are_pd_indices_equal(*pd_args):
+            raise ValueError(
+                "All inputs provided as pandas data structures are expected to rely on "
+                "the same index. Yet, at least two data structures have a different index."
+            )
+    if 0 < len(pd_args) < len(args):
+        if any(pd_args[0].index != range(0, len(pd_args[0]))):  # type: ignore
+            raise ValueError(
+                "In order to mix numpy np.ndarray  and pd.Series objects, the pd.Series objects "
+                "should have an index of 0 to n-1."
+            )
 
 
 def validate_number_positive(
@@ -243,3 +277,7 @@ def supports_categoricals(model: _ScikitModel) -> bool:
         pass
     # TODO: Add support for Catboost? The problem is that we need the cat features names and reinit the model
     return False
+
+
+def function_has_argument(func: Callable, argument: str) -> bool:
+    return argument in signature(func).parameters

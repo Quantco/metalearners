@@ -57,6 +57,8 @@ def _linear_base_learner_params(
         ("S", "continuous", 14.5706, "binary", "linear"),
         ("X", "binary", 0.3046, "binary", "linear"),
         ("X", "continuous", 0.0459, "binary", "linear"),
+        ("R", "binary", 0.3046, "binary", "linear"),
+        ("R", "continuous", 0.0470, "binary", "linear"),
     ],
 )
 def test_learner_synthetic_in_sample(
@@ -117,6 +119,8 @@ def test_learner_synthetic_in_sample(
         ("S", "continuous", 0.0111, "multi", "constant"),
         ("X", "binary", 0.3019, "binary", "linear"),
         ("X", "continuous", 0.0456, "binary", "linear"),
+        ("R", "binary", 0.3018, "binary", "linear"),
+        ("R", "continuous", 0.0463, "binary", "linear"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -181,6 +185,7 @@ def test_learner_synthetic_oos(
     cate_estimates = learner.predict(
         covariates_test, is_oos=True, oos_method=oos_method
     )
+
     if is_classification:
         cate_estimates = cate_estimates[:, 1]
     rmse = root_mean_squared_error(true_cate_test, cate_estimates)
@@ -251,7 +256,8 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
 
 
 @pytest.mark.parametrize(
-    "metalearner, reference_value", [("T", 0.3456), ("S", 0.3186), ("X", 0.3353)]
+    "metalearner, reference_value",
+    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3444)],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean"])
 def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng):
@@ -295,12 +301,13 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
     cate_estimates = learner.predict(
         covariates_test, is_oos=True, oos_method=oos_method
     )[:, 1]
+
     rmse = root_mean_squared_error(true_cate_test, cate_estimates)
     # See the benchmarking directory for reference values.
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
 
 
-@pytest.mark.parametrize("metalearner", ["S", "T"])
+@pytest.mark.parametrize("metalearner", ["S", "T", "R"])
 @pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
 def test_learner_evaluate(metalearner, outcome_kind, request):
     dataset = request.getfixturevalue(
@@ -310,11 +317,16 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
 
     is_classification = _is_classification(outcome_kind)
     base_learner = _linear_base_learner(is_classification)
-    if metalearner == "S":
-        learner = SLearner(base_learner, is_classification)
-    elif metalearner == "T":
-        learner = TLearner(base_learner, is_classification)  # type: ignore
-    learner.fit(covariates, observed_outcomes, treatment)
+
+    factory = metalearner_factory(metalearner)
+    learner = factory(
+        nuisance_model_factory=base_learner,
+        is_classification=is_classification,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        n_folds=2,
+    )
+    learner.fit(X=covariates, y=observed_outcomes, w=treatment)
     evaluation = learner.evaluate(
         X=covariates, y=observed_outcomes, w=treatment, is_oos=False
     )
@@ -324,12 +336,18 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
         elif metalearner == "T":
             assert "treatment_cross_entropy" in evaluation
             assert "effect_cross_entropy" in evaluation
+        elif metalearner == "R":
+            assert "outcome_log_loss" in evaluation
     else:
         if metalearner == "S":
             assert "rmse" in evaluation
         elif metalearner == "T":
             assert "treatment_rmse" in evaluation
             assert "effect_rmse" in evaluation
+        elif metalearner == "R":
+            assert "outcome_rmse" in evaluation
+    if metalearner == "R":
+        assert {"r_loss", "propensity_cross_entropy"} <= set(evaluation.keys())
 
 
 @pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
@@ -409,6 +427,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("S", True),
         ("T", False),
         ("X", False),
+        ("R", False),
     ],
 )
 def test_check_treatment_error_multi(metalearner_prefix, success):
@@ -432,7 +451,7 @@ def test_check_treatment_error_multi(metalearner_prefix, success):
             learner.fit(covariates, y, w)
 
 
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
 def test_check_treatment_error_encoding(metalearner_prefix):
     covariates = np.zeros((10, 1))
     w = np.array([1, 2] * 5)
@@ -457,6 +476,7 @@ def test_check_treatment_error_encoding(metalearner_prefix):
         ("S", True),
         ("T", True),
         ("X", False),
+        ("R", False),
     ],
 )
 def test_check_multi_class(metalearner_prefix, success):

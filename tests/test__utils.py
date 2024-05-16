@@ -13,11 +13,14 @@ from sklearn.linear_model import LinearRegression
 from xgboost import XGBClassifier, XGBRegressor
 
 from metalearners._utils import (
+    are_pd_indices_equal,
     check_probability,
     check_propensity_score,
     convert_treatment,
+    function_has_argument,
     get_linear_dimension,
     supports_categoricals,
+    validate_all_vectors_same_index,
 )
 from metalearners.data_generation import generate_covariates
 
@@ -183,3 +186,114 @@ def test_convert_treatment_raise(use_pd):
 )
 def test_supports_categoricals(model, expected):
     assert supports_categoricals(model) == expected
+
+
+def _foo1(sample_weight):
+    return None
+
+
+def _foo2(qeight, sample_weight):
+    return None
+
+
+def _foo3():
+    return None
+
+
+def _foo4(weight):
+    return None
+
+
+def _foo5(weight, sample_weight=None):
+    return None
+
+
+@pytest.mark.parametrize(
+    "foo, result",
+    [
+        (lambda sample_weight: None, True),
+        (lambda sample_qeight: None, False),
+        (_foo1, True),
+        (_foo2, True),
+        (_foo3, False),
+        (_foo4, False),
+        (_foo5, True),
+        (LinearRegression.fit, True),
+        (LGBMRegressor.fit, True),
+    ],
+)
+def test_function_has_argument(foo, result):
+    assert function_has_argument(foo, "sample_weight") == result
+
+
+@pytest.mark.parametrize(
+    "data,result",
+    [
+        ([pd.Series([10, 11, 12]), pd.Series(data=[10, 11, 12])], True),
+        (
+            [pd.Series([10, 11, 12]), pd.Series(index=[0, 1, 2], data=[10, 11, 12])],
+            True,
+        ),
+        (
+            [pd.Series([10, 11, 12]), pd.Series(index=[1, 2, 3], data=[10, 11, 12])],
+            False,
+        ),
+        (
+            [
+                pd.Series([10, 11, 12], index=[1, 2, 3]),
+                pd.Series(index=[1, 2, 3], data=[10, 11, 12]),
+            ],
+            True,
+        ),
+    ],
+)
+def test_are_pd_indices_equal(data, result):
+    assert are_pd_indices_equal(*data) == result
+
+
+@pytest.mark.parametrize(
+    "data, result",
+    [
+        ([pd.Series([10, 11, 12]), pd.Series(data=[10, 11, 12])], "valid"),
+        (
+            [pd.Series([10, 11, 12]), pd.Series(index=[0, 1, 2], data=[10, 11, 12])],
+            "valid",
+        ),
+        (
+            [pd.Series([10, 11, 12]), pd.Series(index=[1, 2, 3], data=[10, 11, 12])],
+            "pd_invalid",
+        ),
+        (
+            [
+                pd.Series([10, 11, 12], index=[1, 2, 3]),
+                pd.Series(index=[1, 2, 3], data=[10, 11, 12]),
+            ],
+            "valid",
+        ),
+        ([pd.Series([10, 11, 12])], "valid"),
+        ([pd.Series([10, 11, 12]), np.ndarray([10, 11, 12])], "valid"),
+        (
+            [pd.Series([10, 11, 12], index=[1, 2, 3]), np.ndarray([10, 11, 12])],
+            "mixed_invalid",
+        ),
+        (
+            [pd.Series([10, 11, 12], index=[0, 1, 3]), np.ndarray([10, 11, 12])],
+            "mixed_invalid",
+        ),
+    ],
+)
+def test_validate_all_vectors_same_index(data, result):
+    if result == "valid":
+        validate_all_vectors_same_index(*data)
+    elif result == "pd_invalid":
+        with pytest.raises(
+            ValueError,
+            match="are expected to rely on the same index",
+        ):
+            validate_all_vectors_same_index(*data)
+    elif result == "mixed_invalid":
+        with pytest.raises(
+            ValueError,
+            match="should have an index of 0 to n-1",
+        ):
+            validate_all_vectors_same_index(*data)

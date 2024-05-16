@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from causalml.inference.meta import (
+    BaseRClassifier,
+    BaseRRegressor,
     BaseSClassifier,
     BaseSRegressor,
     BaseTClassifier,
@@ -253,8 +255,20 @@ def causalml_estimates(
             )
         # The default model does CV so it's not comparable
         learner.model_p = classifier_learner_factory(**classifier_learner_params)
+    elif metalearner == "R":
+        if is_classification:
+            learner = BaseRClassifier(
+                outcome_learner=classifier_learner_factory(**classifier_learner_params),
+                effect_learner=regressor_learner_factory(**regressor_learner_params),
+            )
+        else:
+            learner = BaseRRegressor(
+                learner=regressor_learner_factory(**regressor_learner_params),
+            )
+        # The default model does CV so it's not comparable
+        learner.model_p = classifier_learner_factory(**classifier_learner_params)
     else:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     learner.fit(covariates_train, treatment_train, observed_outcomes_train)
     return learner.predict(covariates_test)
@@ -294,6 +308,8 @@ def econml_estimates(
             allow_missing=True,
             propensity_model=classifier_learner_factory(**classifier_learner_params),
         )
+    else:
+        raise ValueError(f"{metalearner}-Learner not supported for econml.")
     est.fit(observed_outcomes_train, treatment_train, X=covariates_train)
     if n_variants > 2:
         estimates = []
@@ -336,6 +352,7 @@ def metalearner_estimates(
         propensity_model_params=classifier_learner_params,
         random_state=_SEED,
     )
+
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
     estimates = learner.predict(covariates_test, is_oos=is_oos, oos_method="overall")
     if is_classification:
@@ -378,6 +395,12 @@ def eval(
         if n_variants > 2 and library == "causalml":
             # Causalml does a different model for each variant and hence it's
             # not comparable
+            continue
+        if metalearner == "R" and library == "econml":
+            # Econml has a private R-Learner implementation, see
+            # https://github.com/py-why/EconML/blob/ea46d0d2816f2b70e67f5e6699157502038c8bf1/econml/dml/_rlearner.py#L115
+            # Yet, this class has abstract methods and would need to be completed
+            # and overwritten by an end-user.
             continue
         print(f"{library}...")
         for eval_kind in ["in_sample", "oos"]:
@@ -475,7 +498,7 @@ def dict_to_markdown_file(d, filename="comparison.md"):
 if __name__ == "__main__":
     losses: dict[str, dict] = {}
 
-    for metalearner in ["T", "S", "X"]:
+    for metalearner in ["T", "S", "X", "R"]:
         print(f"{metalearner}-learner...")
         print_separator()
         print_separator()
