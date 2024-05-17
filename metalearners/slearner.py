@@ -6,12 +6,12 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
+from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, convert_treatment, supports_categoricals
-from metalearners.cross_fit_estimator import OVERALL, OosMethod
+from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import MetaLearner, _ModelSpecifications
 
 _BASE_MODEL = "base_model"
@@ -95,22 +95,6 @@ class SLearner(MetaLearner):
             # and having it would bring problems when using fit_nuisance and predict_nuisance
             # as we need to add the treatment column.
             raise ValueError("SLearner does not support feature set definition.")
-
-    def _validate_models(self) -> None:
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[_BASE_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {_BASE_MODEL} "
-                "is not a classifier."
-            )
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[_BASE_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {_BASE_MODEL} "
-                "is not a regressor."
-            )
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the S-Learner."""

@@ -8,12 +8,16 @@ from typing import TypedDict
 import numpy as np
 from typing_extensions import Self
 
-from metalearners._utils import Matrix, Vector, _ScikitModel, validate_number_positive
+from metalearners._typing import OosMethod, PredictMethod, _ScikitModel
+from metalearners._utils import (
+    Matrix,
+    Vector,
+    validate_model_and_predict_method,
+    validate_number_positive,
+)
 from metalearners.cross_fit_estimator import (
     OVERALL,
     CrossFitEstimator,
-    OosMethod,
-    PredictMethod,
 )
 
 Params = dict[str, int | float | str]
@@ -106,10 +110,31 @@ class MetaLearner(ABC):
                 f" Yet we found {len(np.unique(y))} classes."
             )
 
-    @abstractmethod
     def _validate_models(self) -> None:
-        """Validate that the models are of the correct type (classifier or regressor)"""
-        ...
+        """Validate that the base models are appropriate.
+
+        In particular, it is validated that a base model to be used with ``"predict"`` is
+        recognized by ``scikit-learn`` as a regressor via ``sklearn.base.is_regressor`` and
+        a model to be used with ``"predict_proba"`` is recognized by ``scikit-learn` as
+        a classifier via ``sklearn.base.is_classifier``.
+        """
+        for model_kind in self.nuisance_model_specifications():
+            factory = self.nuisance_model_factory[model_kind]
+            predict_method = self.nuisance_model_specifications()[model_kind][
+                "predict_method"
+            ](self)
+            validate_model_and_predict_method(
+                factory, predict_method, name=f"nuisance model {model_kind}"
+            )
+
+        for model_kind in self.treatment_model_specifications():
+            factory = self.treatment_model_factory[model_kind]
+            predict_method = self.treatment_model_specifications()[model_kind][
+                "predict_method"
+            ](self)
+            validate_model_and_predict_method(
+                factory, predict_method, name=f"treatment model {model_kind}"
+            )
 
     def __init__(
         self,

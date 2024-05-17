@@ -3,28 +3,19 @@
 
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Literal
 
 import numpy as np
 from sklearn.base import is_classifier
 from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
 from typing_extensions import Self
 
+from metalearners._typing import OosMethod, PredictMethod
 from metalearners._utils import Matrix, Vector, _ScikitModel, index_matrix
-
-# As of 24/01/19, no convenient way of dynamically creating a literal collection that
-# mypy can deal with seems to exist. Therefore we duplicate the values.
-# See https://stackoverflow.com/questions/64522040/typing-dynamically-create-literal-alias-from-list-of-valid-values
-# As of 24/04/25 there is no way either to reuse variables inside a Literal definition, see
-# https://mypy.readthedocs.io/en/stable/literal_types.html#limitations
-OosMethod = Literal["overall", "median", "mean"]
 
 OVERALL: OosMethod = "overall"
 MEDIAN: OosMethod = "median"
 _MEAN: OosMethod = "mean"
 _OOS_WHITELIST = [OVERALL, MEDIAN, _MEAN]
-
-PredictMethod = Literal["predict", "predict_proba"]
 
 
 def _validate_oos_method(oos_method: OosMethod | None, enable_overall: bool) -> None:

@@ -3,11 +3,11 @@
 
 
 import numpy as np
-from sklearn.base import is_classifier, is_regressor
 from typing_extensions import Self
 
+from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
-from metalearners.cross_fit_estimator import MEDIAN, OVERALL, OosMethod
+from metalearners.cross_fit_estimator import MEDIAN, OVERALL
 from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner, _ModelSpecifications
 
 CONTROL_OUTCOME_MODEL = "control_outcome_model"
@@ -67,43 +67,6 @@ class XLearner(MetaLearner):
     @classmethod
     def _supports_multi_class(cls) -> bool:
         return False
-
-    def _validate_models(self) -> None:
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[CONTROL_OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {CONTROL_OUTCOME_MODEL} "
-                "is not a classifier."
-            )
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[TREATMENT_OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {TREATMENT_OUTCOME_MODEL} "
-                "is not a classifier."
-            )
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[CONTROL_OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {CONTROL_OUTCOME_MODEL} "
-                "is not a regressor."
-            )
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[TREATMENT_OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {TREATMENT_OUTCOME_MODEL} "
-                "is not a regressor."
-            )
-
-        if not is_classifier(self.nuisance_model_factory[PROPENSITY_MODEL]):
-            raise ValueError(f"{PROPENSITY_MODEL} is not a classifier.")
-        if not is_regressor(self.treatment_model_factory[CONTROL_EFFECT_MODEL]):
-            raise ValueError(f"{CONTROL_EFFECT_MODEL} is not a regressor.")
-        if not is_regressor(self.treatment_model_factory[TREATMENT_EFFECT_MODEL]):
-            raise ValueError(f"{TREATMENT_EFFECT_MODEL} is not a regressor.")
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         self._check_treatment(w)

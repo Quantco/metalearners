@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from glum import GeneralizedLinearRegressor, GeneralizedLinearRegressorCV
-from lightgbm import LGBMRegressor
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from xgboost import XGBClassifier, XGBRegressor
@@ -21,6 +21,7 @@ from metalearners._utils import (
     get_linear_dimension,
     supports_categoricals,
     validate_all_vectors_same_index,
+    validate_model_and_predict_method,
 )
 from metalearners.data_generation import generate_covariates
 
@@ -297,3 +298,22 @@ def test_validate_all_vectors_same_index(data, result):
             match="should have an index of 0 to n-1",
         ):
             validate_all_vectors_same_index(*data)
+
+
+@pytest.mark.parametrize(
+    "factory,predict_method,success",
+    [
+        (LGBMRegressor, "predict", True),
+        (LGBMRegressor, "predict_proba", False),
+        (LGBMClassifier, "predict", False),
+        (LGBMClassifier, "predict_proba", True),
+    ],
+)
+def test_validate_model_and_predict_method(factory, predict_method, success):
+    if success:
+        validate_model_and_predict_method(factory, predict_method)
+    else:
+        with pytest.raises(
+            ValueError, match="supposed to be used with the predict method"
+        ):
+            validate_model_and_predict_method(factory, predict_method)

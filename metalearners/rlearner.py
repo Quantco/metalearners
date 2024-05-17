@@ -3,17 +3,17 @@
 
 
 import numpy as np
-from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
+from metalearners._typing import OosMethod
 from metalearners._utils import (
     Matrix,
     Vector,
     function_has_argument,
     validate_all_vectors_same_index,
 )
-from metalearners.cross_fit_estimator import OVERALL, OosMethod
+from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import MetaLearner, _ModelSpecifications
 
 PROPENSITY_MODEL = "propensity_model"
@@ -85,33 +85,23 @@ class RLearner(MetaLearner):
     """
 
     def _validate_models(self) -> None:
+        """Validate that the base models are appropriate.
+
+        In particular, it is validated that a base model to be used with ``"predict"`` is
+        recognized by ``scikit-learn`` as a regressor via ``sklearn.base.is_regressor`` and
+        a model to be used with ``"predict_proba"`` is recognized by ``scikit-learn` as
+        a classifier via ``sklearn.base.is_classifier``.
+
+        Additionally, this method ensures that the treatment model "treatment_model" supports
+        the ``"sample_weight"`` argument in its ``fit`` method.
+        """
         if not function_has_argument(
             self.treatment_model_factory[TREATMENT_MODEL].fit, _SAMPLE_WEIGHT
         ):
             raise ValueError(
                 f"{TREATMENT_MODEL}'s fit method does not support 'sample_weight' argument."
             )
-
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {OUTCOME_MODEL} "
-                "is not a classifier."
-            )
-
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[OUTCOME_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {OUTCOME_MODEL} "
-                "is not a regressor."
-            )
-
-        if not is_classifier(self.nuisance_model_factory[PROPENSITY_MODEL]):
-            raise ValueError(f"{PROPENSITY_MODEL} is not a classifier.")
-        if not is_regressor(self.treatment_model_factory[TREATMENT_MODEL]):
-            raise ValueError(f"{TREATMENT_MODEL} is not a regressor.")
+        super()._validate_models()
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:

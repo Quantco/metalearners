@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from lightgbm import LGBMClassifier, LGBMRegressor
+from lightgbm import LGBMRegressor
 from sklearn.linear_model import LinearRegression
 
 from metalearners.slearner import SLearner, _append_treatment_to_covariates
@@ -15,19 +15,6 @@ def test_feature_set_raise():
         ValueError, match="SLearner does not support feature set definition."
     ):
         SLearner(LinearRegression, False, 2, feature_set="")
-
-
-def test_validate_models():
-    with pytest.raises(
-        ValueError,
-        match="is_classification is set to True but the base_model is not a classifier.",
-    ):
-        SLearner(LGBMRegressor, True, 2)
-    with pytest.raises(
-        ValueError,
-        match="is_classification is set to False but the base_model is not a regressor.",
-    ):
-        SLearner(LGBMClassifier, False, 2)
 
 
 @pytest.mark.parametrize(

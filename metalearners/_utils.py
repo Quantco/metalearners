@@ -5,34 +5,27 @@ import operator
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
-from typing import Protocol, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import check_array, check_X_y
+from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
 )
 
+from metalearners._typing import PredictMethod, _ScikitModel
+
 # ruff is not happy about the usage of Union.
 Vector = Union[pd.Series, np.ndarray]  # noqa
 Matrix = Union[pd.DataFrame, np.ndarray]  # noqa
 
+_PREDICT = "predict"
+_PREDICT_PROBA = "predict_proba"
+
+
 default_rng = np.random.default_rng()
-
-
-class _ScikitModel(Protocol):
-    _estimator_type: str
-
-    # https://stackoverflow.com/questions/54868698/what-type-is-a-sklearn-model/60542986#60542986
-    def fit(self, X, y, *params, **kwargs): ...
-
-    def predict(self, X, *params, **kwargs): ...
-
-    def score(self, X, y, **kwargs): ...
-
-    def set_params(self, **params): ...
 
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
@@ -281,3 +274,20 @@ def supports_categoricals(model: _ScikitModel) -> bool:
 
 def function_has_argument(func: Callable, argument: str) -> bool:
     return argument in signature(func).parameters
+
+
+def validate_model_and_predict_method(
+    model_factory: type[_ScikitModel],
+    predict_method: PredictMethod,
+    name: str = "model",
+) -> None:
+    if is_classifier(model_factory) and predict_method == _PREDICT:
+        raise ValueError(
+            f"The {name} is supposed to be used with the predict "
+            "method 'predict' but it is a classifier."
+        )
+    if is_regressor(model_factory) and predict_method == _PREDICT_PROBA:
+        raise ValueError(
+            f"The {name} is supposed to be used with the predict "
+            "method 'predict_proba' but it is not a classifier."
+        )

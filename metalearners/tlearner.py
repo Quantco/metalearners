@@ -3,12 +3,12 @@
 
 
 import numpy as np
-from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
+from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
-from metalearners.cross_fit_estimator import OVERALL, OosMethod
+from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
     MetaLearner,
     _ModelSpecifications,
@@ -59,36 +59,6 @@ class TLearner(MetaLearner):
     @classmethod
     def _supports_multi_class(cls) -> bool:
         return True
-
-    def _validate_models(self) -> None:
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[_TREATMENT_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {_TREATMENT_MODEL} "
-                "is not a classifier."
-            )
-        if self.is_classification and not is_classifier(
-            self.nuisance_model_factory[_CONTROL_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to True but the {_CONTROL_MODEL} "
-                "is not a classifier."
-            )
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[_TREATMENT_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {_TREATMENT_MODEL} "
-                "is not a regressor."
-            )
-        if not self.is_classification and not is_regressor(
-            self.nuisance_model_factory[_CONTROL_MODEL]
-        ):
-            raise ValueError(
-                f"is_classification is set to False but the {_CONTROL_MODEL} "
-                "is not a regressor."
-            )
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the T-Learner."""
