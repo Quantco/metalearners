@@ -361,7 +361,7 @@ def metalearner_estimates(
     return estimates
 
 
-def eval(
+def evaluate(
     data,
     is_classification,
     metalearner,
@@ -441,7 +441,7 @@ def losses_synthetic_data(
     regressor_learner_params: dict = {}
     classifier_learner_params = {"random_state": _SEED, "max_iter": 500}
     n_variants = len(propensity_score) if isinstance(propensity_score, list) else 2
-    return eval(
+    return evaluate(
         data,
         is_classification,
         metalearner,
@@ -460,7 +460,7 @@ def losses_twins_data(metalearner, use_numpy=False):
     classifier_learner_params = {"verbose": -1, "random_state": rng}
     regressor_factory = LGBMRegressor
     regressor_learner_params: dict = {"verbose": -1, "random_state": rng}
-    return eval(
+    return evaluate(
         data,
         True,
         metalearner,
