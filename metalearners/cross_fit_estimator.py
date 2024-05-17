@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
+import warnings
 from dataclasses import dataclass, field
 from functools import partial
 
@@ -18,7 +19,9 @@ _MEAN: OosMethod = "mean"
 _OOS_WHITELIST = [OVERALL, MEDIAN, _MEAN]
 
 
-def _validate_oos_method(oos_method: OosMethod | None, enable_overall: bool) -> None:
+def _validate_oos_method(
+    oos_method: OosMethod | None, enable_overall: bool, n_folds: int
+) -> None:
     if oos_method not in _OOS_WHITELIST:
         raise ValueError(
             f"oos_method {oos_method} not supported. Supported values are "
@@ -28,6 +31,11 @@ def _validate_oos_method(oos_method: OosMethod | None, enable_overall: bool) -> 
         raise ValueError(
             "In order to use 'overall' prediction method, the estimator's "
             "enable_overall property has to be set to True."
+        )
+    if n_folds == 1 and oos_method != OVERALL:
+        raise ValueError(
+            'Cross-fitting is deactivated and therefore only the ``"overall"`` prediction method '
+            "can be used."
         )
 
 
@@ -55,6 +63,11 @@ class CrossFitEstimator:
     When doing oos prediction, different options exist. These options either rely on
     combining the ``n_folds`` models or using a model trained on all of the data
     (``enable_overall``).
+
+    ``n_folds`` can be set to 1 if the user desires to deactivate cross-fitting. In
+    that case, the ``CrossFitEstimator`` would only fit one overall model which would be
+    the one used for either in sample or out of sample predictions. Note that this is
+    recommended since it can lead to data leakage when doing in-sample predictions.
     """
 
     n_folds: int
@@ -70,6 +83,12 @@ class CrossFitEstimator:
 
     def __post_init__(self):
         _validate_n_folds(self.n_folds)
+        if self.n_folds == 1 and not self.enable_overall:
+            raise ValueError(
+                "CrossFitting is deactivated as 'n_folds' is set to 1, but 'enable_overall' "
+                "is set to 'False'. If you wish to deactivate CrossFitting, please ensure "
+                " 'enable_overall' is set to 'True'."
+            )
         self._estimators: list[_ScikitModel] = []
         self._estimator_type: str = self.estimator_factory._estimator_type
         self._overall_estimator: _ScikitModel | None = None
@@ -98,29 +117,30 @@ class CrossFitEstimator:
         """
         if fit_params is None:
             fit_params = dict()
-        if is_classifier(self):
-            cv = StratifiedKFold(
-                n_splits=self.n_folds,
-                shuffle=True,
-                random_state=self.random_state,
+        if self.n_folds > 1:
+            if is_classifier(self):
+                cv = StratifiedKFold(
+                    n_splits=self.n_folds,
+                    shuffle=True,
+                    random_state=self.random_state,
+                )
+            else:
+                cv = KFold(
+                    n_splits=self.n_folds,
+                    shuffle=True,
+                    random_state=self.random_state,
+                )
+            cv_result = cross_validate(
+                self.estimator_factory(**self.estimator_params),
+                X,
+                y,
+                cv=cv,
+                return_estimator=True,
+                return_indices=True,
+                params=fit_params,
             )
-        else:
-            cv = KFold(
-                n_splits=self.n_folds,
-                shuffle=True,
-                random_state=self.random_state,
-            )
-        cv_result = cross_validate(
-            self.estimator_factory(**self.estimator_params),
-            X,
-            y,
-            cv=cv,
-            return_estimator=True,
-            return_indices=True,
-            params=fit_params,
-        )
-        self._estimators = cv_result["estimator"]
-        self._test_indices = cv_result["indices"]["test"]
+            self._estimators = cv_result["estimator"]
+            self._test_indices = cv_result["indices"]["test"]
         if self.enable_overall:
             self._overall_estimator = self._train_overall_estimator(X, y, fit_params)
 
@@ -196,10 +216,9 @@ class CrossFitEstimator:
         is_oos: bool,
         method: PredictMethod,
         oos_method: OosMethod | None = None,
-        w: Vector | Matrix | None = None,
     ) -> np.ndarray:
         if is_oos:
-            _validate_oos_method(oos_method, self.enable_overall)
+            _validate_oos_method(oos_method, self.enable_overall, self.n_folds)
             if oos_method == OVERALL:
                 return getattr(self._overall_estimator, method)(X)
             if oos_method == _MEAN:
@@ -215,6 +234,11 @@ class CrossFitEstimator:
                     "Cannot create median of class probabilities. Please use a different oos_method."
                 )
             return self._predict_median(X, method=method)
+        if self.n_folds == 1:
+            warnings.warn(
+                "Cross-fitting is deactivated. Using overall model for in sample predictions."
+            )
+            return getattr(self._overall_estimator, method)(X)
         return self._predict_in_sample(X, method=method)
 
     def predict(

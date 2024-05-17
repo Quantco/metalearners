@@ -6,7 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
 
 from metalearners.cross_fit_estimator import CrossFitEstimator, _PredictContext
@@ -161,3 +161,27 @@ def test_predict_context(rng):
         match="CrossFitEstimator.predict_proba\\(\\) missing 1 required positional argument: 'is_oos'",
     ):
         model.predict_proba(X)  # type: ignore
+
+
+def test_error_n_folds():
+    with pytest.raises(
+        ValueError, match="CrossFitting is deactivated as 'n_folds' is set to 1,"
+    ):
+        CrossFitEstimator(1, LogisticRegression, enable_overall=False)
+
+
+def test_crossfitestimator_n_folds_1(rng, sample_size):
+    cfe = CrossFitEstimator(
+        n_folds=1,
+        estimator_factory=LinearRegression,
+    )
+    X = rng.standard_normal((sample_size, 10))
+    y = rng.standard_normal(sample_size)
+
+    cfe.fit(X, y)
+
+    with pytest.warns(
+        UserWarning, match="Cross-fitting is deactivated. Using overall model"
+    ):
+        in_sample_predictions = cfe.predict(X, False)
+    np.testing.assert_allclose(cfe.predict(X, True, "overall"), in_sample_predictions)
