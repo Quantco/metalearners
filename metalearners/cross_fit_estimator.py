@@ -171,7 +171,7 @@ class CrossFitEstimator:
             raise ValueError()
         if len(X) != sum(len(fold) for fold in self._test_indices):
             raise ValueError(
-                "Trying to predict in-sample on data that is unlike data encountered in training."
+                "Trying to predict in-sample on data that is unlike data encountered in training. "
                 f"Training data included {sum(len(fold) for fold in self._test_indices)} "
                 f"observations while prediction data includes {len(X)} observations."
             )
