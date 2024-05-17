@@ -144,8 +144,8 @@ class RLearner(MetaLearner):
         w: Vector,
         epsilon: float = _EPSILON,
     ) -> Self:
-        self._check_treatment(w)
-        self._check_outcome(y)
+        self._validate_treatment(w)
+        self._validate_outcome(y)
 
         self.fit_nuisance(
             X=X,

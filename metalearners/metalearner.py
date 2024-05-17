@@ -74,7 +74,7 @@ class MetaLearner(ABC):
     def _supports_multi_class(cls) -> bool: ...
 
     @classmethod
-    def _check_n_variants(cls, n_variants: int) -> None:
+    def _validate_n_variants(cls, n_variants: int) -> None:
         if not isinstance(n_variants, int) or n_variants < 2:
             raise ValueError(
                 "n_variants needs to be an integer strictly greater than 1."
@@ -85,7 +85,7 @@ class MetaLearner(ABC):
                 f"treatment variants. Yet, n_variants was set to {n_variants}."
             )
 
-    def _check_treatment(self, w: Vector) -> None:
+    def _validate_treatment(self, w: Vector) -> None:
         if len(np.unique(w)) != self.n_variants:
             raise ValueError(
                 "Number of variants present in the treatment are different than the "
@@ -99,7 +99,7 @@ class MetaLearner(ABC):
                 f"Yet we found the values {set(np.unique(w))}."
             )
 
-    def _check_outcome(self, y: Vector) -> None:
+    def _validate_outcome(self, y: Vector) -> None:
         if (
             self.is_classification
             and not self._supports_multi_class()
@@ -215,7 +215,7 @@ class MetaLearner(ABC):
                 " has a propensity model."
             )
 
-        self._check_n_variants(n_variants)
+        self._validate_n_variants(n_variants)
         self.is_classification = is_classification
         self.n_variants = n_variants
 

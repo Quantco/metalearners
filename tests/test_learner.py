@@ -438,7 +438,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("R", False),
     ],
 )
-def test_check_n_variants_error_multi(metalearner_prefix, success):
+def test_validate_n_variants_error_multi(metalearner_prefix, success):
     factory = metalearner_factory(metalearner_prefix)
     n_variants = 10
     if success:
@@ -464,7 +464,7 @@ def test_check_n_variants_error_multi(metalearner_prefix, success):
 
 @pytest.mark.parametrize("n_variants", [2.0, 1])
 @pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
-def test_check_n_variants_error_format(metalearner_prefix, n_variants):
+def test_validate_n_variants_error_format(metalearner_prefix, n_variants):
     factory = metalearner_factory(metalearner_prefix)
     with pytest.raises(
         ValueError, match="n_variants needs to be an integer strictly greater than 1."
@@ -480,7 +480,7 @@ def test_check_n_variants_error_format(metalearner_prefix, n_variants):
 
 
 @pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
-def test_check_treatment_error_encoding(metalearner_prefix):
+def test_validate_treatment_error_encoding(metalearner_prefix):
     covariates = np.zeros((10, 1))
     w = np.array([1, 2] * 5)
     y = np.zeros(10)
@@ -500,7 +500,7 @@ def test_check_treatment_error_encoding(metalearner_prefix):
 
 
 @pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
-def test_check_treatment_error_different_instantiation(metalearner_prefix):
+def test_validate_treatment_error_different_instantiation(metalearner_prefix):
     covariates = np.zeros((10, 1))
     w = np.array(range(10))
     y = np.zeros(10)
@@ -529,7 +529,7 @@ def test_check_treatment_error_different_instantiation(metalearner_prefix):
         ("R", False),
     ],
 )
-def test_check_multi_class(metalearner_prefix, success):
+def test_validate_outcome_multi_class(metalearner_prefix, success):
     covariates = np.zeros((20, 1))
     w = np.array([0, 1] * 10)
     y = np.array([0, 1] * 8 + [2] * 4)

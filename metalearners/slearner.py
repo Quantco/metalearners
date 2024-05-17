@@ -98,8 +98,8 @@ class SLearner(MetaLearner):
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the S-Learner."""
-        self._check_treatment(w)
-        self._check_outcome(y)
+        self._validate_treatment(w)
+        self._validate_outcome(y)
         self._n_variants = len(np.unique(w))
         self._fitted_treatments = convert_treatment(w)
 

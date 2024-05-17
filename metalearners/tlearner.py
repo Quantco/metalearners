@@ -62,8 +62,8 @@ class TLearner(MetaLearner):
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         """Fit all models of the T-Learner."""
-        self._check_treatment(w)
-        self._check_outcome(y)
+        self._validate_treatment(w)
+        self._validate_outcome(y)
         self._treatment_indices = w == 1
         self._control_indices = w == 0
         # TODO: Consider multiprocessing
