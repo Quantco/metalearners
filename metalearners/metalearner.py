@@ -6,6 +6,7 @@ from collections.abc import Callable, Collection
 from typing import TypedDict
 
 import numpy as np
+import pandas as pd
 from typing_extensions import Self
 
 from metalearners._typing import OosMethod, PredictMethod, _ScikitModel
@@ -43,6 +44,19 @@ def _combine_propensity_and_nuisance_specs(
         return non_propensity_model_dict | {PROPENSITY_MODEL: propensity_specs}
 
     return _initialize_model_dict(nuisance_specs, nuisance_model_names)
+
+
+def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
+    if feature_set is None:
+        X_filtered = X
+    elif len(feature_set) == 0:
+        X_filtered = np.ones((len(X), 1))
+    else:
+        if isinstance(X, pd.DataFrame):
+            X_filtered = X[list(feature_set)]
+        else:
+            X_filtered = X[:, np.array(feature_set)]
+    return X_filtered
 
 
 class _ModelSpecifications(TypedDict):
@@ -168,6 +182,14 @@ class MetaLearner(ABC):
         of the respective MetaLearner or
         * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
         respective value
+
+        The possible values for defining ``feature_set`` (either one single value for all
+        the models or the values inside the dictionary specifying for each model) can be:
+
+        * ``None``: All columns will be used.
+        * A list of strings or integers indicating which columns to use.
+        * ``[]`` meaning that no present column should be used for that model and the
+        input of the model should be a vector of 1s.
         """
         self._validate_params(
             nuisance_model_factory=nuisance_model_factory,
@@ -250,14 +272,11 @@ class MetaLearner(ABC):
         self.n_folds = n_folds
         self.random_state = random_state
 
-        if feature_set is None:
-            self.feature_set = None
-        else:
-            self.feature_set = _initialize_model_dict(
-                feature_set,
-                set(nuisance_model_specifications.keys())
-                | set(treatment_model_specifications.keys()),
-            )
+        self.feature_set = _initialize_model_dict(
+            feature_set,
+            set(nuisance_model_specifications.keys())
+            | set(treatment_model_specifications.keys()),
+        )
 
         self._nuisance_models: dict[str, list[CrossFitEstimator]] = {
             name: [
@@ -329,7 +348,7 @@ class MetaLearner(ABC):
 
         ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
         """
-        X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._nuisance_models[model_kind][model_ord].fit(
             X_filtered, y, fit_params=fit_params
         )
@@ -347,7 +366,7 @@ class MetaLearner(ABC):
 
         ``y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         """
-        X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._treatment_models[model_kind][model_ord].fit(
             X_filtered, y, fit_params=fit_params
         )
@@ -371,7 +390,7 @@ class MetaLearner(ABC):
         Importantly, this method needs to implement the subselection of ``X`` based on
         the ``feature_set`` field of ``MetaLearner``.
         """
-        X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         predict_method_name = self.nuisance_model_specifications()[model_kind][
             "predict_method"
         ](self)
@@ -393,7 +412,7 @@ class MetaLearner(ABC):
         Importantly, this method needs to implement the subselection of ``X`` based on
         the ``feature_set`` field of ``MetaLearner``.
         """
-        X_filtered = X[self.feature_set[model_kind]] if self.feature_set else X
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         return self._treatment_models[model_kind][model_ord].predict(
             X_filtered, is_oos, oos_method
         )

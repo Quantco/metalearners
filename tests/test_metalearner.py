@@ -59,12 +59,12 @@ class _TestMetaLearner(MetaLearner):
             for model_ord in range(
                 self.nuisance_model_specifications()[model_kind]["cardinality"](self)
             ):
-                self._nuisance_models[model_kind][model_ord].fit(X, y)
+                self.fit_nuisance(X, y, model_kind, model_ord)
         for model_kind in self.__class__.treatment_model_specifications():
             for model_ord in range(
                 self.treatment_model_specifications()[model_kind]["cardinality"](self)
             ):
-                self._treatment_models[model_kind][model_ord].fit(X, y)
+                self.fit_treatment(X, y, model_kind, model_ord)
         return self
 
     def predict(self, X, is_oos, oos_method=None):
@@ -327,3 +327,66 @@ def test_combine_propensity_and_nuisance_specs(
         )
         == expected
     )
+
+
+@pytest.mark.parametrize(
+    "feature_set, expected_n_features",
+    [
+        (
+            None,
+            {
+                "nuisance1": None,
+                "nuisance2": None,
+                "treatment1": None,
+                "treatment2": None,
+            },
+        ),
+        (
+            [0, 1, 2],
+            {
+                "nuisance1": 3,
+                "nuisance2": 3,
+                "treatment1": 3,
+                "treatment2": 3,
+            },
+        ),
+        (
+            {
+                "nuisance1": [],
+                "nuisance2": None,
+                "treatment1": [0, 1],
+                "treatment2": [2, 3, 4],
+            },
+            {
+                "nuisance1": 1,
+                "nuisance2": None,
+                "treatment1": 2,
+                "treatment2": 3,
+            },
+        ),
+    ],
+)
+@pytest.mark.parametrize("use_pandas", [False, True])
+def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
+    ml = _TestMetaLearner(
+        LGBMRegressor, False, 2, LGBMRegressor, feature_set=feature_set, n_folds=2
+    )
+    sample_size = 100
+    n_features = 10
+    X = rng.standard_normal((sample_size, n_features))
+    y = rng.standard_normal(sample_size)
+    w = rng.integers(0, 2, sample_size)
+    if use_pandas:
+        X = pd.DataFrame(X)
+        y = pd.Series(y)
+        w = pd.Series(w)
+    ml.fit(X, y, w)
+
+    for model_kind, model_kind_list in ml._nuisance_models.items():
+        exp = (
+            expected_n_features[model_kind]
+            if expected_n_features[model_kind]
+            else n_features
+        )
+        for m in model_kind_list:
+            assert m._overall_estimator.n_features_ == exp  # type: ignore
