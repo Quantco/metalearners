@@ -313,29 +313,38 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
 
 
 @pytest.mark.parametrize("metalearner", ["S", "T", "R"])
-@pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
-def test_learner_evaluate(metalearner, outcome_kind, request):
-    dataset = request.getfixturevalue(
-        f"numerical_experiment_dataset_{outcome_kind}_outcome_binary_treatment_linear_te"
-    )
-    covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
+@pytest.mark.parametrize("n_classes", [2, 5, 10])
+@pytest.mark.parametrize("n_variants", [2, 5])
+@pytest.mark.parametrize("is_classification", [True, False])
+def test_learner_evaluate(
+    metalearner, is_classification, rng, sample_size, n_classes, n_variants
+):
+    factory = metalearner_factory(metalearner)
+    if n_variants > 2 and not factory._supports_multi_treatment():
+        pytest.skip()
+    if n_classes != 2 and not is_classification:
+        pytest.skip()  # skip repeated tests
+    if is_classification and n_classes > 2 and not factory._supports_multi_class():
+        pytest.skip()
+    X = rng.standard_normal((sample_size, 10))
+    w = rng.integers(0, n_variants, size=sample_size)
+    if is_classification:
+        y = rng.integers(0, n_classes, size=sample_size)
+    else:
+        y = rng.standard_normal(sample_size)
 
-    is_classification = _is_classification(outcome_kind)
     base_learner = _linear_base_learner(is_classification)
 
-    factory = metalearner_factory(metalearner)
     learner = factory(
         nuisance_model_factory=base_learner,
         is_classification=is_classification,
-        n_variants=len(np.unique(treatment)),
+        n_variants=n_variants,
         treatment_model_factory=LinearRegression,
         propensity_model_factory=LogisticRegression,
         n_folds=2,
     )
-    learner.fit(X=covariates, y=observed_outcomes, w=treatment)
-    evaluation = learner.evaluate(
-        X=covariates, y=observed_outcomes, w=treatment, is_oos=False
-    )
+    learner.fit(X=X, y=y, w=w)
+    evaluation = learner.evaluate(X=X, y=y, w=w, is_oos=False)
     if is_classification:
         if metalearner == "S":
             assert "cross_entropy" in evaluation

@@ -122,10 +122,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
                 ),
             }
         return {
-            "treatment_cross_entropy": log_loss(
-                y[w == 1], treatment_outcomes[w == 1][:, 1]
-            ),
-            "control_cross_entropy": log_loss(
-                y[w == 0], control_outcomes[w == 0][:, 1]
-            ),
+            "treatment_cross_entropy": log_loss(y[w == 1], treatment_outcomes[w == 1]),
+            "control_cross_entropy": log_loss(y[w == 0], control_outcomes[w == 0]),
         }
