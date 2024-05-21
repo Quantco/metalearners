@@ -100,7 +100,6 @@ class SLearner(MetaLearner):
         """Fit all models of the S-Learner."""
         self._validate_treatment(w)
         self._validate_outcome(y)
-        self._n_variants = len(np.unique(w))
         self._fitted_treatments = convert_treatment(w)
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](
@@ -108,7 +107,7 @@ class SLearner(MetaLearner):
         )
         self._supports_categoricals = supports_categoricals(mock_model)
         X_with_w = _append_treatment_to_covariates(
-            X, w, self._supports_categoricals, self._n_variants
+            X, w, self._supports_categoricals, self.n_variants
         )
 
         self.fit_nuisance(
@@ -140,7 +139,7 @@ class SLearner(MetaLearner):
             X=X, is_oos=is_oos, oos_method=oos_method
         )
 
-        if self._n_variants == 2:
+        if self.n_variants == 2:
             return (
                 conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
             )
@@ -160,7 +159,7 @@ class SLearner(MetaLearner):
         """Evaluate all models contained in the S-Learner."""
         # TODO: Parameterize evaluation approaches.
         X_with_w = _append_treatment_to_covariates(
-            X, w, self._supports_categoricals, self._n_variants
+            X, w, self._supports_categoricals, self.n_variants
         )
         y_pred = self.predict_nuisance(
             X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=is_oos
@@ -204,16 +203,16 @@ class SLearner(MetaLearner):
                 X,
                 self._fitted_treatments,
                 self._supports_categoricals,
-                self._n_variants,
+                self.n_variants,
             )
             in_sample_pred = self.predict_nuisance(
                 X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=False
             )
 
-        for v in range(self._n_variants):
+        for v in range(self.n_variants):
             w = np.array([v] * n_obs)
             X_with_w = _append_treatment_to_covariates(
-                X, w, self._supports_categoricals, self._n_variants
+                X, w, self._supports_categoricals, self.n_variants
             )
             variant_predictions = self.predict_nuisance(
                 X=X_with_w,
