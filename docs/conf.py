@@ -46,6 +46,13 @@ apidoc_module_dir = "../metalearners"
 apidoc_output_dir = "api"
 apidoc_separate_modules = True
 apidoc_extra_args = ["--implicit-namespaces"]
+autodoc_default_options = {
+    "members": True,
+    "member-order": "bysource",
+    "inherited-members": True,
+    "special-members": "__init__",
+    "undoc-members": True,
+}
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
