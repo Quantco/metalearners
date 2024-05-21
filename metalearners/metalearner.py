@@ -173,6 +173,7 @@ class MetaLearner(ABC):
         """Initialize a MetaLearner.
 
         All of
+
         * ``nuisance_model_factory``
         * ``treatment_model_factory``
         * ``nuisance_model_params``
@@ -468,6 +469,7 @@ class ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         """Initialize a MetaLearner.
 
         All of
+
         * ``nuisance_model_factory``
         * ``treatment_model_factory``
         * ``nuisance_model_params``
