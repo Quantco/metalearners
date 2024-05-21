@@ -10,15 +10,14 @@ from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
-    MetaLearner,
+    CONTROL_OUTCOME_MODEL,
+    TREATMENT_OUTCOME_MODEL,
+    ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
 
-_TREATMENT_MODEL = "treatment_model"
-_CONTROL_MODEL = "control_model"
 
-
-class TLearner(MetaLearner):
+class TLearner(ConditionalAverageOutcomeMetaLearner):
     """T-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
 
     Importantly, this implementation currently only supports binary treatment variants.
@@ -33,13 +32,13 @@ class TLearner(MetaLearner):
         """Return the names of all first-stage models."""
 
         return {
-            _TREATMENT_MODEL: _ModelSpecifications(
+            TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
             ),
-            _CONTROL_MODEL: _ModelSpecifications(
+            CONTROL_OUTCOME_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
@@ -70,13 +69,13 @@ class TLearner(MetaLearner):
         self.fit_nuisance(
             X=index_matrix(X, self._treatment_indices),
             y=y[self._treatment_indices],
-            model_kind=_TREATMENT_MODEL,
+            model_kind=TREATMENT_OUTCOME_MODEL,
             model_ord=0,
         )
         self.fit_nuisance(
             X=index_matrix(X, self._control_indices),
             y=y[self._control_indices],
-            model_kind=_CONTROL_MODEL,
+            model_kind=CONTROL_OUTCOME_MODEL,
             model_ord=0,
         )
         return self
@@ -98,76 +97,6 @@ class TLearner(MetaLearner):
         )
         return conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
 
-    def predict_conditional_average_outcomes(
-        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
-    ) -> np.ndarray:
-        """Predict the vectors of conditional average outcomes.
-
-        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})` if
-        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
-        n_{variants}, n_{classes})` if it's a classification problem.
-
-        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
-        the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
-        """
-        # TODO: Consider multiprocessing
-        if is_oos:
-            treatment_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=_TREATMENT_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-            control_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=_CONTROL_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-        else:
-            treatment_outcomes_treated = self.predict_nuisance(
-                X=X[self._treatment_indices],
-                model_kind=_TREATMENT_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-            control_outcomes_treated = self.predict_nuisance(
-                X=X[self._treatment_indices],
-                model_kind=_CONTROL_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-
-            treatment_outcomes_control = self.predict_nuisance(
-                X=X[self._control_indices],
-                model_kind=_TREATMENT_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-            control_outcomes_control = self.predict_nuisance(
-                X=X[self._control_indices],
-                model_kind=_CONTROL_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-
-            nuisance_tensors = self._nuisance_tensors(len(X))
-
-            treatment_outcomes = nuisance_tensors[_TREATMENT_MODEL][0]
-            control_outcomes = nuisance_tensors[_CONTROL_MODEL][0]
-
-            treatment_outcomes[self._control_indices] = treatment_outcomes_control
-            treatment_outcomes[self._treatment_indices] = treatment_outcomes_treated
-            control_outcomes[self._control_indices] = control_outcomes_control
-            control_outcomes[self._treatment_indices] = control_outcomes_treated
-
-        return np.stack([control_outcomes, treatment_outcomes], axis=1)
-
     def evaluate(
         self,
         X: Matrix,
@@ -181,20 +110,22 @@ class TLearner(MetaLearner):
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
-        effect_outcomes = conditional_average_outcomes[:, 0]
+        control_outcomes = conditional_average_outcomes[:, 0]
         treatment_outcomes = conditional_average_outcomes[:, 1]
         if not self.is_classification:
             return {
                 "treatment_rmse": root_mean_squared_error(
                     y[w == 1], treatment_outcomes[w == 1]
                 ),
-                "effect_rmse": root_mean_squared_error(
-                    y[w == 0], effect_outcomes[w == 0]
+                "control_rmse": root_mean_squared_error(
+                    y[w == 0], control_outcomes[w == 0]
                 ),
             }
         return {
             "treatment_cross_entropy": log_loss(
                 y[w == 1], treatment_outcomes[w == 1][:, 1]
             ),
-            "effect_cross_entropy": log_loss(y[w == 0], effect_outcomes[w == 0][:, 1]),
+            "control_cross_entropy": log_loss(
+                y[w == 0], control_outcomes[w == 0][:, 1]
+            ),
         }

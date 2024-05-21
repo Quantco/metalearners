@@ -8,15 +8,19 @@ from typing_extensions import Self
 from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
 from metalearners.cross_fit_estimator import MEDIAN, OVERALL
-from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner, _ModelSpecifications
+from metalearners.metalearner import (
+    CONTROL_OUTCOME_MODEL,
+    PROPENSITY_MODEL,
+    TREATMENT_OUTCOME_MODEL,
+    ConditionalAverageOutcomeMetaLearner,
+    _ModelSpecifications,
+)
 
-CONTROL_OUTCOME_MODEL = "control_outcome_model"
-TREATMENT_OUTCOME_MODEL = "treatment_outcome_model"
 CONTROL_EFFECT_MODEL = "control_effect_model"
 TREATMENT_EFFECT_MODEL = "treatment_effect_model"
 
 
-class XLearner(MetaLearner):
+class XLearner(ConditionalAverageOutcomeMetaLearner):
     """X-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
 
     Importantly, the current X-Learner implementation only supports:
@@ -203,66 +207,6 @@ class XLearner(MetaLearner):
         raise NotImplementedError(
             "This feature is not yet implemented for the X-Learner."
         )
-
-    def predict_conditional_average_outcomes(
-        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
-    ) -> np.ndarray:
-        # TODO: Consider multiprocessing
-        if is_oos:
-            treatment_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-            control_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-        else:
-            treatment_outcomes_treated = self.predict_nuisance(
-                X=index_matrix(X, self._treatment_indices),
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-            control_outcomes_treated = self.predict_nuisance(
-                X=index_matrix(X, self._treatment_indices),
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-
-            treatment_outcomes_control = self.predict_nuisance(
-                X=index_matrix(X, self._control_indices),
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-            control_outcomes_control = self.predict_nuisance(
-                X=index_matrix(X, self._control_indices),
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-
-            nuisance_tensors = self._nuisance_tensors(len(X))
-
-            treatment_outcomes = nuisance_tensors[TREATMENT_OUTCOME_MODEL][0]
-            control_outcomes = nuisance_tensors[CONTROL_OUTCOME_MODEL][0]
-
-            treatment_outcomes[self._control_indices] = treatment_outcomes_control
-            treatment_outcomes[self._treatment_indices] = treatment_outcomes_treated
-            control_outcomes[self._control_indices] = control_outcomes_control
-            control_outcomes[self._treatment_indices] = control_outcomes_treated
-
-        return np.stack([control_outcomes, treatment_outcomes], axis=1)
 
     def _pseudo_outcome(self, X: Matrix, y: Vector, w: Vector) -> np.ndarray:
         pseudo_outcome = np.zeros(len(y))

@@ -341,7 +341,7 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
             assert "cross_entropy" in evaluation
         elif metalearner == "T":
             assert "treatment_cross_entropy" in evaluation
-            assert "effect_cross_entropy" in evaluation
+            assert "control_cross_entropy" in evaluation
         elif metalearner == "R":
             assert "outcome_log_loss" in evaluation
     else:
@@ -349,7 +349,7 @@ def test_learner_evaluate(metalearner, outcome_kind, request):
             assert "rmse" in evaluation
         elif metalearner == "T":
             assert "treatment_rmse" in evaluation
-            assert "effect_rmse" in evaluation
+            assert "control_rmse" in evaluation
         elif metalearner == "R":
             assert "outcome_rmse" in evaluation
     if metalearner == "R":

@@ -13,6 +13,7 @@ from metalearners._typing import OosMethod, PredictMethod, _ScikitModel
 from metalearners._utils import (
     Matrix,
     Vector,
+    index_matrix,
     validate_model_and_predict_method,
     validate_number_positive,
 )
@@ -25,6 +26,8 @@ Params = dict[str, int | float | str]
 Features = Collection[str] | Collection[int]
 ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 PROPENSITY_MODEL = "propensity_model"
+CONTROL_OUTCOME_MODEL = "control_outcome_model"
+TREATMENT_OUTCOME_MODEL = "treatment_outcome_model"
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
@@ -441,3 +444,115 @@ class MetaLearner(ABC):
     ) -> dict[str, float | int]:
         """Evaluate all models contained in a MetaLearner."""
         ...
+
+
+class ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
+
+    def __init__(
+        self,
+        nuisance_model_factory: ModelFactory,
+        is_classification: bool,
+        # TODO: Consider whether we can make this not a state of the MetaLearner
+        # but rather just a parameter of a predict call.
+        n_variants: int,
+        treatment_model_factory: ModelFactory | None = None,
+        propensity_model_factory: type[_ScikitModel] | None = None,
+        nuisance_model_params: Params | dict[str, Params] | None = None,
+        treatment_model_params: Params | dict[str, Params] | None = None,
+        propensity_model_params: Params | None = None,
+        feature_set: Features | dict[str, Features] | None = None,
+        # TODO: Consider implementing selection of number of folds for various estimators.
+        n_folds: int = 10,
+        random_state: int | None = None,
+    ):
+        """Initialize a MetaLearner.
+
+        All of
+        * ``nuisance_model_factory``
+        * ``treatment_model_factory``
+        * ``nuisance_model_params``
+        * ``treatment_model_params``
+        * ``feature_set``
+
+        can either
+
+        * contain a single value, such that the value will be used for all relevant models
+        of the respective MetaLearner or
+        * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
+        respective value
+        """
+        super().__init__(
+            nuisance_model_factory=nuisance_model_factory,
+            is_classification=is_classification,
+            n_variants=n_variants,
+            treatment_model_factory=treatment_model_factory,
+            propensity_model_factory=propensity_model_factory,
+            nuisance_model_params=nuisance_model_params,
+            treatment_model_params=treatment_model_params,
+            propensity_model_params=propensity_model_params,
+            feature_set=feature_set,
+            n_folds=n_folds,
+            random_state=random_state,
+        )
+        self._treatment_indices = None
+        self._control_indices = None
+
+    def predict_conditional_average_outcomes(
+        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
+    ) -> np.ndarray:
+        # TODO: Consider multiprocessing
+        if is_oos:
+            treatment_outcomes = self.predict_nuisance(
+                X=X,
+                model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=is_oos,
+                oos_method=oos_method,
+            )
+            control_outcomes = self.predict_nuisance(
+                X=X,
+                model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=is_oos,
+                oos_method=oos_method,
+            )
+        else:
+            treatment_outcomes_treated = self.predict_nuisance(
+                X=index_matrix(X, self._treatment_indices),
+                model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=False,
+            )
+            control_outcomes_treated = self.predict_nuisance(
+                X=index_matrix(X, self._treatment_indices),
+                model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=True,
+                oos_method=oos_method,
+            )
+
+            treatment_outcomes_control = self.predict_nuisance(
+                X=index_matrix(X, self._control_indices),
+                model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=True,
+                oos_method=oos_method,
+            )
+            control_outcomes_control = self.predict_nuisance(
+                X=index_matrix(X, self._control_indices),
+                model_kind=CONTROL_OUTCOME_MODEL,
+                model_ord=0,
+                is_oos=False,
+            )
+
+            nuisance_tensors = self._nuisance_tensors(len(X))
+
+            treatment_outcomes = nuisance_tensors[TREATMENT_OUTCOME_MODEL][0]
+            control_outcomes = nuisance_tensors[CONTROL_OUTCOME_MODEL][0]
+
+            treatment_outcomes[self._control_indices] = treatment_outcomes_control
+            treatment_outcomes[self._treatment_indices] = treatment_outcomes_treated
+            control_outcomes[self._control_indices] = control_outcomes_control
+            control_outcomes[self._treatment_indices] = control_outcomes_treated
+
+        return np.stack([control_outcomes, treatment_outcomes], axis=1)
