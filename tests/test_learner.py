@@ -10,7 +10,6 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from metalearners.metalearner import MetaLearner
-from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
 from metalearners.utils import metalearner_factory
 from metalearners.xlearner import XLearner
@@ -205,6 +204,8 @@ def test_learner_synthetic_oos(
         ("T", "binary"),
         ("S", "binary"),
         ("S", "multi"),
+        ("X", "binary"),
+        ("R", "binary"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -217,22 +218,17 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
     learner: MetaLearner
     base_learner = _linear_base_learner(is_classification)
     base_learner_params = _linear_base_learner_params(is_classification)
-    if metalearner == "S":
-        learner = SLearner(
-            base_learner,
-            is_classification,
-            len(np.unique(treatment)),
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
-    elif metalearner == "T":
-        learner = TLearner(
-            base_learner,
-            is_classification,
-            len(np.unique(treatment)),
-            nuisance_model_params=base_learner_params,
-            random_state=_SEED,
-        )
+    factory = metalearner_factory(metalearner)
+    learner = factory(
+        base_learner,
+        is_classification,
+        len(np.unique(treatment)),
+        nuisance_model_params=base_learner_params,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        propensity_model_params=_linear_base_learner_params(True),
+        random_state=_SEED,
+    )
     (
         covariates_train,
         covariates_test,
