@@ -9,6 +9,15 @@ from metalearners.xlearner import XLearner
 
 
 def metalearner_factory(metalearner_prefix: str) -> type[MetaLearner]:
+    """Returns the MetaLearner class corresponding to the given prefix.
+
+    The accepted prefixes are:
+
+    * ``"S"`` for :func:`metalearners.slearner.SLearner`
+    * ``"T"`` for :func:`metalearners.tlearner.TLearner`
+    * ``"X"`` for :func:`metalearners.xlearner.XLearner`
+    * ``"R"`` for :func:`metalearners.rlearner.RLearner`
+    """
     match metalearner_prefix:
         case "T":
             return TLearner

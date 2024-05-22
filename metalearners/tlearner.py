@@ -12,12 +12,12 @@ from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
     CONTROL_OUTCOME_MODEL,
     TREATMENT_OUTCOME_MODEL,
-    ConditionalAverageOutcomeMetaLearner,
+    _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
 
 
-class TLearner(ConditionalAverageOutcomeMetaLearner):
+class TLearner(_ConditionalAverageOutcomeMetaLearner):
     """T-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
 
     Importantly, this implementation currently only supports binary treatment variants.
@@ -29,8 +29,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all first-stage models."""
-
         return {
             TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,
@@ -48,7 +46,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
 
     @classmethod
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all second-stage models."""
         return dict()
 
     @classmethod
@@ -60,7 +57,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
         return True
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
-        """Fit all models of the T-Learner."""
         self._validate_treatment(w)
         self._validate_outcome(y)
         self._treatment_indices = w == 1
@@ -86,12 +82,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        """Estimate the Conditional Average Treatment Effect.
-
-        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
-        the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
-        """
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
@@ -105,7 +95,6 @@ class TLearner(ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> dict[str, float | int]:
-        """Evaluate all models contained in the T-Learner."""
         # TODO: Parametrize evaluation approaches.
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method

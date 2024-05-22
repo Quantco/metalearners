@@ -67,7 +67,7 @@ class CrossFitEstimator:
     ``n_folds`` can be set to 1 if the user desires to deactivate cross-fitting. In
     that case, the ``CrossFitEstimator`` would only fit one overall model which would be
     the one used for either in sample or out of sample predictions. Note that this is
-    recommended since it can lead to data leakage when doing in-sample predictions.
+    not recommended since it can lead to data leakage when doing in-sample predictions.
     """
 
     n_folds: int

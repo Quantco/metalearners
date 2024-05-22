@@ -66,7 +66,6 @@ class SLearner(MetaLearner):
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all first-stage, nuisance models."""
         return {
             _BASE_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,
@@ -78,7 +77,6 @@ class SLearner(MetaLearner):
 
     @classmethod
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all second-stage, treatment models."""
         return dict()
 
     @classmethod
@@ -97,7 +95,6 @@ class SLearner(MetaLearner):
             raise ValueError("SLearner does not support feature set definition.")
 
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
-        """Fit all models of the S-Learner."""
         self._validate_treatment(w)
         self._validate_outcome(y)
         self._fitted_treatments = convert_treatment(w)
@@ -124,17 +121,6 @@ class SLearner(MetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        """Estimate the CATE.
-
-        If ``is_oos``, an acronym for 'is out of sample', is ``False``,
-        the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
-
-        The returned matrix should be of shape :math:`(n_{obs},)` if the treatment is
-        binary or :math:`(n_{obs}, n_{variants} - 1)` if there are more than two
-        treatment variants where each column represents the CATE of the corresponding
-        variant vs the control (variant 0).
-        """
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
@@ -156,7 +142,6 @@ class SLearner(MetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> dict[str, float | int]:
-        """Evaluate all models contained in the S-Learner."""
         # TODO: Parameterize evaluation approaches.
         X_with_w = _append_treatment_to_covariates(
             X, w, self._supports_categoricals, self.n_variants
@@ -171,13 +156,16 @@ class SLearner(MetaLearner):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        """Predict the vectors of conditional average outcomes.
+        r"""Predict the vectors of conditional average outcomes.
 
-        The returned matrix should be of shape :math:`(n_{obs}, n_{variants})` if
+        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
+        :math:`w`.
+
+        The returned matrix is of shape :math:`(n_{obs}, n_{variants})` if
         there's only one output, i.e. a regression problem, or :math:`(n_{obs},
         n_{variants}, n_{classes})` if it's a classification problem.
 
-        If ``is_oos``, an acronym for 'is out of sample', is ``False``,
+        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
         the estimates will stem from cross-fitting. Otherwise,
         various approaches exist, specified via ``oos_method``.
         """

@@ -12,7 +12,7 @@ from metalearners.metalearner import (
     CONTROL_OUTCOME_MODEL,
     PROPENSITY_MODEL,
     TREATMENT_OUTCOME_MODEL,
-    ConditionalAverageOutcomeMetaLearner,
+    _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
 
@@ -20,7 +20,7 @@ CONTROL_EFFECT_MODEL = "control_effect_model"
 TREATMENT_EFFECT_MODEL = "treatment_effect_model"
 
 
-class XLearner(ConditionalAverageOutcomeMetaLearner):
+class XLearner(_ConditionalAverageOutcomeMetaLearner):
     """X-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
 
     Importantly, the current X-Learner implementation only supports:
@@ -31,7 +31,6 @@ class XLearner(ConditionalAverageOutcomeMetaLearner):
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-
         return {
             CONTROL_OUTCOME_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,

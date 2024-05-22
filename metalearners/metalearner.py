@@ -71,14 +71,44 @@ class _ModelSpecifications(TypedDict):
 
 
 class MetaLearner(ABC):
+    """MetaLearner abstract class. All metalearner implementations should inherit from
+    it.
+
+    All of
+
+    * ``nuisance_model_factory``
+    * ``treatment_model_factory``
+    * ``nuisance_model_params``
+    * ``treatment_model_params``
+    * ``feature_set``
+
+    can either
+
+    * contain a single value, such that the value will be used for all relevant models
+      of the respective MetaLearner or
+    * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
+      respective value
+
+    The possible values for defining ``feature_set`` (either one single value for all
+    the models or the values inside the dictionary specifying for each model) can be:
+
+    * ``None``: All columns will be used.
+    * A list of strings or integers indicating which columns to use.
+    * ``[]`` meaning that no present column should be used for that model and the
+      input of the model should be a vector of 1s.
+    """
 
     @classmethod
     @abstractmethod
-    def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]: ...
+    def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+        """Return the specifications of all first-stage models."""
+        ...
 
     @classmethod
     @abstractmethod
-    def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]: ...
+    def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
+        """Return the specifications of all second-stage models."""
+        ...
 
     def _validate_params(self, **kwargs): ...
 
@@ -170,31 +200,6 @@ class MetaLearner(ABC):
         n_folds: int = 10,
         random_state: int | None = None,
     ):
-        """Initialize a MetaLearner.
-
-        All of
-
-        * ``nuisance_model_factory``
-        * ``treatment_model_factory``
-        * ``nuisance_model_params``
-        * ``treatment_model_params``
-        * ``feature_set``
-
-        can either
-
-        * contain a single value, such that the value will be used for all relevant models
-        of the respective MetaLearner or
-        * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
-        respective value
-
-        The possible values for defining ``feature_set`` (either one single value for all
-        the models or the values inside the dictionary specifying for each model) can be:
-
-        * ``None``: All columns will be used.
-        * A list of strings or integers indicating which columns to use.
-        * ``[]`` meaning that no present column should be used for that model and the
-        input of the model should be a vector of 1s.
-        """
         self._validate_params(
             nuisance_model_factory=nuisance_model_factory,
             treatment_model_factory=treatment_model_factory,
@@ -378,7 +383,7 @@ class MetaLearner(ABC):
 
     @abstractmethod
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
-        """Fit all models of a MetaLearner."""
+        """Fit all models of the MetaLearner."""
         ...
 
     def predict_nuisance(
@@ -428,9 +433,25 @@ class MetaLearner(ABC):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        """Estimate the Conditional Average Treatment Effect.
+        """Estimate the CATE.
 
-        This method can be identical to predict_treatment but doesn't need to.
+        If ``is_oos``, an acronym for 'is out of sample', is ``False``,
+        the estimates will stem from cross-fitting. Otherwise,
+        various approaches exist, specified via ``oos_method``.
+
+        The returned matrix is of shape:
+
+        * :math:`(n_{obs},)` if the treatment is binary and there is only one output,
+          i.e. a regression problem.
+        * :math:`(n_{obs}, n_{variants} - 1)` if there are more than two treatment
+          variants and there's only one output.
+        * :math:`(n_{obs}, n_{classes})` if the treatment is binary and it is a
+          classification problem.
+        * :math:`(n_{obs}, n_{variants} - 1, n_{classes})` if there are more than two
+          treatment variants and it is a classification problem.
+
+        In the case of multiple treatment variants, the second dimension represents the
+        CATE of the corresponding variant vs the control (variant 0).
         """
         ...
 
@@ -447,7 +468,7 @@ class MetaLearner(ABC):
         ...
 
 
-class ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
+class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
 
     def __init__(
         self,
@@ -466,23 +487,6 @@ class ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         n_folds: int = 10,
         random_state: int | None = None,
     ):
-        """Initialize a MetaLearner.
-
-        All of
-
-        * ``nuisance_model_factory``
-        * ``treatment_model_factory``
-        * ``nuisance_model_params``
-        * ``treatment_model_params``
-        * ``feature_set``
-
-        can either
-
-        * contain a single value, such that the value will be used for all relevant models
-        of the respective MetaLearner or
-        * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
-        respective value
-        """
         super().__init__(
             nuisance_model_factory=nuisance_model_factory,
             is_classification=is_classification,
@@ -502,6 +506,19 @@ class ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
+        r"""Predict the vectors of conditional average outcomes.
+
+        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
+        :math:`w`.
+
+        The returned matrix is of shape :math:`(n_{obs}, n_{variants})` if
+        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
+        n_{variants}, n_{classes})` if it's a classification problem.
+
+        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
+        the estimates will stem from cross-fitting. Otherwise,
+        various approaches exist, specified via ``oos_method``.
+        """
         # TODO: Consider multiprocessing
         if is_oos:
             treatment_outcomes = self.predict_nuisance(

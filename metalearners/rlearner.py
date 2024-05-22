@@ -73,12 +73,12 @@ class RLearner(MetaLearner):
 
     The R-Learner contains two nuisance models
 
-        * a "propensity_model" estimating :math:`\Pr[W=1|X]`
-        * an "outcome_model" estimating :math:`\mathbb{E}[Y|X]`
+        * a ``"propensity_model"`` estimating :math:`\Pr[W=1|X]`
+        * an ``"outcome_model"`` estimating :math:`\mathbb{E}[Y|X]`
 
     and one treatment model
 
-        * "treatment_model" which estimates :math:`\mathbb{E}[Y(1) - Y(0) | X]`
+        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(1) - Y(0) | X]`
 
     The ``treatment_model_factory`` provided needs to support the argument
     ``sample_weight`` in its ``fit`` method.
@@ -105,8 +105,6 @@ class RLearner(MetaLearner):
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all first-stage models."""
-
         return {
             PROPENSITY_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1, predict_method=lambda _: "predict_proba"
@@ -121,7 +119,6 @@ class RLearner(MetaLearner):
 
     @classmethod
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
-        """Return the names of all second-stage models."""
         return {
             TREATMENT_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1,
