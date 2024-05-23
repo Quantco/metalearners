@@ -74,19 +74,20 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
-        self._treatment_indices = w == 1
-        self._control_indices = w == 0
+
+        for v in range(self.n_variants):
+            self._treatment_variants_indices.append(w == v)
 
         # TODO: Consider multiprocessing
         self.fit_nuisance(
-            X=index_matrix(X, self._treatment_indices),
-            y=y[self._treatment_indices],
+            X=index_matrix(X, self._treatment_variants_indices[1]),
+            y=y[self._treatment_variants_indices[1]],
             model_kind=TREATMENT_OUTCOME_MODEL,
             model_ord=0,
         )
         self.fit_nuisance(
-            X=index_matrix(X, self._control_indices),
-            y=y[self._control_indices],
+            X=index_matrix(X, self._treatment_variants_indices[0]),
+            y=y[self._treatment_variants_indices[0]],
             model_kind=CONTROL_OUTCOME_MODEL,
             model_ord=0,
         )
@@ -100,14 +101,14 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         pseudo_outcome = self._pseudo_outcome(X, y, w)
 
         self.fit_treatment(
-            X=index_matrix(X, self._treatment_indices),
-            y=pseudo_outcome[self._treatment_indices],
+            X=index_matrix(X, self._treatment_variants_indices[1]),
+            y=pseudo_outcome[self._treatment_variants_indices[1]],
             model_kind=TREATMENT_EFFECT_MODEL,
             model_ord=0,
         )
         self.fit_treatment(
-            X=index_matrix(X, self._control_indices),
-            y=pseudo_outcome[self._control_indices],
+            X=index_matrix(X, self._treatment_variants_indices[0]),
+            y=pseudo_outcome[self._treatment_variants_indices[0]],
             model_kind=CONTROL_EFFECT_MODEL,
             model_ord=0,
         )
@@ -137,13 +138,13 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             )
         else:
             treatment_effect_treated = self.predict_treatment(
-                X=index_matrix(X, self._treatment_indices),
+                X=index_matrix(X, self._treatment_variants_indices[1]),
                 model_kind=TREATMENT_EFFECT_MODEL,
                 model_ord=0,
                 is_oos=False,
             )
             control_effect_treated = self.predict_treatment(
-                X=index_matrix(X, self._treatment_indices),
+                X=index_matrix(X, self._treatment_variants_indices[1]),
                 model_kind=CONTROL_EFFECT_MODEL,
                 model_ord=0,
                 is_oos=True,
@@ -151,14 +152,14 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             )
 
             treatment_effect_control = self.predict_treatment(
-                X=index_matrix(X, self._control_indices),
+                X=index_matrix(X, self._treatment_variants_indices[0]),
                 model_kind=TREATMENT_EFFECT_MODEL,
                 model_ord=0,
                 is_oos=True,
                 oos_method=oos_method,
             )
             control_effect_control = self.predict_treatment(
-                X=index_matrix(X, self._control_indices),
+                X=index_matrix(X, self._treatment_variants_indices[0]),
                 model_kind=CONTROL_EFFECT_MODEL,
                 model_ord=0,
                 is_oos=False,
@@ -167,10 +168,18 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             tau_hat_treatment = np.zeros(len(X))
             tau_hat_control = np.zeros(len(X))
 
-            tau_hat_treatment[self._control_indices] = treatment_effect_control
-            tau_hat_treatment[self._treatment_indices] = treatment_effect_treated
-            tau_hat_control[self._control_indices] = control_effect_control
-            tau_hat_control[self._treatment_indices] = control_effect_treated
+            tau_hat_treatment[self._treatment_variants_indices[0]] = (
+                treatment_effect_control
+            )
+            tau_hat_treatment[self._treatment_variants_indices[1]] = (
+                treatment_effect_treated
+            )
+            tau_hat_control[self._treatment_variants_indices[0]] = (
+                control_effect_control
+            )
+            tau_hat_control[self._treatment_variants_indices[1]] = (
+                control_effect_treated
+            )
 
         # Propensity score model is always a classifier so we can't use MEDIAN
         propensity_score_oos = OVERALL if oos_method == MEDIAN else oos_method

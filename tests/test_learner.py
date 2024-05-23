@@ -113,6 +113,8 @@ def test_learner_synthetic_in_sample(
     [
         ("T", "binary", 0.0215, "binary", "linear"),
         ("T", "continuous", 0.0456, "binary", "linear"),
+        ("T", "continuous", 0.0617, "multi", "linear"),
+        ("T", "continuous", 0.0753, "multi", "constant"),
         ("S", "binary", 0.2286, "binary", "linear"),
         ("S", "continuous", 14.6248, "binary", "linear"),
         ("S", "continuous", 14.185, "multi", "linear"),
@@ -194,7 +196,10 @@ def test_learner_synthetic_oos(
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
     if metalearner == "T":
         np.testing.assert_allclose(
-            cate_estimates, true_cate_test.reshape(-1), atol=0.3, rtol=0.3
+            cate_estimates.reshape(len(covariates_test), -1),
+            true_cate_test,
+            atol=0.4,
+            rtol=0.3,
         )
 
 
@@ -202,6 +207,7 @@ def test_learner_synthetic_oos(
     "metalearner, treatment_kind",
     [
         ("T", "binary"),
+        ("T", "multi"),
         ("S", "binary"),
         ("S", "multi"),
         ("X", "binary"),
@@ -345,7 +351,8 @@ def test_learner_evaluate(
         if metalearner == "S":
             assert "cross_entropy" in evaluation
         elif metalearner == "T":
-            assert "treatment_cross_entropy" in evaluation
+            for v in range(1, n_variants):
+                assert f"treatment_{v}_cross_entropy" in evaluation
             assert "control_cross_entropy" in evaluation
         elif metalearner == "R":
             assert "outcome_log_loss" in evaluation
@@ -353,7 +360,8 @@ def test_learner_evaluate(
         if metalearner == "S":
             assert "rmse" in evaluation
         elif metalearner == "T":
-            assert "treatment_rmse" in evaluation
+            for v in range(1, n_variants):
+                assert f"treatment_{v}_rmse" in evaluation
             assert "control_rmse" in evaluation
         elif metalearner == "R":
             assert "outcome_rmse" in evaluation
@@ -438,7 +446,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
     "metalearner_prefix,success",
     [
         ("S", True),
-        ("T", False),
+        ("T", True),
         ("X", False),
         ("R", False),
     ],
@@ -605,8 +613,6 @@ def test_conditional_average_outcomes_smoke_multi_class(
     metalearner_prefix, rng, sample_size, n_classes, n_variants
 ):
     factory = metalearner_factory(metalearner_prefix)
-    if n_variants > 2 and not factory._supports_multi_treatment():
-        pytest.skip()
 
     X = rng.standard_normal((sample_size, 10))
     w = rng.integers(0, n_variants, size=sample_size)

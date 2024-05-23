@@ -526,7 +526,7 @@ if __name__ == "__main__":
         )
         print_separator()
 
-        if metalearner in {"S"}:  # implemented multivariant support
+        if metalearner in {"S", "T"}:  # implemented multivariant support
             print(
                 "Start comparing libraries on synthetic data with continuous "
                 "outcomes, multiple treatments and linear treatment effect."

@@ -23,12 +23,14 @@ $ cat comparison.json
 Recents results look as such, where each cell corresponds to an RMSE
 on ground truth CATEs:
 
-| T-learner                                                    | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
-| :----------------------------------------------------------- | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome_binary_treatment_linear_te |          0.0458966 |    0.0456347 |        0.0458966 |  0.0456347 |              0.0467864 |        0.0456347 |
-| synthetic_data_binary_outcome_binary_treatment_linear_te     |          0.0212419 |    0.0215154 |              nan |        nan |               0.021512 |        0.0215154 |
-| twins_pandas                                                 |           0.308362 |     0.345602 |              nan |        nan |               0.354783 |         0.348551 |
-| twins_numpy                                                  |           0.308362 |     0.345602 |              nan |        nan |               0.349543 |         0.345602 |
+| T-learner                                                     | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
+| :------------------------------------------------------------ | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0458966 |    0.0456347 |        0.0458966 |  0.0456347 |              0.0467864 |        0.0456347 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te      |          0.0212419 |    0.0215154 |              nan |        nan |               0.021512 |        0.0215154 |
+| twins_pandas                                                  |           0.308362 |     0.345602 |              nan |        nan |               0.354783 |         0.348551 |
+| twins_numpy                                                   |           0.308362 |     0.345602 |              nan |        nan |               0.349543 |         0.345602 |
+| synthetic_data_continuous_outcome_multi_treatment_linear_te   |                nan |          nan |        0.0615009 |   0.061717 |              0.0621115 |         0.061717 |
+| synthetic_data_continuous_outcome_multi_treatment_constant_te |                nan |          nan |         0.075331 |   0.075295 |              0.0759047 |         0.075295 |
 
 | S-learner                                                     | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
 | :------------------------------------------------------------ | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |

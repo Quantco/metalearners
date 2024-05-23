@@ -18,10 +18,7 @@ from metalearners.metalearner import (
 
 
 class TLearner(_ConditionalAverageOutcomeMetaLearner):
-    """T-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
-
-    Importantly, this implementation currently only supports binary treatment variants.
-    """
+    """T-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_."""
 
     # TODO: Parametrize instantiation of the TLearner as to add an optional
     # second-stage model regularizing the treatment effects, rather than
@@ -31,7 +28,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+                cardinality=lambda ml: ml.n_variants - 1,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -50,7 +47,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
-        return False
+        return True
 
     @classmethod
     def _supports_multi_class(cls) -> bool:
@@ -59,18 +56,22 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
-        self._treatment_indices = w == 1
-        self._control_indices = w == 0
+
+        for v in range(self.n_variants):
+            self._treatment_variants_indices.append(w == v)
+
         # TODO: Consider multiprocessing
+        for treatment_variant in range(1, self.n_variants):
+            self.fit_nuisance(
+                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
+                y=y[self._treatment_variants_indices[treatment_variant]],
+                model_kind=TREATMENT_OUTCOME_MODEL,
+                model_ord=treatment_variant - 1,
+            )
+
         self.fit_nuisance(
-            X=index_matrix(X, self._treatment_indices),
-            y=y[self._treatment_indices],
-            model_kind=TREATMENT_OUTCOME_MODEL,
-            model_ord=0,
-        )
-        self.fit_nuisance(
-            X=index_matrix(X, self._control_indices),
-            y=y[self._control_indices],
+            X=index_matrix(X, self._treatment_variants_indices[0]),
+            y=y[self._treatment_variants_indices[0]],
             model_kind=CONTROL_OUTCOME_MODEL,
             model_ord=0,
         )
@@ -85,7 +86,14 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
-        return conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
+        if self.n_variants == 2:
+            return (
+                conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
+            )
+        else:
+            return conditional_average_outcomes[:, 1:] - (
+                conditional_average_outcomes[:, [0]]
+            )
 
     def evaluate(
         self,
@@ -99,18 +107,20 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
-        control_outcomes = conditional_average_outcomes[:, 0]
-        treatment_outcomes = conditional_average_outcomes[:, 1]
-        if not self.is_classification:
-            return {
-                "treatment_rmse": root_mean_squared_error(
-                    y[w == 1], treatment_outcomes[w == 1]
-                ),
-                "control_rmse": root_mean_squared_error(
-                    y[w == 0], control_outcomes[w == 0]
-                ),
-            }
-        return {
-            "treatment_cross_entropy": log_loss(y[w == 1], treatment_outcomes[w == 1]),
-            "control_cross_entropy": log_loss(y[w == 0], control_outcomes[w == 0]),
-        }
+        evaluation_metrics = {}
+        for treatment_variant in range(self.n_variants):
+            prefix = (
+                "control"
+                if treatment_variant == 0
+                else f"treatment_{treatment_variant}"
+            )
+            variant_outcomes = conditional_average_outcomes[:, treatment_variant]
+            if self.is_classification:
+                evaluation_metrics[f"{prefix}_cross_entropy"] = log_loss(
+                    y[w == treatment_variant], variant_outcomes[w == treatment_variant]
+                )
+            else:
+                evaluation_metrics[f"{prefix}_rmse"] = root_mean_squared_error(
+                    y[w == treatment_variant], variant_outcomes[w == treatment_variant]
+                )
+        return evaluation_metrics

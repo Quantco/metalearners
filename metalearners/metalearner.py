@@ -503,8 +503,7 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
             n_folds=n_folds,
             random_state=random_state,
         )
-        self._treatment_indices = None
-        self._control_indices = None
+        self._treatment_variants_indices: list[np.ndarray] = []
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
@@ -523,58 +522,41 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         various approaches exist, specified via ``oos_method``.
         """
         # TODO: Consider multiprocessing
-        if is_oos:
-            treatment_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-            control_outcomes = self.predict_nuisance(
-                X=X,
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-        else:
-            treatment_outcomes_treated = self.predict_nuisance(
-                X=index_matrix(X, self._treatment_indices),
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-            control_outcomes_treated = self.predict_nuisance(
-                X=index_matrix(X, self._treatment_indices),
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
+        n_obs = len(X)
+        nuisance_tensors = self._nuisance_tensors(n_obs)
+        conditional_average_outcomes_list = (
+            nuisance_tensors[CONTROL_OUTCOME_MODEL]
+            + nuisance_tensors[TREATMENT_OUTCOME_MODEL]
+        )
 
-            treatment_outcomes_control = self.predict_nuisance(
-                X=index_matrix(X, self._control_indices),
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-            control_outcomes_control = self.predict_nuisance(
-                X=index_matrix(X, self._control_indices),
-                model_kind=CONTROL_OUTCOME_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
+        for tv in range(self.n_variants):
+            model_kind = CONTROL_OUTCOME_MODEL if tv == 0 else TREATMENT_OUTCOME_MODEL
+            model_ord = 0 if tv == 0 else tv - 1
+            if is_oos:
+                conditional_average_outcomes_list[tv] = self.predict_nuisance(
+                    X=X,
+                    model_kind=model_kind,
+                    model_ord=model_ord,
+                    is_oos=True,
+                    oos_method=oos_method,
+                )
+            else:
+                conditional_average_outcomes_list[tv][
+                    self._treatment_variants_indices[tv]
+                ] = self.predict_nuisance(
+                    X=index_matrix(X, self._treatment_variants_indices[tv]),
+                    model_kind=model_kind,
+                    model_ord=model_ord,
+                    is_oos=False,
+                )
+                conditional_average_outcomes_list[tv][
+                    ~self._treatment_variants_indices[tv]
+                ] = self.predict_nuisance(
+                    X=index_matrix(X, ~self._treatment_variants_indices[tv]),
+                    model_kind=model_kind,
+                    model_ord=model_ord,
+                    is_oos=True,
+                    oos_method=oos_method,
+                )
 
-            nuisance_tensors = self._nuisance_tensors(len(X))
-
-            treatment_outcomes = nuisance_tensors[TREATMENT_OUTCOME_MODEL][0]
-            control_outcomes = nuisance_tensors[CONTROL_OUTCOME_MODEL][0]
-
-            treatment_outcomes[self._control_indices] = treatment_outcomes_control
-            treatment_outcomes[self._treatment_indices] = treatment_outcomes_treated
-            control_outcomes[self._control_indices] = control_outcomes_control
-            control_outcomes[self._treatment_indices] = control_outcomes_treated
-
-        return np.stack([control_outcomes, treatment_outcomes], axis=1)
+        return np.stack(conditional_average_outcomes_list, axis=1)
