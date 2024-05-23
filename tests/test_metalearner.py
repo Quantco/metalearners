@@ -95,7 +95,9 @@ class _TestMetaLearner(MetaLearner):
         },
     ],
 )
-@pytest.mark.parametrize("n_folds", [5])
+@pytest.mark.parametrize(
+    "n_folds", [5, {"nuisance1": 1, "nuisance2": 1, "treatment1": 5, "treatment2": 10}]
+)
 @pytest.mark.parametrize("propensity_model_factory", [None, LGBMClassifier])
 @pytest.mark.parametrize("propensity_model_params", [None, {}, {"n_estimators": 5}])
 @pytest.mark.parametrize("n_variants", [2, 5, 10])
@@ -270,6 +272,25 @@ def test_metalearner_format_consistent(
     np_cate_estimates = np_ml.predict(covariates, is_oos=False)
     pd_cate_estimates = np_ml.predict(pd.DataFrame(covariates), is_oos=False)
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
+
+
+@pytest.mark.parametrize(
+    "n_folds", [5, {"nuisance1": 1, "nuisance2": 1, "treatment1": 5, "treatment2": 10}]
+)
+def test_n_folds(n_folds):
+    ml = _TestMetaLearner(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        n_variants=2,
+        treatment_model_factory=LinearRegression,
+        n_folds=n_folds,
+    )
+    for model_kind, cf_estimator_list in chain(
+        ml._nuisance_models.items(), ml._treatment_models.items()
+    ):
+        expected_folds = n_folds[model_kind] if isinstance(n_folds, dict) else n_folds
+        for cf_estimator in cf_estimator_list:
+            assert cf_estimator.n_folds == expected_folds
 
 
 @pytest.mark.parametrize(

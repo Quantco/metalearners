@@ -196,8 +196,7 @@ class MetaLearner(ABC):
         treatment_model_params: Params | dict[str, Params] | None = None,
         propensity_model_params: Params | None = None,
         feature_set: Features | dict[str, Features] | None = None,
-        # TODO: Consider implementing selection of number of folds for various estimators.
-        n_folds: int = 10,
+        n_folds: int | dict[str, int] = 10,
         random_state: int | None = None,
     ):
         self._validate_params(
@@ -277,8 +276,13 @@ class MetaLearner(ABC):
                 treatment_model_params, set(treatment_model_specifications.keys())
             )
 
-        validate_number_positive(n_folds, "n_folds")
-        self.n_folds = n_folds
+        self.n_folds = _initialize_model_dict(
+            n_folds,
+            set(nuisance_model_specifications.keys())
+            | set(treatment_model_specifications.keys()),
+        )
+        for model_kind, n_folds_model_kind in self.n_folds.items():
+            validate_number_positive(n_folds_model_kind, f"{model_kind} n_folds", True)
         self.random_state = random_state
 
         self.feature_set = _initialize_model_dict(
@@ -290,7 +294,7 @@ class MetaLearner(ABC):
         self._nuisance_models: dict[str, list[CrossFitEstimator]] = {
             name: [
                 CrossFitEstimator(
-                    n_folds=self.n_folds,
+                    n_folds=self.n_folds[name],
                     estimator_factory=self.nuisance_model_factory[name],
                     estimator_params=self.nuisance_model_params[name],
                     random_state=self.random_state,
@@ -302,7 +306,7 @@ class MetaLearner(ABC):
         self._treatment_models: dict[str, list[CrossFitEstimator]] = {
             name: [
                 CrossFitEstimator(
-                    n_folds=self.n_folds,
+                    n_folds=self.n_folds[name],
                     estimator_factory=self.treatment_model_factory[name],
                     estimator_params=self.treatment_model_params[name],
                     random_state=self.random_state,
@@ -483,8 +487,7 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         treatment_model_params: Params | dict[str, Params] | None = None,
         propensity_model_params: Params | None = None,
         feature_set: Features | dict[str, Features] | None = None,
-        # TODO: Consider implementing selection of number of folds for various estimators.
-        n_folds: int = 10,
+        n_folds: int | dict[str, int] = 10,
         random_state: int | None = None,
     ):
         super().__init__(
