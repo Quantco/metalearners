@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
+from metalearners.drlearner import DRLearner
 from metalearners.metalearner import MetaLearner
 from metalearners.rlearner import RLearner
 from metalearners.slearner import SLearner
@@ -27,6 +28,8 @@ def metalearner_factory(metalearner_prefix: str) -> type[MetaLearner]:
             return XLearner
         case "R":
             return RLearner
+        case "DR":
+            return DRLearner
         case _:
             raise ValueError(
                 f"No MetaLearner implementation found for prefix {metalearner_prefix}."

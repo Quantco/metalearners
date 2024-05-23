@@ -16,6 +16,7 @@ from metalearners._utils import (
     are_pd_indices_equal,
     check_probability,
     check_propensity_score,
+    clip_element_absolute_value_to_epsilon,
     convert_treatment,
     function_has_argument,
     get_linear_dimension,
@@ -317,3 +318,10 @@ def test_validate_model_and_predict_method(factory, predict_method, success):
             ValueError, match="supposed to be used with the predict method"
         ):
             validate_model_and_predict_method(factory, predict_method)
+
+
+def test_increase_element_absolute_value_by_epsilon():
+    vector = np.array([0, 1, -1, 0.1, -0.1, 0.05, -0.05])
+    epsilon = 0.1
+    result = clip_element_absolute_value_to_epsilon(vector, epsilon)
+    assert all(result == np.array([epsilon, 1, -1, 0.1, -0.1, epsilon, -epsilon]))

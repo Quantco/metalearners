@@ -10,15 +10,19 @@ from metalearners._typing import OosMethod
 from metalearners._utils import (
     Matrix,
     Vector,
+    clip_element_absolute_value_to_epsilon,
     function_has_argument,
     validate_all_vectors_same_index,
 )
 from metalearners.cross_fit_estimator import OVERALL
-from metalearners.metalearner import MetaLearner, _ModelSpecifications
+from metalearners.metalearner import (
+    PROPENSITY_MODEL,
+    TREATMENT_MODEL,
+    MetaLearner,
+    _ModelSpecifications,
+)
 
-PROPENSITY_MODEL = "propensity_model"
 OUTCOME_MODEL = "outcome_model"
-TREATMENT_MODEL = "treatment_model"
 
 _EPSILON = 1e-09
 
@@ -270,12 +274,10 @@ class RLearner(MetaLearner):
             )[:, 1]
         )
 
-        # We want to avoid a case in which adding epsilon actually causes numerical
-        # harm, e.g. if w_residuals is approximately -epsilon. Therefore we add
-        # epsilon in the existing direction pointing away from 0.
-        epsilons = np.where(w_residuals < 0, -1, 1) * epsilon
-
-        pseudo_outcomes = y_residuals / (w_residuals + epsilons)
+        w_residuals_padded = clip_element_absolute_value_to_epsilon(
+            w_residuals, epsilon
+        )
+        pseudo_outcomes = y_residuals / w_residuals_padded
         weights = np.square(w_residuals)
 
         return pseudo_outcomes, weights

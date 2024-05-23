@@ -54,3 +54,10 @@ on ground truth CATEs:
 | synthetic_data_binary_outcome_binary_treatment_linear_te     |           0.304553 |     0.301832 |               0.304672 |         0.301835 |
 | twins_pandas                                                 |           0.322255 |     0.344373 |               0.353968 |         0.349625 |
 | twins_numpy                                                  |           0.322681 |      0.34876 |               0.350513 |         0.336281 |
+
+| DR-learner                                                   | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
+| :----------------------------------------------------------- | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te |          0.0463883 |    0.0454509 |         0.248504 |   0.248071 |              0.0479302 |        0.0454753 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te     |                nan |          nan |         0.304584 |   0.301864 |               0.304651 |         0.301819 |
+| twins_pandas                                                 |                nan |          nan |              nan |        nan |               0.384664 |         0.371556 |
+| twins_numpy                                                  |                nan |          nan |              nan |        nan |               0.365246 |         0.355291 |

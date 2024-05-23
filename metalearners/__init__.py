@@ -4,12 +4,13 @@
 import importlib.metadata
 import warnings
 
+from .drlearner import DRLearner
 from .rlearner import RLearner
 from .slearner import SLearner
 from .tlearner import TLearner
 from .xlearner import XLearner
 
-__all__ = ["RLearner", "SLearner", "TLearner", "XLearner"]
+__all__ = ["DRLearner", "RLearner", "SLearner", "TLearner", "XLearner"]
 
 
 try:

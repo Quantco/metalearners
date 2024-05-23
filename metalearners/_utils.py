@@ -291,3 +291,17 @@ def validate_model_and_predict_method(
             f"The {name} is supposed to be used with the predict "
             "method 'predict_proba' but it is not a classifier."
         )
+
+
+def clip_element_absolute_value_to_epsilon(vector: Vector, epsilon: float) -> Vector:
+    """Clip in accordance with the sign of each element if the element's absolute value
+    is below ``epsilon``.
+
+    For instance, if ``vector`` equals ``[0, 1, -1, .09, -.09]`` and ``epsilon`` equals ``.1``,
+    this function will return ``[0, 1, -1, .1, -.1]``.
+
+    Typically, this is done in order to avoid numerical problems when there is an element-wise
+    division by ``vector`` and that the elements of ``vector`` are very close to 0.
+    """
+    bound = np.where(vector < 0, -1, 1) * epsilon
+    return np.where(np.abs(vector) < epsilon, bound, vector)

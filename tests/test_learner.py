@@ -58,6 +58,8 @@ def _linear_base_learner_params(
         ("X", "continuous", 0.0459, "binary", "linear"),
         ("R", "binary", 0.3046, "binary", "linear"),
         ("R", "continuous", 0.0470, "binary", "linear"),
+        ("DR", "binary", 0.3045, "binary", "linear"),
+        ("DR", "continuous", 0.0463, "binary", "linear"),
     ],
 )
 def test_learner_synthetic_in_sample(
@@ -123,6 +125,8 @@ def test_learner_synthetic_in_sample(
         ("X", "continuous", 0.0456, "binary", "linear"),
         ("R", "binary", 0.3018, "binary", "linear"),
         ("R", "continuous", 0.0463, "binary", "linear"),
+        ("DR", "binary", 0.3018, "binary", "linear"),
+        ("DR", "continuous", 0.0454, "binary", "linear"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -263,7 +267,9 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
 
 @pytest.mark.parametrize(
     "metalearner, reference_value",
-    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3444)],
+    # Since we don't have a reference implementation for the DR-Learner,
+    # we reuse the reference value of the R-Learner plus some tolerance.
+    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3444), ("DR", 0.3444 * 1.05)],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean"])
 def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng):
@@ -449,6 +455,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("T", True),
         ("X", False),
         ("R", False),
+        ("DR", False),
     ],
 )
 def test_validate_n_variants_error_multi(metalearner_prefix, success):
@@ -476,7 +483,7 @@ def test_validate_n_variants_error_multi(metalearner_prefix, success):
 
 
 @pytest.mark.parametrize("n_variants", [2.0, 1])
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R", "DR"])
 def test_validate_n_variants_error_format(metalearner_prefix, n_variants):
     factory = metalearner_factory(metalearner_prefix)
     with pytest.raises(
@@ -492,7 +499,7 @@ def test_validate_n_variants_error_format(metalearner_prefix, n_variants):
         )
 
 
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R", "DR"])
 def test_validate_treatment_error_encoding(metalearner_prefix):
     covariates = np.zeros((10, 1))
     w = np.array([1, 2] * 5)
@@ -512,7 +519,7 @@ def test_validate_treatment_error_encoding(metalearner_prefix):
         learner.fit(covariates, y, w)
 
 
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R", "DR"])
 def test_validate_treatment_error_different_instantiation(metalearner_prefix):
     covariates = np.zeros((10, 1))
     w = np.array(range(10))
@@ -540,6 +547,7 @@ def test_validate_treatment_error_different_instantiation(metalearner_prefix):
         ("T", True),
         ("X", False),
         ("R", False),
+        ("DR", False),
     ],
 )
 def test_validate_outcome_multi_class(metalearner_prefix, success):
@@ -567,7 +575,7 @@ def test_validate_outcome_multi_class(metalearner_prefix, success):
 
 
 @pytest.mark.parametrize("is_classification", [True, False])
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "DR"])
 def test_conditional_average_outcomes_smoke(
     metalearner_prefix, is_classification, request
 ):
@@ -636,7 +644,7 @@ def test_conditional_average_outcomes_smoke_multi_class(
     np.testing.assert_allclose(result.sum(axis=-1), 1)
 
 
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "R", "DR"])
 @pytest.mark.parametrize("n_classes", [2, 5, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])

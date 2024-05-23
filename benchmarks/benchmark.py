@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from causalml.inference.meta import (
+    BaseDRRegressor,
     BaseRClassifier,
     BaseRRegressor,
     BaseSClassifier,
@@ -16,6 +17,7 @@ from causalml.inference.meta import (
     BaseXClassifier,
     BaseXRegressor,
 )
+from econml.dr import DRLearner
 from econml.metalearners import SLearner, TLearner, XLearner
 from git_root import git_root
 from lightgbm import LGBMClassifier, LGBMRegressor
@@ -267,6 +269,19 @@ def causalml_estimates(
             )
         # The default model does CV so it's not comparable
         learner.model_p = classifier_learner_factory(**classifier_learner_params)
+    elif metalearner == "DR":
+        if is_classification:
+            raise ValueError("causalml has no classifier version of the DRLearner.")
+        else:
+            # TODO: Unlike other MetaLearners, the causalml DR-Learner doesn't estimate
+            # propensities via the model_p field. Rather, it relies on an independent
+            # function called compute_propensity_score:
+            # https://github.com/uber/causalml/blob/a0315660d9b14f5d943aa688d8242eb621d2ba76/causalml/inference/meta/drlearner.py#L162
+            # Hence, the current setup uses a causalml internal approach of estimating
+            # propensities, including CV.
+            learner = BaseDRRegressor(
+                learner=regressor_learner_factory(**regressor_learner_params),
+            )
     else:
         raise NotImplementedError()
 
@@ -308,9 +323,34 @@ def econml_estimates(
             allow_missing=True,
             propensity_model=classifier_learner_factory(**classifier_learner_params),
         )
+    elif metalearner == "DR":
+        if is_classification:
+            est = DRLearner(
+                model_propensity=classifier_learner_factory(
+                    **classifier_learner_params
+                ),
+                model_regression=classifier_learner_factory(
+                    **classifier_learner_params
+                ),
+                model_final=regressor_learner_factory(**regressor_learner_params),
+                allow_missing=True,
+                discrete_outcome=True,
+            )
+        else:
+            est = DRLearner(
+                model_propensity=classifier_learner_factory(
+                    **classifier_learner_params
+                ),
+                model_regression=regressor_learner_factory(**regressor_learner_params),
+                model_final=regressor_learner_factory(**regressor_learner_params),
+                allow_missing=True,
+                discrete_outcome=False,
+            )
     else:
         raise ValueError(f"{metalearner}-Learner not supported for econml.")
-    est.fit(observed_outcomes_train, treatment_train, X=covariates_train)
+    est.fit(
+        observed_outcomes_train.ravel(), treatment_train.ravel(), X=covariates_train
+    )
     if n_variants > 2:
         estimates = []
         for v in range(1, n_variants):
@@ -389,13 +429,23 @@ def evaluate(
         ("econml", econml_estimates),
         ("metalearners", metalearner_estimates),
     ):
-        if is_classification and library == "econml":
-            # Econml's TLearner doesn't seem to support calling
+        if (
+            is_classification
+            and library == "econml"
+            and (metalearner != "DR" or pd.isna(covariates_test).any().any())
+        ):
+            # Most of econml's MetaLearners don't seem to support calling
             # predict_proba under the hood.
+            # Moreover, the DRLearner classifier fails for missing values, even with
+            # allow_missing=True due to this line:
+            # https://github.com/py-why/EconML/blob/ea46d0d2816f2b70e67f5e6699157502038c8bf1/econml/_cate_estimator.py#L857
             continue
         if n_variants > 2 and library == "causalml":
             # Causalml does a different model for each variant and hence it's
             # not comparable
+            continue
+        if metalearner == "DR" and is_classification and library == "causalml":
+            # Causalml doesn't have a classifier version of the DR-Learner.
             continue
         if metalearner == "R" and library == "econml":
             # Econml has a private R-Learner implementation, see
@@ -496,10 +546,14 @@ def dict_to_markdown_file(d, filename="comparison.md"):
     print(f"Dumped results as markdown table to {path}.")
 
 
+# TODO: For some reason econml's DRLearner performs much worse
+# than causalml and the metalearners library on synthetic data
+# with a continuous outcome.
+
 if __name__ == "__main__":
     losses: dict[str, dict] = {}
 
-    for metalearner in ["T", "S", "X", "R"]:
+    for metalearner in ["T", "S", "X", "R", "DR"]:
         print(f"{metalearner}-learner...")
         print_separator()
         print_separator()

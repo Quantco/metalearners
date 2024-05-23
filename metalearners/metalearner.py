@@ -28,6 +28,7 @@ ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 PROPENSITY_MODEL = "propensity_model"
 CONTROL_OUTCOME_MODEL = "control_outcome_model"
 TREATMENT_OUTCOME_MODEL = "treatment_outcome_model"
+TREATMENT_MODEL = "treatment_model"
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:

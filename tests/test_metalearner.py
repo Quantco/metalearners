@@ -10,6 +10,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression
 
 from metalearners.data_generation import insert_missing
+from metalearners.drlearner import DRLearner
 from metalearners.metalearner import (
     MetaLearner,
     _combine_propensity_and_nuisance_specs,
@@ -128,7 +129,8 @@ def test_metalearner_init(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
+    "implementation",
+    [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_categorical(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -173,7 +175,8 @@ def test_metalearner_categorical(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
+    "implementation",
+    [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_missing_data_smoke(
     mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -201,7 +204,8 @@ def test_metalearner_missing_data_smoke(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
+    "implementation",
+    [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_missing_data_error(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -231,7 +235,8 @@ def test_metalearner_missing_data_error(
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
+    "implementation",
+    [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_format_consistent(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
@@ -294,7 +299,8 @@ def test_n_folds(n_folds):
 
 
 @pytest.mark.parametrize(
-    "implementation", [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner]
+    "implementation",
+    [_TestMetaLearner, TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_model_names(implementation):
     set1 = set(implementation.nuisance_model_specifications().keys())
