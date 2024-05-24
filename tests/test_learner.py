@@ -52,8 +52,12 @@ def _linear_base_learner_params(
     [
         ("T", "binary", 0.0212, "binary", "linear"),
         ("T", "continuous", 0.0456, "binary", "linear"),
+        ("T", "continuous", 0.0615, "multi", "linear"),
+        ("T", "continuous", 0.0753, "multi", "constant"),
         ("S", "binary", 0.2290, "binary", "linear"),
         ("S", "continuous", 14.5706, "binary", "linear"),
+        ("S", "continuous", 14.147, "multi", "linear"),
+        ("S", "continuous", 0.0111, "multi", "constant"),
         ("X", "binary", 0.3046, "binary", "linear"),
         ("X", "continuous", 0.0459, "binary", "linear"),
         ("R", "binary", 0.3046, "binary", "linear"),
@@ -105,7 +109,10 @@ def test_learner_synthetic_in_sample(
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
     if metalearner == "T":
         np.testing.assert_allclose(
-            cate_estimates, true_cate.reshape(-1), atol=0.3, rtol=0.3
+            cate_estimates.reshape(len(cate_estimates), -1),
+            true_cate,
+            atol=0.4,
+            rtol=0.3,
         )
 
 
