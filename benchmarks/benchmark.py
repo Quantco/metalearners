@@ -213,7 +213,7 @@ def causalml_estimates(
     classifier_learner_params=None,
     **kwargs,
 ):
-    if n_variants > 2:
+    if n_variants > 2 and metalearner == "S":
         raise ValueError(
             "Causalml does a different model for each variant and "
             "hence it's not comparable"
@@ -439,7 +439,7 @@ def evaluate(
             # allow_missing=True due to this line:
             # https://github.com/py-why/EconML/blob/ea46d0d2816f2b70e67f5e6699157502038c8bf1/econml/_cate_estimator.py#L857
             continue
-        if n_variants > 2 and library == "causalml":
+        if n_variants > 2 and library == "causalml" and metalearner == "S":
             # Causalml does a different model for each variant and hence it's
             # not comparable
             continue
