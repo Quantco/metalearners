@@ -259,9 +259,11 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
     cate_estimates = learner.predict(
         covariates_test, is_oos=True, oos_method=oos_method
     )
-    actual_ate_estimate = np.mean(cate_estimates)
-    target_ate_estimate = np.mean(true_cate_test)
-    assert actual_ate_estimate == pytest.approx(target_ate_estimate, abs=1e-2, rel=1e-1)
+    actual_ate_estimate = np.squeeze(np.mean(cate_estimates, axis=0), axis=-1)
+    target_ate_estimate = np.mean(true_cate_test, axis=0)
+    np.testing.assert_allclose(
+        actual_ate_estimate, target_ate_estimate, atol=1e-2, rtol=5e-2
+    )
 
 
 @pytest.mark.parametrize(
