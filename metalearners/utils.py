@@ -12,12 +12,13 @@ from metalearners.xlearner import XLearner
 def metalearner_factory(metalearner_prefix: str) -> type[MetaLearner]:
     """Returns the MetaLearner class corresponding to the given prefix.
 
-    The accepted prefixes are:
+    The accepted ``metalearner_prefix`` values are:
 
-    * ``"S"`` for :func:`metalearners.slearner.SLearner`
-    * ``"T"`` for :func:`metalearners.tlearner.TLearner`
-    * ``"X"`` for :func:`metalearners.xlearner.XLearner`
-    * ``"R"`` for :func:`metalearners.rlearner.RLearner`
+    * ``"S"`` for :class:`metalearners.slearner.SLearner`
+    * ``"T"`` for :class:`metalearners.tlearner.TLearner`
+    * ``"X"`` for :class:`metalearners.xlearner.XLearner`
+    * ``"R"`` for :class:`metalearners.rlearner.RLearner`
+    * ``"DR"`` for :class:`metalearners.drlearner.DRLearner`
     """
     match metalearner_prefix:
         case "T":
