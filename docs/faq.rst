@@ -95,3 +95,19 @@ FAQ
 
     See :class:`metalearners.cross_fit_estimator.CrossFitEstimator`
     for our implementation of cross-fitting.
+
+* **How do the MetaLearners work with classification outcomes?**
+    If the outcome of an experiment is a class and not a scalar, e.g. conversion,
+    we have two cases:
+
+    * **Binary classification**: All MetaLearners can handle this scenario. In this situation
+      :math:`\mathbb{E}[Y | X = x] = \mathbb{P}[Y = 1 | X = x]`. Thanks to the binary nature
+      of the class, operations can be conducted combining the estimated probability for class 1 and observed outcomes
+      (:math:`Y \in \{0,1\}`). This happens in the X, R, and DR-Learner methods. Although
+      the result of these operations is treated as the difference in probabilities, this
+      represents an approximation since the observed outcome probabilities are unavailable.
+      Nonetheless, this approach provides the best approximation possible in such circumstances.
+    * **Multiclass classification**: The S and T-Learners are the only MetaLearners capable
+      of handling multiclass classification. In this case, the nuisance models of the S
+      and T-Learners can predict the probability assigned to each outcome class.
+      Followingly, the CATE can be estimated by computing the difference between the per-class probabilities of different variants.
