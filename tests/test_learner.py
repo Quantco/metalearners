@@ -357,18 +357,16 @@ def test_learner_evaluate(
         if metalearner == "S":
             assert "cross_entropy" in evaluation
         elif metalearner == "T":
-            for v in range(1, n_variants):
-                assert f"treatment_{v}_cross_entropy" in evaluation
-            assert "control_cross_entropy" in evaluation
+            for v in range(n_variants):
+                assert f"variant_{v}_cross_entropy" in evaluation
         elif metalearner == "R":
             assert "outcome_log_loss" in evaluation
     else:
         if metalearner == "S":
             assert "rmse" in evaluation
         elif metalearner == "T":
-            for v in range(1, n_variants):
-                assert f"treatment_{v}_rmse" in evaluation
-            assert "control_rmse" in evaluation
+            for v in range(n_variants):
+                assert f"variant_{v}_rmse" in evaluation
         elif metalearner == "R":
             assert "outcome_rmse" in evaluation
     if metalearner == "R":

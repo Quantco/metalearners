@@ -13,10 +13,9 @@ from metalearners._utils import (
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
-    CONTROL_OUTCOME_MODEL,
     PROPENSITY_MODEL,
     TREATMENT_MODEL,
-    TREATMENT_OUTCOME_MODEL,
+    VARIANT_OUTCOME_MODEL,
     _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
@@ -35,8 +34,8 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
     The DR-Learner contains three nuisance models
 
         * a ``"propensity_model"`` estimating :math:`\Pr[W=1|X]`
-        * a ``"control_outcome_model"`` estimating :math:`\mathbb{E}[Y|X, W=0]`
-        * a ``"treatment_outcome_model"`` estimating :math:`\mathbb{E}[Y|X,W=1]`
+        * two ``"variant_outcome_model"`` estimating :math:`\mathbb{E}[Y|X, W=0]` and
+          :math:`\mathbb{E}[Y|X, W=1]`
 
     and one treatment model
 
@@ -50,14 +49,8 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             PROPENSITY_MODEL: _ModelSpecifications(
                 cardinality=lambda _: 1, predict_method=lambda _: "predict_proba"
             ),
-            CONTROL_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
-            ),
-            TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+            VARIANT_OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 2,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -103,13 +96,13 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         self.fit_nuisance(
             X=index_matrix(X, self._treatment_variants_indices[1]),
             y=y[self._treatment_variants_indices[1]],
-            model_kind=TREATMENT_OUTCOME_MODEL,
-            model_ord=0,
+            model_kind=VARIANT_OUTCOME_MODEL,
+            model_ord=1,
         )
         self.fit_nuisance(
             X=index_matrix(X, self._treatment_variants_indices[0]),
             y=y[self._treatment_variants_indices[0]],
-            model_kind=CONTROL_OUTCOME_MODEL,
+            model_kind=VARIANT_OUTCOME_MODEL,
             model_ord=0,
         )
 

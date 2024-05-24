@@ -10,8 +10,7 @@ from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
-    CONTROL_OUTCOME_MODEL,
-    TREATMENT_OUTCOME_MODEL,
+    VARIANT_OUTCOME_MODEL,
     _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
@@ -27,14 +26,8 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
-            TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda ml: ml.n_variants - 1,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
-            ),
-            CONTROL_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+            VARIANT_OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda ml: ml.n_variants,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -61,20 +54,14 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             self._treatment_variants_indices.append(w == v)
 
         # TODO: Consider multiprocessing
-        for treatment_variant in range(1, self.n_variants):
+        for treatment_variant in range(self.n_variants):
             self.fit_nuisance(
                 X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
                 y=y[self._treatment_variants_indices[treatment_variant]],
-                model_kind=TREATMENT_OUTCOME_MODEL,
-                model_ord=treatment_variant - 1,
+                model_kind=VARIANT_OUTCOME_MODEL,
+                model_ord=treatment_variant,
             )
 
-        self.fit_nuisance(
-            X=index_matrix(X, self._treatment_variants_indices[0]),
-            y=y[self._treatment_variants_indices[0]],
-            model_kind=CONTROL_OUTCOME_MODEL,
-            model_ord=0,
-        )
         return self
 
     def predict(
@@ -109,11 +96,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         )
         evaluation_metrics = {}
         for treatment_variant in range(self.n_variants):
-            prefix = (
-                "control"
-                if treatment_variant == 0
-                else f"treatment_{treatment_variant}"
-            )
+            prefix = f"variant_{treatment_variant}"
             variant_outcomes = conditional_average_outcomes[:, treatment_variant]
             if self.is_classification:
                 evaluation_metrics[f"{prefix}_cross_entropy"] = log_loss(

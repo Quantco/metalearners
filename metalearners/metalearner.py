@@ -26,8 +26,7 @@ Params = dict[str, int | float | str]
 Features = Collection[str] | Collection[int]
 ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 PROPENSITY_MODEL = "propensity_model"
-CONTROL_OUTCOME_MODEL = "control_outcome_model"
-TREATMENT_OUTCOME_MODEL = "treatment_outcome_model"
+VARIANT_OUTCOME_MODEL = "variant_outcome_model"
 TREATMENT_MODEL = "treatment_model"
 
 
@@ -525,19 +524,14 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         # TODO: Consider multiprocessing
         n_obs = len(X)
         nuisance_tensors = self._nuisance_tensors(n_obs)
-        conditional_average_outcomes_list = (
-            nuisance_tensors[CONTROL_OUTCOME_MODEL]
-            + nuisance_tensors[TREATMENT_OUTCOME_MODEL]
-        )
+        conditional_average_outcomes_list = nuisance_tensors[VARIANT_OUTCOME_MODEL]
 
         for tv in range(self.n_variants):
-            model_kind = CONTROL_OUTCOME_MODEL if tv == 0 else TREATMENT_OUTCOME_MODEL
-            model_ord = 0 if tv == 0 else tv - 1
             if is_oos:
                 conditional_average_outcomes_list[tv] = self.predict_nuisance(
                     X=X,
-                    model_kind=model_kind,
-                    model_ord=model_ord,
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=tv,
                     is_oos=True,
                     oos_method=oos_method,
                 )
@@ -546,16 +540,16 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
                     self._treatment_variants_indices[tv]
                 ] = self.predict_nuisance(
                     X=index_matrix(X, self._treatment_variants_indices[tv]),
-                    model_kind=model_kind,
-                    model_ord=model_ord,
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=tv,
                     is_oos=False,
                 )
                 conditional_average_outcomes_list[tv][
                     ~self._treatment_variants_indices[tv]
                 ] = self.predict_nuisance(
                     X=index_matrix(X, ~self._treatment_variants_indices[tv]),
-                    model_kind=model_kind,
-                    model_ord=model_ord,
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=tv,
                     is_oos=True,
                     oos_method=oos_method,
                 )

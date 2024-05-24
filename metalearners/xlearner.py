@@ -9,9 +9,8 @@ from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
 from metalearners.cross_fit_estimator import MEDIAN, OVERALL
 from metalearners.metalearner import (
-    CONTROL_OUTCOME_MODEL,
     PROPENSITY_MODEL,
-    TREATMENT_OUTCOME_MODEL,
+    VARIANT_OUTCOME_MODEL,
     _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
@@ -32,14 +31,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
-            CONTROL_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
-            ),
-            TREATMENT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+            VARIANT_OUTCOME_MODEL: _ModelSpecifications(
+                cardinality=lambda _: 2,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -82,13 +75,13 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         self.fit_nuisance(
             X=index_matrix(X, self._treatment_variants_indices[1]),
             y=y[self._treatment_variants_indices[1]],
-            model_kind=TREATMENT_OUTCOME_MODEL,
-            model_ord=0,
+            model_kind=VARIANT_OUTCOME_MODEL,
+            model_ord=1,
         )
         self.fit_nuisance(
             X=index_matrix(X, self._treatment_variants_indices[0]),
             y=y[self._treatment_variants_indices[0]],
-            model_kind=CONTROL_OUTCOME_MODEL,
+            model_kind=VARIANT_OUTCOME_MODEL,
             model_ord=0,
         )
         self.fit_nuisance(
@@ -221,19 +214,19 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         treatment_indices = w == 1
         control_indices = w == 0
 
-        # This is always oos because the CONTROL_OUTCOME_MODEL is used to predict the
+        # This is always oos because the VARIANT_OUTCOME_MODEL[0] is used to predict the
         # control outcomes of the treated observations and vice versa.
         control_outcome = self.predict_nuisance(
             X=index_matrix(X, treatment_indices),
-            model_kind=CONTROL_OUTCOME_MODEL,
+            model_kind=VARIANT_OUTCOME_MODEL,
             model_ord=0,
             is_oos=True,
             oos_method=OVERALL,
         )
         treatment_outcome = self.predict_nuisance(
             X=index_matrix(X, control_indices),
-            model_kind=TREATMENT_OUTCOME_MODEL,
-            model_ord=0,
+            model_kind=VARIANT_OUTCOME_MODEL,
+            model_ord=1,
             is_oos=True,
             oos_method=OVERALL,
         )
