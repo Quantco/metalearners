@@ -176,7 +176,7 @@ def get_n_variants(propensity_scores: Matrix) -> int:
     return n_variants
 
 
-def get_linear_dimension(X: Matrix):
+def get_linear_dimension(X: Matrix) -> int:
     """Calculates the required dimensionality of a vector in order to perform a linear
     transformation of the given data matrix.
 
