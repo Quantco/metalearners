@@ -73,14 +73,10 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         conditional_average_outcomes = self.predict_conditional_average_outcomes(
             X=X, is_oos=is_oos, oos_method=oos_method
         )
-        if self.n_variants == 2:
-            return (
-                conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
-            )
-        else:
-            return conditional_average_outcomes[:, 1:] - (
-                conditional_average_outcomes[:, [0]]
-            )
+
+        return conditional_average_outcomes[:, 1:] - (
+            conditional_average_outcomes[:, [0]]
+        )
 
     def evaluate(
         self,

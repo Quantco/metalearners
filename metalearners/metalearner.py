@@ -443,16 +443,13 @@ class MetaLearner(ABC):
         the estimates will stem from cross-fitting. Otherwise,
         various approaches exist, specified via ``oos_method``.
 
-        The returned matrix is of shape:
+        The returned ndarray is of shape:
 
-        * :math:`(n_{obs},)` if the treatment is binary and there is only one output,
-          i.e. a regression problem.
-        * :math:`(n_{obs}, n_{variants} - 1)` if there are more than two treatment
-          variants and there's only one output.
-        * :math:`(n_{obs}, n_{classes})` if the treatment is binary and it is a
-          classification problem.
-        * :math:`(n_{obs}, n_{variants} - 1, n_{classes})` if there are more than two
-          treatment variants and it is a classification problem.
+        * :math:`(n_{obs}, n_{variants} - 1, 1)` if the outcome is a scalar, i.e. in case
+          of a regression problem.
+
+        * :math:`(n_{obs}, n_{variants} - 1, n_{classes})` if the outcome is a class,
+          i.e. in case of a classification problem.
 
         In the case of multiple treatment variants, the second dimension represents the
         CATE of the corresponding variant vs the control (variant 0).
@@ -513,13 +510,17 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
         :math:`w`.
 
-        The returned matrix is of shape :math:`(n_{obs}, n_{variants})` if
-        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
-        n_{variants}, n_{classes})` if it's a classification problem.
-
         If ``is_oos``, an acronym for 'is out of sample' is ``False``,
         the estimates will stem from cross-fitting. Otherwise,
         various approaches exist, specified via ``oos_method``.
+
+        The returned ndarray is of shape:
+
+        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
+          of a regression problem.
+
+        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
+          i.e. in case of a classification problem.
         """
         # TODO: Consider multiprocessing
         n_obs = len(X)
@@ -553,5 +554,6 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
                     is_oos=True,
                     oos_method=oos_method,
                 )
-
-        return np.stack(conditional_average_outcomes_list, axis=1)
+        return np.stack(conditional_average_outcomes_list, axis=1).reshape(
+            n_obs, self.n_variants, -1
+        )

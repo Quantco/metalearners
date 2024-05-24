@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 
 from metalearners.metalearner import MetaLearner
 from metalearners.tlearner import TLearner
-from metalearners.utils import metalearner_factory
+from metalearners.utils import metalearner_factory, simplify_output
 from metalearners.xlearner import XLearner
 
 # Chosen arbitrarily.
@@ -99,8 +99,7 @@ def test_learner_synthetic_in_sample(
 
     learner.fit(covariates, observed_outcomes, treatment)
     cate_estimates = learner.predict(covariates, is_oos=False)
-    if is_classification:
-        cate_estimates = cate_estimates[:, 1]
+    cate_estimates = simplify_output(cate_estimates)
 
     rmse = root_mean_squared_error(true_cate, cate_estimates)
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
@@ -193,8 +192,8 @@ def test_learner_synthetic_oos(
         covariates_test, is_oos=True, oos_method=oos_method
     )
 
-    if is_classification:
-        cate_estimates = cate_estimates[:, 1]
+    cate_estimates = simplify_output(cate_estimates)
+
     rmse = root_mean_squared_error(true_cate_test, cate_estimates)
     # See the benchmarking directory for the original reference values.
     assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
@@ -311,9 +310,9 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
         random_state=_SEED,
     )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
-    cate_estimates = learner.predict(
-        covariates_test, is_oos=True, oos_method=oos_method
-    )[:, 1]
+    cate_estimates = simplify_output(
+        learner.predict(covariates_test, is_oos=True, oos_method=oos_method)
+    )
 
     rmse = root_mean_squared_error(true_cate_test, cate_estimates)
     # See the benchmarking directory for reference values.
@@ -607,7 +606,7 @@ def test_conditional_average_outcomes_smoke(
             df[outcome_column].nunique(),
         )
     else:
-        assert result.shape == (len(df), df[treatment_column].nunique())
+        assert result.shape == (len(df), df[treatment_column].nunique(), 1)
 
 
 @pytest.mark.parametrize(
@@ -676,13 +675,7 @@ def test_predict_smoke(
     learner.fit(X, y, w)
     result = learner.predict(X, is_oos=False)
     if is_classification:
-        if n_variants > 2:
-            assert result.shape == (len(X), n_variants - 1, n_classes)
-        else:
-            assert result.shape == (len(X), n_classes)
+        assert result.shape == (len(X), n_variants - 1, n_classes)
         np.testing.assert_allclose(result.sum(axis=-1), 0, atol=1e-10)
     else:
-        if n_variants > 2:
-            assert result.shape == (len(X), n_variants - 1)
-        else:
-            assert result.shape == (len(X),)
+        result.shape == (len(X), n_variants - 1, 1)

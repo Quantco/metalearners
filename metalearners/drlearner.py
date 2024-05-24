@@ -154,8 +154,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             # works with binary classes (the pseudo outcome formula does not make sense with
             # multiple classes unless some adaptation is done) we can manually infer the
             # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
-            return np.stack([-estimates, estimates], axis=-1)
-        return estimates
+            return np.stack([-estimates, estimates], axis=-1).reshape(
+                len(X), self.n_variants - 1, 2
+            )
+        return estimates.reshape(len(X), self.n_variants - 1, 1)
 
     def evaluate(
         self,
@@ -184,6 +186,9 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         if self.is_classification:
             y0_estimate = y0_estimate[:, 1]
             y1_estimate = y1_estimate[:, 1]
+        else:
+            y0_estimate = y0_estimate[:, 0]
+            y1_estimate = y1_estimate[:, 0]
 
         numerator = w - propensity_estimates
         denominator = propensity_estimates * (1 - propensity_estimates)

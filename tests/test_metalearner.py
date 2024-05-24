@@ -69,13 +69,13 @@ class _TestMetaLearner(MetaLearner):
         return self
 
     def predict(self, X, is_oos, oos_method=None):
-        return np.zeros(len(X))
+        return np.zeros((len(X), 1, 1))
 
     def evaluate(self, X, y, w, is_oos, oos_method=None):
         return {}
 
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
-        return np.zeros((len(X), 1))
+        return np.zeros((len(X), 2, 1))
 
 
 @pytest.mark.parametrize("nuisance_model_factory", [LGBMRegressor])

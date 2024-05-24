@@ -194,8 +194,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             # works with binary classes (the pseudo outcome formula does not make sense with
             # multiple classes unless some adaptation is done) we can manually infer the
             # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
-            return np.stack([-tau_hat, tau_hat], axis=1)
-        return tau_hat
+            return np.stack([-tau_hat, tau_hat], axis=1).reshape(
+                len(tau_hat), self.n_variants - 1, 2
+            )
+        return tau_hat.reshape(len(tau_hat), self.n_variants - 1, 1)
 
     def evaluate(
         self,

@@ -35,7 +35,7 @@ from metalearners.outcome_functions import (
     constant_treatment_effect,
     linear_treatment_effect,
 )
-from metalearners.utils import metalearner_factory
+from metalearners.utils import metalearner_factory, simplify_output
 
 _SEED = 1337
 
@@ -396,9 +396,8 @@ def metalearner_estimates(
 
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
     estimates = learner.predict(covariates_test, is_oos=is_oos, oos_method="overall")
-    if is_classification:
-        return estimates[:, 1]
-    return estimates
+
+    return simplify_output(estimates)
 
 
 def evaluate(

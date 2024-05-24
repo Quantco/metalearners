@@ -125,14 +125,9 @@ class SLearner(MetaLearner):
             X=X, is_oos=is_oos, oos_method=oos_method
         )
 
-        if self.n_variants == 2:
-            return (
-                conditional_average_outcomes[:, 1] - conditional_average_outcomes[:, 0]
-            )
-        else:
-            return conditional_average_outcomes[:, 1:] - (
-                conditional_average_outcomes[:, [0]]
-            )
+        return conditional_average_outcomes[:, 1:] - (
+            conditional_average_outcomes[:, [0]]
+        )
 
     def evaluate(
         self,
@@ -161,13 +156,17 @@ class SLearner(MetaLearner):
         These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
         :math:`w`.
 
-        The returned matrix is of shape :math:`(n_{obs}, n_{variants})` if
-        there's only one output, i.e. a regression problem, or :math:`(n_{obs},
-        n_{variants}, n_{classes})` if it's a classification problem.
-
         If ``is_oos``, an acronym for 'is out of sample' is ``False``,
         the estimates will stem from cross-fitting. Otherwise,
         various approaches exist, specified via ``oos_method``.
+
+        The returned ndarray is of shape:
+
+        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
+          of a regression problem.
+
+        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
+          i.e. in case of a classification problem.
         """
         n_obs = len(X)
         conditional_average_outcomes_list = []
@@ -216,4 +215,6 @@ class SLearner(MetaLearner):
 
             conditional_average_outcomes_list.append(variant_predictions)
 
-        return np.stack(conditional_average_outcomes_list, axis=1)
+        return np.stack(conditional_average_outcomes_list, axis=1).reshape(
+            n_obs, self.n_variants, -1
+        )
