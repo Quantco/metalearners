@@ -12,7 +12,7 @@ dependencies:
   - numpy
   - pandas
   - lightgbm
-  - econml
+  - econml>=0.15
   - causalml
   - pip
   - tabulate
