@@ -188,7 +188,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 propensity_score_treatment * tau_hat_control
                 + (1 - propensity_score_treatment) * tau_hat_treatment
             )
-            assert tau_hat_treatment_variant.shape == (len(X),)
 
             if self.is_classification:
                 # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
