@@ -105,7 +105,37 @@ It is an extension of the T-Learner and consists of three stages:
     where :math:`g(x) \in [0,1]`. We take :math:`g(x) := \mathbb{E}[W = 1 | X]` to be
     the propensity score.
 
-TODO: multitreatment
+In the case of multiple discrete treatments the stages are similar to the binary case:
+
+#.  One outcome model is estimated for each variant (including the control), and one
+    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K\}`:
+
+    .. math::
+        \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
+        e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
+
+#.  The treatment effects are imputed using the corresponding outcome estimator,
+    :math:`\forall k \in \{1,\dots, K\}`:
+
+    .. math::
+        \widetilde{D}_k^i &:= Y^i_k - \hat{\mu}_0(X^i_k) \\
+        \widetilde{D}_{0,k}^i &:= \hat{\mu}_k(X^i_0) - Y^i_0
+
+    Then :math:`\tau_k(x) := \mathbb{E}[\widetilde{D}^i_k | X]` is estimated using the
+    observations which received treatment :math:`k` and :math:`\tau_{0,k}(x) := \mathbb{E}[\widetilde{D}^i_{0,k} | X]`
+    using the observations in the control group.
+
+#.  Finally the CATE for each variant is estimated as a weighted average:
+
+    .. math::
+        \hat{\tau}_k^X(x) := g(x, k)\hat{\tau}_{0,k}(x) + (1-g(x,k))\hat{\tau}_k(x)
+
+    Where
+
+    .. math::
+        g(x,k) := \frac{\hat{e}(x,k)}{\hat{e}(x,k) + \hat{e}(x,0)}
+
+
 
 R-Learner
 """""""""""""""""""""

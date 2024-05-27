@@ -24,7 +24,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
     Importantly, the current X-Learner implementation only supports:
 
-        * binary treatment variants
         * binary classes in case of a classification outcome
     """
 
@@ -32,7 +31,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             VARIANT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 2,
+                cardinality=lambda ml: ml.n_variants,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -47,18 +46,18 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             CONTROL_EFFECT_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+                cardinality=lambda ml: ml.n_variants - 1,
                 predict_method=lambda _: "predict",
             ),
             TREATMENT_EFFECT_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+                cardinality=lambda ml: ml.n_variants - 1,
                 predict_method=lambda _: "predict",
             ),
         }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
-        return False
+        return True
 
     @classmethod
     def _supports_multi_class(cls) -> bool:
@@ -72,18 +71,14 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             self._treatment_variants_indices.append(w == v)
 
         # TODO: Consider multiprocessing
-        self.fit_nuisance(
-            X=index_matrix(X, self._treatment_variants_indices[1]),
-            y=y[self._treatment_variants_indices[1]],
-            model_kind=VARIANT_OUTCOME_MODEL,
-            model_ord=1,
-        )
-        self.fit_nuisance(
-            X=index_matrix(X, self._treatment_variants_indices[0]),
-            y=y[self._treatment_variants_indices[0]],
-            model_kind=VARIANT_OUTCOME_MODEL,
-            model_ord=0,
-        )
+        for treatment_variant in range(self.n_variants):
+            self.fit_nuisance(
+                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
+                y=y[self._treatment_variants_indices[treatment_variant]],
+                model_kind=VARIANT_OUTCOME_MODEL,
+                model_ord=treatment_variant,
+            )
+
         self.fit_nuisance(
             X=X,
             y=w,
@@ -91,20 +86,23 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             model_ord=0,
         )
 
-        pseudo_outcome = self._pseudo_outcome(X, y, w)
+        for treatment_variant in range(1, self.n_variants):
+            imputed_te_control, imputed_te_treatment = self._pseudo_outcome(
+                X, y, w, treatment_variant
+            )
 
-        self.fit_treatment(
-            X=index_matrix(X, self._treatment_variants_indices[1]),
-            y=pseudo_outcome[self._treatment_variants_indices[1]],
-            model_kind=TREATMENT_EFFECT_MODEL,
-            model_ord=0,
-        )
-        self.fit_treatment(
-            X=index_matrix(X, self._treatment_variants_indices[0]),
-            y=pseudo_outcome[self._treatment_variants_indices[0]],
-            model_kind=CONTROL_EFFECT_MODEL,
-            model_ord=0,
-        )
+            self.fit_treatment(
+                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
+                y=imputed_te_treatment,
+                model_kind=TREATMENT_EFFECT_MODEL,
+                model_ord=treatment_variant - 1,
+            )
+            self.fit_treatment(
+                X=index_matrix(X, self._treatment_variants_indices[0]),
+                y=imputed_te_control,
+                model_kind=CONTROL_EFFECT_MODEL,
+                model_ord=treatment_variant - 1,
+            )
 
         return self
 
@@ -114,66 +112,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        if is_oos:
-            tau_hat_treatment = self.predict_treatment(
-                X=X,
-                model_kind=TREATMENT_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-            tau_hat_control = self.predict_treatment(
-                X=X,
-                model_kind=CONTROL_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=is_oos,
-                oos_method=oos_method,
-            )
-        else:
-            treatment_effect_treated = self.predict_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[1]),
-                model_kind=TREATMENT_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-            control_effect_treated = self.predict_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[1]),
-                model_kind=CONTROL_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-
-            treatment_effect_control = self.predict_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[0]),
-                model_kind=TREATMENT_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=True,
-                oos_method=oos_method,
-            )
-            control_effect_control = self.predict_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[0]),
-                model_kind=CONTROL_EFFECT_MODEL,
-                model_ord=0,
-                is_oos=False,
-            )
-
-            tau_hat_treatment = np.zeros(len(X))
-            tau_hat_control = np.zeros(len(X))
-
-            tau_hat_treatment[self._treatment_variants_indices[0]] = (
-                treatment_effect_control
-            )
-            tau_hat_treatment[self._treatment_variants_indices[1]] = (
-                treatment_effect_treated
-            )
-            tau_hat_control[self._treatment_variants_indices[0]] = (
-                control_effect_control
-            )
-            tau_hat_control[self._treatment_variants_indices[1]] = (
-                control_effect_treated
-            )
-
+        n_outputs = 2 if self.is_classification else 1
+        tau_hat = np.zeros((len(X), self.n_variants - 1, n_outputs))
         # Propensity score model is always a classifier so we can't use MEDIAN
         propensity_score_oos = OVERALL if oos_method == MEDIAN else oos_method
         propensity_score = self.predict_nuisance(
@@ -182,22 +122,89 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             model_ord=0,
             is_oos=is_oos,
             oos_method=propensity_score_oos,
-        )[:, 1]
-
-        tau_hat = (
-            propensity_score * tau_hat_control
-            + (1 - propensity_score) * tau_hat_treatment
         )
-        if self.is_classification:
-            # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
-            # work with multiclass outcomes and return the CATE estimate for each class. As the X-Learner only
-            # works with binary classes (the pseudo outcome formula does not make sense with
-            # multiple classes unless some adaptation is done) we can manually infer the
-            # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
-            return np.stack([-tau_hat, tau_hat], axis=1).reshape(
-                len(tau_hat), self.n_variants - 1, 2
+
+        control_indices = self._treatment_variants_indices[0]
+        non_control_indices = ~control_indices
+
+        for treatment_variant in range(1, self.n_variants):
+            treatment_variant_indices = self._treatment_variants_indices[
+                treatment_variant
+            ]
+            non_treatment_variant_indices = ~treatment_variant_indices
+            if is_oos:
+                tau_hat_treatment = self.predict_treatment(
+                    X=X,
+                    model_kind=TREATMENT_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=is_oos,
+                    oos_method=oos_method,
+                )
+                tau_hat_control = self.predict_treatment(
+                    X=X,
+                    model_kind=CONTROL_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=is_oos,
+                    oos_method=oos_method,
+                )
+            else:
+                tau_hat_treatment = np.zeros(len(X))
+                tau_hat_control = np.zeros(len(X))
+
+                tau_hat_treatment[non_treatment_variant_indices] = (
+                    self.predict_treatment(
+                        X=index_matrix(X, non_treatment_variant_indices),
+                        model_kind=TREATMENT_EFFECT_MODEL,
+                        model_ord=treatment_variant - 1,
+                        is_oos=True,
+                        oos_method=oos_method,
+                    )
+                )
+                tau_hat_treatment[treatment_variant_indices] = self.predict_treatment(
+                    X=index_matrix(X, treatment_variant_indices),
+                    model_kind=TREATMENT_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=False,
+                )
+                tau_hat_control[control_indices] = self.predict_treatment(
+                    X=index_matrix(X, control_indices),
+                    model_kind=CONTROL_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=False,
+                )
+                tau_hat_control[non_control_indices] = self.predict_treatment(
+                    X=index_matrix(X, non_control_indices),
+                    model_kind=CONTROL_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=True,
+                    oos_method=oos_method,
+                )
+
+            propensity_score_treatment = propensity_score[:, treatment_variant] / (
+                propensity_score[:, 0] + propensity_score[:, treatment_variant]
             )
-        return tau_hat.reshape(len(tau_hat), self.n_variants - 1, 1)
+
+            tau_hat_treatment_variant = (
+                propensity_score_treatment * tau_hat_control
+                + (1 - propensity_score_treatment) * tau_hat_treatment
+            )
+            assert tau_hat_treatment_variant.shape == (len(X),)
+
+            if self.is_classification:
+                # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
+                # work with multiclass outcomes and return the CATE estimate for each class. As the X-Learner only
+                # works with binary classes (the pseudo outcome formula does not make sense with
+                # multiple classes unless some adaptation is done) we can manually infer the
+                # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
+                tau_hat_treatment_variant = np.stack(
+                    [-tau_hat_treatment_variant, tau_hat_treatment_variant], axis=1
+                )
+            else:
+                tau_hat_treatment_variant = np.expand_dims(tau_hat_treatment_variant, 1)
+
+            tau_hat[:, treatment_variant - 1] = tau_hat_treatment_variant
+
+        return tau_hat
 
     def evaluate(
         self,
@@ -211,24 +218,31 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             "This feature is not yet implemented for the X-Learner."
         )
 
-    def _pseudo_outcome(self, X: Matrix, y: Vector, w: Vector) -> np.ndarray:
-        pseudo_outcome = np.zeros(len(y))
-        treatment_indices = w == 1
-        control_indices = w == 0
+    def _pseudo_outcome(
+        self, X: Matrix, y: Vector, w: Vector, treatment_variant: int
+    ) -> tuple[np.ndarray, np.ndarray]:
+        mask = (w == treatment_variant) | (w == 0)
+
+        X_filt = X[mask]
+        y_filt = y[mask]
+        w_filt = (w[mask] == treatment_variant).astype(int)
+
+        treatment_indices = w_filt == 1
+        control_indices = w_filt == 0
 
         # This is always oos because the VARIANT_OUTCOME_MODEL[0] is used to predict the
         # control outcomes of the treated observations and vice versa.
         control_outcome = self.predict_nuisance(
-            X=index_matrix(X, treatment_indices),
+            X=index_matrix(X_filt, treatment_indices),
             model_kind=VARIANT_OUTCOME_MODEL,
             model_ord=0,
             is_oos=True,
             oos_method=OVERALL,
         )
         treatment_outcome = self.predict_nuisance(
-            X=index_matrix(X, control_indices),
+            X=index_matrix(X_filt, control_indices),
             model_kind=VARIANT_OUTCOME_MODEL,
-            model_ord=1,
+            model_ord=treatment_variant,
             is_oos=True,
             oos_method=OVERALL,
         )
@@ -237,9 +251,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             control_outcome = control_outcome[:, 1]
             treatment_outcome = treatment_outcome[:, 1]
 
-        imputed_te_treatment = y[treatment_indices] - control_outcome
-        imputed_te_control = treatment_outcome - y[control_indices]
+        imputed_te_treatment = y_filt[treatment_indices] - control_outcome
+        imputed_te_control = treatment_outcome - y_filt[control_indices]
 
-        pseudo_outcome[treatment_indices] = imputed_te_treatment
-        pseudo_outcome[control_indices] = imputed_te_control
-        return pseudo_outcome
+        return imputed_te_control, imputed_te_treatment
