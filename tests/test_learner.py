@@ -66,6 +66,8 @@ def _linear_base_learner_params(
         ("R", "continuous", 0.0470, "binary", "linear"),
         ("DR", "binary", 0.3045, "binary", "linear"),
         ("DR", "continuous", 0.0463, "binary", "linear"),
+        ("DR", "continuous", 0.0627, "multi", "linear"),
+        ("DR", "continuous", 0.0762, "multi", "constant"),
     ],
 )
 def test_learner_synthetic_in_sample(
@@ -137,6 +139,8 @@ def test_learner_synthetic_in_sample(
         ("R", "continuous", 0.0463, "binary", "linear"),
         ("DR", "binary", 0.3018, "binary", "linear"),
         ("DR", "continuous", 0.0454, "binary", "linear"),
+        ("DR", "continuous", 0.0666, "multi", "linear"),
+        ("DR", "continuous", 0.0758, "multi", "constant"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -227,6 +231,8 @@ def test_learner_synthetic_oos(
         ("X", "binary"),
         ("X", "multi"),
         ("R", "binary"),
+        ("DR", "binary"),
+        ("DR", "multi"),
     ],
 )
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
@@ -466,7 +472,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("T", True),
         ("X", True),
         ("R", False),
-        ("DR", False),
+        ("DR", True),
     ],
 )
 def test_validate_n_variants_error_multi(metalearner_prefix, success):

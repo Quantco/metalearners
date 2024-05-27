@@ -57,9 +57,11 @@ on ground truth CATEs:
 | twins_pandas                                                 |           0.322255 |     0.344373 |               0.353968 |         0.349625 |
 | twins_numpy                                                  |           0.322681 |      0.34876 |               0.350513 |         0.336281 |
 
-| DR-learner                                                   | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
-| :----------------------------------------------------------- | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome_binary_treatment_linear_te |          0.0463883 |    0.0454509 |         0.248504 |   0.248071 |              0.0479302 |        0.0454753 |
-| synthetic_data_binary_outcome_binary_treatment_linear_te     |                nan |          nan |         0.304584 |   0.301864 |               0.304651 |         0.301819 |
-| twins_pandas                                                 |                nan |          nan |              nan |        nan |               0.384664 |         0.371556 |
-| twins_numpy                                                  |                nan |          nan |              nan |        nan |               0.365246 |         0.355291 |
+| DR-learner                                                    | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
+| :------------------------------------------------------------ | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0463883 |    0.0454509 |         0.248504 |   0.248071 |              0.0479302 |        0.0454753 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te      |                nan |          nan |         0.304584 |   0.301864 |               0.304651 |         0.301819 |
+| twins_pandas                                                  |                nan |          nan |              nan |        nan |               0.384664 |         0.371556 |
+| twins_numpy                                                   |                nan |          nan |              nan |        nan |               0.365246 |         0.355291 |
+| synthetic_data_continuous_outcome_multi_treatment_linear_te   |          0.0626939 |    0.0666055 |          0.35979 |   0.361228 |               0.065019 |        0.0620081 |
+| synthetic_data_continuous_outcome_multi_treatment_constant_te |          0.0762018 |    0.0758183 |         0.075396 |  0.0753247 |              0.0788082 |        0.0757351 |

@@ -28,18 +28,17 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
     Importantly, the current DR-Learner implementation only supports:
 
-        * binary treatment variants
         * binary classes in case of a classification outcome
 
-    The DR-Learner contains three nuisance models
+    The DR-Learner contains the following nuisance models:
 
-        * a ``"propensity_model"`` estimating :math:`\Pr[W=1|X]`
-        * two ``"variant_outcome_model"`` estimating :math:`\mathbb{E}[Y|X, W=0]` and
-          :math:`\mathbb{E}[Y|X, W=1]`
+        * a ``"propensity_model"`` estimating :math:`\Pr[W=k|X]`
+        * one ``"variant_outcome_model"`` for each treatment variant (including control)
+          estimating :math:`\mathbb{E}[Y|X, W=k]`
 
-    and one treatment model
+    and one treatment model for each treatment variant (without control):
 
-        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(1) - Y(0) | X]`
+        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
 
     """
 
@@ -50,7 +49,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 cardinality=lambda _: 1, predict_method=lambda _: "predict_proba"
             ),
             VARIANT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 2,
+                cardinality=lambda ml: ml.n_variants,
                 predict_method=lambda ml: (
                     "predict_proba" if ml.is_classification else "predict"
                 ),
@@ -61,14 +60,14 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             TREATMENT_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+                cardinality=lambda ml: ml.n_variants - 1,
                 predict_method=lambda _: "predict",
             )
         }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
-        return False
+        return True
 
     @classmethod
     def _supports_multi_class(cls) -> bool:
@@ -86,32 +85,21 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         for treatment_variant in range(self.n_variants):
             self._treatment_variants_indices.append(w == treatment_variant)
 
+        # TODO: Consider multiprocessing
+        for treatment_variant in range(self.n_variants):
+            self.fit_nuisance(
+                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
+                y=y[self._treatment_variants_indices[treatment_variant]],
+                model_kind=VARIANT_OUTCOME_MODEL,
+                model_ord=treatment_variant,
+            )
+
         self.fit_nuisance(
             X=X,
             y=w,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
         )
-
-        self.fit_nuisance(
-            X=index_matrix(X, self._treatment_variants_indices[1]),
-            y=y[self._treatment_variants_indices[1]],
-            model_kind=VARIANT_OUTCOME_MODEL,
-            model_ord=1,
-        )
-        self.fit_nuisance(
-            X=index_matrix(X, self._treatment_variants_indices[0]),
-            y=y[self._treatment_variants_indices[0]],
-            model_kind=VARIANT_OUTCOME_MODEL,
-            model_ord=0,
-        )
-
-        propensity_estimates = self.predict_nuisance(
-            X=X,
-            is_oos=False,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-        )[:, 1]
 
         conditional_average_outcome_estimates = (
             self.predict_conditional_average_outcomes(
@@ -120,19 +108,29 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             )
         )
 
-        pseudo_outcomes = self._pseudo_outcome(
+        propensity_estimates = self.predict_nuisance(
             X=X,
-            w=w,
-            y=y,
-            propensity_estimates=propensity_estimates,
-            conditional_average_outcome_estimates=conditional_average_outcome_estimates,
-        )
-        self.fit_treatment(
-            X=X,
-            y=pseudo_outcomes,
-            model_kind=TREATMENT_MODEL,
+            is_oos=False,
+            model_kind=PROPENSITY_MODEL,
             model_ord=0,
         )
+
+        for treatment_variant in range(1, self.n_variants):
+            pseudo_outcomes = self._pseudo_outcome(
+                X=X,
+                w=w,
+                y=y,
+                propensity_estimates=propensity_estimates,
+                conditional_average_outcome_estimates=conditional_average_outcome_estimates,
+                treatment_variant=treatment_variant,
+            )
+
+            self.fit_treatment(
+                X=X,
+                y=pseudo_outcomes,
+                model_kind=TREATMENT_MODEL,
+                model_ord=treatment_variant - 1,
+            )
         return self
 
     def predict(
@@ -141,23 +139,30 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        estimates = self.predict_treatment(
-            X,
-            is_oos=is_oos,
-            oos_method=oos_method,
-            model_kind=TREATMENT_MODEL,
-            model_ord=0,
-        )
-        if self.is_classification:
-            # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
-            # work with multiclass outcomes and return the CATE estimate for each class. As the DR-Learner only
-            # works with binary classes (the pseudo outcome formula does not make sense with
-            # multiple classes unless some adaptation is done) we can manually infer the
-            # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
-            return np.stack([-estimates, estimates], axis=-1).reshape(
-                len(X), self.n_variants - 1, 2
+        n_outputs = 2 if self.is_classification else 1
+        estimates = np.zeros((len(X), self.n_variants - 1, n_outputs))
+        for treatment_variant in range(1, self.n_variants):
+            estimates_variant = self.predict_treatment(
+                X,
+                is_oos=is_oos,
+                oos_method=oos_method,
+                model_kind=TREATMENT_MODEL,
+                model_ord=treatment_variant - 1,
             )
-        return estimates.reshape(len(X), self.n_variants - 1, 1)
+            if self.is_classification:
+                # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
+                # work with multiclass outcomes and return the CATE estimate for each class. As the DR-Learner only
+                # works with binary classes (the pseudo outcome formula does not make sense with
+                # multiple classes unless some adaptation is done) we can manually infer the
+                # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
+                estimates_variant = np.stack(
+                    [-estimates_variant, estimates_variant], axis=1
+                )
+            else:
+                estimates_variant = np.expand_dims(estimates_variant, 1)
+
+            estimates[:, treatment_variant - 1] = estimates_variant
+        return estimates
 
     def evaluate(
         self,
@@ -176,29 +181,41 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         X: Matrix,
         y: Vector,
         w: Vector,
-        propensity_estimates: Vector,
+        propensity_estimates: Matrix,
         conditional_average_outcome_estimates: Matrix,
+        treatment_variant: int,
         epsilon: float = _EPSILON,
     ) -> np.ndarray:
         y0_estimate = conditional_average_outcome_estimates[:, 0]
-        y1_estimate = conditional_average_outcome_estimates[:, 1]
+        y1_estimate = conditional_average_outcome_estimates[:, treatment_variant]
+        yw_estimate = conditional_average_outcome_estimates[np.arange(len(w)), w]
 
         if self.is_classification:
             y0_estimate = y0_estimate[:, 1]
             y1_estimate = y1_estimate[:, 1]
+            yw_estimate = yw_estimate[:, 1]
         else:
             y0_estimate = y0_estimate[:, 0]
             y1_estimate = y1_estimate[:, 0]
+            yw_estimate = yw_estimate[:, 0]
 
-        numerator = w - propensity_estimates
-        denominator = propensity_estimates * (1 - propensity_estimates)
-        denominator_padded = clip_element_absolute_value_to_epsilon(
-            denominator, epsilon
-        )
-
-        conditional_outcome_estimate = np.where(w, y1_estimate, y0_estimate)
-        return (
-            numerator / (denominator_padded) * (y - conditional_outcome_estimate)
+        pseudo_outcome = (
+            (
+                (y - yw_estimate)
+                / clip_element_absolute_value_to_epsilon(
+                    propensity_estimates[:, treatment_variant], epsilon
+                )
+            )
+            * (w == treatment_variant)
             + y1_estimate
+            - (
+                (y - y0_estimate)
+                / clip_element_absolute_value_to_epsilon(
+                    propensity_estimates[:, 0], epsilon
+                )
+            )
+            * (w == 0)
             - y0_estimate
         )
+
+        return pseudo_outcome

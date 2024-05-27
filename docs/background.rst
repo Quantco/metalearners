@@ -182,4 +182,23 @@ It consists of two stages:
     .. math::
         \hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i]
 
-TODO: multitreatment
+In the case of multiple discrete treatments the stages are similar to the binary case:
+
+#.  One outcome model is estimated for each variant (including the control), and one
+    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K\}`:
+
+    .. math::
+        \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
+        e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
+
+    The pseudo-outcomes are constructed for each treatment variant, :math:`\forall k \in \{1,\dots, K\}`:
+
+    .. math::
+        \varphi_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{W^i}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}_k(X^i) \\
+        &- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}_0(X^i)
+
+#.  Finally, the CATE is estimated by regressing :math:`\varphi_k` on :math:`X` for each
+    treatment variant, :math:`\forall k \in \{1,\dots, K\}`:
+
+    .. math::
+        \hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i]
