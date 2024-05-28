@@ -305,3 +305,18 @@ def clip_element_absolute_value_to_epsilon(vector: Vector, epsilon: float) -> Ve
     """
     bound = np.where(vector < 0, -1, 1) * epsilon
     return np.where(np.abs(vector) < epsilon, bound, vector)
+
+
+def validate_valid_treatment_variant_not_control(
+    treatment_variant: int, n_variants: int
+) -> None:
+    if treatment_variant >= n_variants:
+        raise ValueError(
+            f"MetaLearner was initialized to have {n_variants} 0-index variants but tried "
+            f"to index variant {treatment_variant}."
+        )
+    if treatment_variant < 1:
+        raise ValueError(
+            "pseudo outcomes can only be computed for a treatment variant which isn't "
+            "considered to be control."
+        )

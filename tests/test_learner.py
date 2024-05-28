@@ -63,7 +63,10 @@ def _linear_base_learner_params(
         ("X", "continuous", 0.0615, "multi", "linear"),
         ("X", "continuous", 0.0753, "multi", "constant"),
         ("R", "binary", 0.3046, "binary", "linear"),
-        ("R", "continuous", 0.0470, "binary", "linear"),
+        ("R", "continuous", 0.0469, "binary", "linear"),
+        # The multi-variant R-Learner runs lack a baseline.
+        ("R", "continuous", 0.288, "multi", "linear"),
+        ("R", "continuous", 0.085, "multi", "constant"),
         ("DR", "binary", 0.3045, "binary", "linear"),
         ("DR", "continuous", 0.0463, "binary", "linear"),
         ("DR", "continuous", 0.0627, "multi", "linear"),
@@ -137,6 +140,9 @@ def test_learner_synthetic_in_sample(
         ("X", "continuous", 0.0753, "multi", "constant"),
         ("R", "binary", 0.3018, "binary", "linear"),
         ("R", "continuous", 0.0463, "binary", "linear"),
+        # The multi-variant R-Learner runs lack a baseline.
+        ("R", "continuous", 0.28, "multi", "linear"),
+        ("R", "continuous", 0.08, "multi", "constant"),
         ("DR", "binary", 0.3018, "binary", "linear"),
         ("DR", "continuous", 0.0454, "binary", "linear"),
         ("DR", "continuous", 0.0666, "multi", "linear"),
@@ -231,6 +237,7 @@ def test_learner_synthetic_oos(
         ("X", "binary"),
         ("X", "multi"),
         ("R", "binary"),
+        ("R", "multi"),
         ("DR", "binary"),
         ("DR", "multi"),
     ],
@@ -389,7 +396,10 @@ def test_learner_evaluate(
         elif metalearner == "R":
             assert "outcome_rmse" in evaluation
     if metalearner == "R":
-        assert {"r_loss", "propensity_cross_entropy"} <= set(evaluation.keys())
+        assert (
+            {f"r_loss_{i}_vs_0" for i in range(1, n_variants)}
+            | {"propensity_cross_entropy"}
+        ) <= set(evaluation.keys())
 
 
 @pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
@@ -471,7 +481,7 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         ("S", True),
         ("T", True),
         ("X", True),
-        ("R", False),
+        ("R", True),
         ("DR", True),
     ],
 )

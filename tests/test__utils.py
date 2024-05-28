@@ -23,6 +23,7 @@ from metalearners._utils import (
     supports_categoricals,
     validate_all_vectors_same_index,
     validate_model_and_predict_method,
+    validate_valid_treatment_variant_not_control,
 )
 from metalearners.data_generation import generate_covariates
 
@@ -325,3 +326,22 @@ def test_increase_element_absolute_value_by_epsilon():
     epsilon = 0.1
     result = clip_element_absolute_value_to_epsilon(vector, epsilon)
     assert all(result == np.array([epsilon, 1, -1, 0.1, -0.1, epsilon, -epsilon]))
+
+
+@pytest.mark.parametrize(
+    "treatment_variant,n_variants,success",
+    [
+        (0, 2, False),
+        (-1, 2, False),
+        (1, 2, True),
+        (2, 2, False),
+    ],
+)
+def test_validate_valid_treatment_variant_not_control(
+    treatment_variant, n_variants, success
+):
+    if success:
+        validate_valid_treatment_variant_not_control(treatment_variant, n_variants)
+    else:
+        with pytest.raises(ValueError, match="variant"):
+            validate_valid_treatment_variant_not_control(treatment_variant, n_variants)

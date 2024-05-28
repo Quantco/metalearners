@@ -50,12 +50,14 @@ on ground truth CATEs:
 | synthetic_data_continuous_outcome_multi_treatment_linear_te   |          0.0615009 |     0.061717 |        0.0615009 |   0.061717 |              0.0616481 |         0.061717 |
 | synthetic_data_continuous_outcome_multi_treatment_constant_te |           0.075331 |     0.075295 |         0.075331 |   0.075295 |              0.0754751 |         0.075295 |
 
-| R-learner                                                    | causalml_in_sample | causalml_oos | metalearners_in_sample | metalearners_oos |
-| :----------------------------------------------------------- | -----------------: | -----------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome_binary_treatment_linear_te |          0.0469718 |    0.0462968 |              0.0499107 |        0.0473927 |
-| synthetic_data_binary_outcome_binary_treatment_linear_te     |           0.304553 |     0.301832 |               0.304672 |         0.301835 |
-| twins_pandas                                                 |           0.322255 |     0.344373 |               0.353968 |         0.349625 |
-| twins_numpy                                                  |           0.322681 |      0.34876 |               0.350513 |         0.336281 |
+| R-learner                                                     | causalml_in_sample | causalml_oos | metalearners_in_sample | metalearners_oos |
+| :------------------------------------------------------------ | -----------------: | -----------: | ---------------------: | ---------------: |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0468823 |    0.0463762 |              0.0499107 |        0.0473927 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te      |           0.304554 |     0.301834 |               0.304672 |         0.301835 |
+| twins_pandas                                                  |           0.319835 |     0.348865 |               0.353968 |         0.349625 |
+| twins_numpy                                                   |           0.322623 |     0.348675 |               0.350504 |         0.336285 |
+| synthetic_data_continuous_outcome_multi_treatment_linear_te   |            8.22632 |      8.22119 |               0.287695 |         0.278256 |
+| synthetic_data_continuous_outcome_multi_treatment_constant_te |            1.33355 |      1.33315 |              0.0854132 |        0.0815987 |
 
 | DR-learner                                                    | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
 | :------------------------------------------------------------ | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |

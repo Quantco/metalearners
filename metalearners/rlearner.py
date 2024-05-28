@@ -12,7 +12,9 @@ from metalearners._utils import (
     Vector,
     clip_element_absolute_value_to_epsilon,
     function_has_argument,
+    index_matrix,
     validate_all_vectors_same_index,
+    validate_valid_treatment_variant_not_control,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -72,7 +74,6 @@ class RLearner(MetaLearner):
 
     Importantly, the current R-Learner implementation only supports:
 
-        * binary treatment variants
         * binary classes in case of a classification outcome
 
     The R-Learner contains two nuisance models
@@ -80,9 +81,9 @@ class RLearner(MetaLearner):
         * a ``"propensity_model"`` estimating :math:`\Pr[W=1|X]`
         * an ``"outcome_model"`` estimating :math:`\mathbb{E}[Y|X]`
 
-    and one treatment model
+    and one treatment model per treatment variant which isn't control
 
-        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(1) - Y(0) | X]`
+        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
 
     The ``treatment_model_factory`` provided needs to support the argument
     ``sample_weight`` in its ``fit`` method.
@@ -125,14 +126,14 @@ class RLearner(MetaLearner):
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             TREATMENT_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
+                cardinality=lambda ml: ml.n_variants - 1,
                 predict_method=lambda _: "predict",
             )
         }
 
     @classmethod
     def _supports_multi_treatment(cls) -> bool:
-        return False
+        return True
 
     @classmethod
     def _supports_multi_class(cls) -> bool:
@@ -148,6 +149,8 @@ class RLearner(MetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
 
+        self._variants_indices = []
+
         self.fit_nuisance(
             X=X,
             y=w,
@@ -161,17 +164,32 @@ class RLearner(MetaLearner):
             model_ord=0,
         )
 
-        pseudo_outcomes, weights = self._pseudo_outcome_and_weights(
-            X=X, w=w, y=y, epsilon=epsilon
-        )
+        for treatment_variant in range(1, self.n_variants):
 
-        self.fit_treatment(
-            X=X,
-            y=pseudo_outcomes,
-            model_kind=TREATMENT_MODEL,
-            model_ord=0,
-            fit_params={_SAMPLE_WEIGHT: weights},
-        )
+            is_treatment = w == treatment_variant
+            is_control = w == 0
+            mask = is_treatment | is_control
+
+            self._variants_indices.append(mask)
+
+            pseudo_outcomes, weights = self._pseudo_outcome_and_weights(
+                X=X,
+                w=w,
+                y=y,
+                treatment_variant=treatment_variant,
+                mask=mask,
+                epsilon=epsilon,
+            )
+
+            X_filtered = index_matrix(X, mask)
+
+            self.fit_treatment(
+                X=X_filtered,
+                y=pseudo_outcomes,
+                model_kind=TREATMENT_MODEL,
+                model_ord=treatment_variant - 1,
+                fit_params={_SAMPLE_WEIGHT: weights},
+            )
         return self
 
     def predict(
@@ -180,23 +198,74 @@ class RLearner(MetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        estimates = self.predict_treatment(
-            X,
-            is_oos=is_oos,
-            oos_method=oos_method,
-            model_kind=TREATMENT_MODEL,
-            model_ord=0,
-        )
-        if self.is_classification:
-            # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
-            # work with multiclass outcomes and return the CATE estimate for each class. As the R-Learner only
-            # works with binary classes (the pseudo outcome formula does not make sense with
-            # multiple classes unless some adaptation is done) we can manually infer the
-            # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
-            return np.stack([-estimates, estimates], axis=-1).reshape(
-                len(X), self.n_variants - 1, 2
+        n_outputs = 2 if self.is_classification else 1
+        tau_hat = np.zeros((len(X), self.n_variants - 1, n_outputs))
+
+        if is_oos:
+
+            for treatment_variant in range(1, self.n_variants):
+                variant_estimates = self.predict_treatment(
+                    X,
+                    is_oos=is_oos,
+                    oos_method=oos_method,
+                    model_kind=TREATMENT_MODEL,
+                    model_ord=treatment_variant - 1,
+                )
+                if self.is_classification:
+                    # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
+                    # work with multiclass outcomes and return the CATE estimate for each class. As the R-Learner only
+                    # works with binary classes (the pseudo outcome formula does not make sense with
+                    # multiple classes unless some adaptation is done) we can manually infer the
+                    # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
+                    variant_estimates = np.stack(
+                        [-variant_estimates, variant_estimates], axis=-1
+                    )
+                variant_estimates = variant_estimates.reshape(len(X), n_outputs)
+                tau_hat[:, treatment_variant - 1, :] = variant_estimates
+
+            return tau_hat
+
+        for treatment_variant in range(1, self.n_variants):
+            variant_indices = self._variants_indices[treatment_variant - 1]
+
+            variant_estimates = self.predict_treatment(
+                index_matrix(X, variant_indices),
+                is_oos=False,
+                model_kind=TREATMENT_MODEL,
+                model_ord=treatment_variant - 1,
             )
-        return estimates.reshape(len(X), self.n_variants - 1, 1)
+            if sum(~variant_indices) > 0:
+                non_variant_estimates = self.predict_treatment(
+                    index_matrix(X, ~variant_indices),
+                    is_oos=True,
+                    oos_method=oos_method,
+                    model_kind=TREATMENT_MODEL,
+                    model_ord=treatment_variant - 1,
+                )
+            if self.is_classification:
+                # This is to be consistent with other MetaLearners (e.g. S and T) that automatically
+                # work with multiclass outcomes and return the CATE estimate for each class. As the R-Learner only
+                # works with binary classes (the pseudo outcome formula does not make sense with
+                # multiple classes unless some adaptation is done) we can manually infer the
+                # CATE estimate for the complementary class  -- returning a matrix of shape (N, 2).
+                variant_estimates = np.stack(
+                    [-variant_estimates, variant_estimates], axis=-1
+                )
+                if sum(~variant_indices) > 0:
+                    non_variant_estimates = np.stack(
+                        [-non_variant_estimates, non_variant_estimates], axis=-1
+                    )
+            variant_estimates = variant_estimates.reshape(
+                (sum(variant_indices), n_outputs)
+            )
+            if sum(~variant_indices) > 0:
+                non_variant_estimates = non_variant_estimates.reshape(
+                    (sum(~variant_indices), n_outputs)
+                )
+                tau_hat[~variant_indices, treatment_variant - 1] = non_variant_estimates
+
+            tau_hat[variant_indices, treatment_variant - 1] = variant_estimates
+        return tau_hat
 
     def evaluate(
         self,
@@ -212,7 +281,9 @@ class RLearner(MetaLearner):
             oos_method=oos_method,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
-        )[:, 1]
+        )
+        propensity_evaluation = {"propensity_cross_entropy": log_loss(w, w_hat)}
+
         y_hat = self.predict_nuisance(
             X=X,
             is_oos=is_oos,
@@ -222,13 +293,6 @@ class RLearner(MetaLearner):
         )
         if self.is_classification:
             y_hat = y_hat[:, 1]
-        tau_hat = self.predict_treatment(
-            X=X,
-            is_oos=is_oos,
-            oos_method=oos_method,
-            model_kind=TREATMENT_MODEL,
-            model_ord=0,
-        )
 
         outcome_evaluation = (
             {"outcome_log_loss": log_loss(y, y_hat)}
@@ -236,49 +300,79 @@ class RLearner(MetaLearner):
             else {"outcome_rmse": root_mean_squared_error(y, y_hat)}
         )
 
-        return outcome_evaluation | {
-            "propensity_cross_entropy": log_loss(w, w_hat),
-            "r_loss": r_loss(
-                cate_estimates=tau_hat,
+        treatment_evaluation = {}
+        tau_hat = self.predict(X=X, is_oos=is_oos, oos_method=oos_method)
+        for treatment_variant in range(1, self.n_variants):
+            propensity_estimates = w_hat[:, treatment_variant] / (
+                w_hat[:, 0] + w_hat[:, treatment_variant]
+            )
+            cate_estimates = (
+                tau_hat[:, treatment_variant - 1, 1]
+                if self.is_classification
+                else tau_hat[:, treatment_variant - 1, 0]
+            )
+            treatment_evaluation[f"r_loss_{treatment_variant}_vs_0"] = r_loss(
+                cate_estimates=cate_estimates,
                 outcome_estimates=y_hat,
-                propensity_scores=w_hat,
+                propensity_scores=propensity_estimates,
                 outcomes=y,
                 treatments=w,
-            ),
-        }
+            )
+
+        return propensity_evaluation | outcome_evaluation | treatment_evaluation
 
     def _pseudo_outcome_and_weights(
-        self, X: Matrix, y: Vector, w: Vector, epsilon: float = _EPSILON
-    ) -> tuple[Vector, Vector]:
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        treatment_variant: int,
+        mask: Vector | None = None,
+        epsilon: float = _EPSILON,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the R-Learner pseudo outcome and corresponding weights.
 
         Importantly, this method assumes to be applied on in-sample data.
         In other words, ``is_oos`` will always be set to ``False`` when calling
         ``predict_nuisance``.
 
+        If ``mask`` is provided, the retuned pseudo outcomes and weights are only
+        with respect the observations that the mask selects.
+
         Since the pseudo outcome is a fraction of residuals, we add a small
         constant ``epsilon`` to the denominator in order to avoid numerical problems.
         """
+        if mask is None:
+            mask = np.ones(len(X), dtype=bool)
+
+        validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
+
+        # Note that if we already applied the mask as an input to this call, we wouldn't
+        # be able to match original observations with their corresponding folds.
         y_estimates = self.predict_nuisance(
             X=X,
             is_oos=False,
             model_kind=OUTCOME_MODEL,
             model_ord=0,
+        )[mask]
+        w_estimates = self.predict_nuisance(
+            X=X, is_oos=False, model_kind=PROPENSITY_MODEL, model_ord=0
+        )[mask]
+        w_estimates_binarized = w_estimates[:, treatment_variant] / (
+            w_estimates[:, 0] + w_estimates[:, treatment_variant]
         )
+
         if self.is_classification:
             y_estimates = y_estimates[:, 1]
-        y_residuals = y - y_estimates
 
-        w_residuals = (
-            w
-            - self.predict_nuisance(
-                X=X, is_oos=False, model_kind=PROPENSITY_MODEL, model_ord=0
-            )[:, 1]
-        )
+        y_residuals = y[mask] - y_estimates
 
+        w_binarized = w[mask] == treatment_variant
+        w_residuals = w_binarized - w_estimates_binarized
         w_residuals_padded = clip_element_absolute_value_to_epsilon(
             w_residuals, epsilon
         )
+
         pseudo_outcomes = y_residuals / w_residuals_padded
         weights = np.square(w_residuals)
 

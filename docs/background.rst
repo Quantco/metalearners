@@ -38,9 +38,13 @@ Then the CATE is estimated as:
 .. math::
     \hat{\tau}^S(x) := \hat{\mu}(x,1) - \hat{\mu}(x,0)
 
+More than binary treatment
+**************************
+
 In the case of multiple discrete treatments the treatment variant is encoded in one
 column if the model natively supports categorical variables or one-hot-encoded if it does
 not have native support.
+
 The CATE for each treatment variant against the control is then estimated with:
 
 .. math::
@@ -63,6 +67,9 @@ Then the CATE is estimated as:
 
 .. math::
     \hat{\tau}^T(x) := \hat{\mu}_1(x) - \hat{\mu}_0(x)
+
+More than binary treatment
+**************************
 
 In the case of multiple discrete treatments one estimator is trained for each treatment
 variant (including the control):
@@ -105,6 +112,9 @@ It is an extension of the T-Learner and consists of three stages:
     where :math:`g(x) \in [0,1]`. We take :math:`g(x) := \mathbb{E}[W = 1 | X]` to be
     the propensity score.
 
+More than binary treatment
+**************************
+
 In the case of multiple discrete treatments the stages are similar to the binary case:
 
 #.  One outcome model is estimated for each variant (including the control), and one
@@ -146,7 +156,7 @@ It consists of two stages:
 
     .. math::
         m(x) &:= \mathbb{E}[Y | X=x] \\
-        e(x) &:= \mathbb{E}[W = 1 | X=x]
+        e(x) &:= \mathbb{P}[W = 1 | X=x]
 
 #.  Estimate the treatment effect by minimising the R-Loss:
 
@@ -158,7 +168,44 @@ It consists of two stages:
 
     And therefore any ML model which supports weighting each observation differently can be used for the final model.
 
-TODO: multitreatment
+More than binary treatment
+**************************
+
+In the case of multiple discrete treatments the stages are similar to
+the binary case. More precisely, the first stage is perfectly
+equivalent. Yet, the second stage includes a conceptual change: we
+arbitrarily define one treatment variant as control -- the variant with
+index 0 -- and estimate pair-wise treatment effects of every other variant to
+the control variant.
+
+#.  Estimate a general outcome model and a propensity model:
+
+    .. math::
+        m(x) &:= \mathbb{E}[Y | X=x] \\
+        e(x) &:= \mathbb{P}[W = k | X=x]
+
+#. For each :math:`k \neq 0`, estimate the pairwise treatment effect :math:`\hat{\tau}_{0,k}^R`
+   between 0 and :math:`k` by minimising the R-Loss from above. In
+   order to fit these models, we fit the pseudo outcomes only on
+   observations of either the control group or the treatment variant
+   group :math:`k`.
+
+Note that
+
+* in chapter 7, `Nie et al. (2017) <https://arxiv.org/pdf/1712.04912>`_ suggest a generalization of the R-Loss
+  simultaneously taking all treatment variants into account. Yet,
+  `Acharki et al. (2023) <https://arxiv.org/pdf/2205.14714>`_ point out
+  practical shortcoming of this approach.
+
+* our implementation differs subtly from the CausalML
+  implementation: while we train a multi-class propensity model whose
+  estimates we normalize subsequently, CausalML estimates one
+  propensity model per control-treatment pair.
+
+* rather than estimating one treatment effect per
+  control-treatment pair, we could also estimate the treatment effects
+  between each treatment variant.
+
 
 DR-Learner
 """""""""""""""""""""
@@ -181,6 +228,9 @@ It consists of two stages:
 
     .. math::
         \hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i]
+
+More than binary treatment
+**************************
 
 In the case of multiple discrete treatments the stages are similar to the binary case:
 
