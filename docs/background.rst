@@ -272,11 +272,11 @@ There maybe several theoretical or practical reasons to prefer one CATE decompos
 another, which is why so many CATE metalearners have been developed. Most of them are
 developed for the binary treatment case although extensions to the multiple discrete
 treatments can be implemented. In this library we assume we have :math:`K` treatment
-variants and a control variant, i.e. :math:`w \in \{0,\dots,K\}`. Given this scenario,
+variants including the control variant, i.e. :math:`w \in \{0,\dots,K-1\}`. Given this scenario,
 we estimate the CATE for each variant in relation to the control:
 
 .. math::
-    \tau_k(x) := \mathbb{E}[Y(k) - Y(0) | X=x] \; \forall k \in \{1,\dots, K\}
+    \tau_k(x) := \mathbb{E}[Y(k) - Y(0) | X=x] \; \forall k \in \{1,\dots, K-1\}
 
 S-Learner
 """""""""""""""""""""
@@ -304,7 +304,7 @@ not have native support.
 The CATE for each treatment variant against the control is then estimated with:
 
 .. math::
-    \hat{\tau}_k^S(x) = \hat{\mu}(x,k) - \hat{\mu}(x,0) \; \forall k \in \{1,\dots, K\}
+    \hat{\tau}_k^S(x) = \hat{\mu}(x,k) - \hat{\mu}(x,0) \; \forall k \in \{1,\dots, K-1\}
 
 T-Learner
 """""""""""""""""""""
@@ -331,12 +331,12 @@ In the case of multiple discrete treatments one estimator is trained for each tr
 variant (including the control):
 
 .. math::
-    \mu_k (x) := \mathbb{E}[Y(k) | X = x] \; \forall k \in \{0,\dots, K\}
+    \mu_k (x) := \mathbb{E}[Y(k) | X = x] \; \forall k \in \{0,\dots, K-1\}
 
 The CATE for each treatment variant against the control is then estimated with:
 
 .. math::
-    \hat{\tau}_k^T(x) := \hat{\mu}_k(x) - \hat{\mu}_0(x) \; \forall k \in \{1,\dots, K\}
+    \hat{\tau}_k^T(x) := \hat{\mu}_k(x) - \hat{\mu}_0(x) \; \forall k \in \{1,\dots, K-1\}
 
 X-Learner
 """""""""""""""""""""
@@ -374,14 +374,14 @@ More than binary treatment
 In the case of multiple discrete treatments the stages are similar to the binary case:
 
 #.  One outcome model is estimated for each variant (including the control), and one
-    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K\}`:
+    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K-1\}`:
 
     .. math::
         \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
         e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
 
 #.  The treatment effects are imputed using the corresponding outcome estimator,
-    :math:`\forall k \in \{1,\dots, K\}`:
+    :math:`\forall k \in \{1,\dots, K-1\}`:
 
     .. math::
         \widetilde{D}_k^i &:= Y^i_k - \hat{\mu}_0(X^i_k) \\
@@ -491,20 +491,20 @@ More than binary treatment
 In the case of multiple discrete treatments the stages are similar to the binary case:
 
 #.  One outcome model is estimated for each variant (including the control), and one
-    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K\}`:
+    propensity model is trained as a multiclass classifier, :math:`\forall k \in \{0,\dots, K-1\}`:
 
     .. math::
         \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
         e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
 
-    The pseudo-outcomes are constructed for each treatment variant, :math:`\forall k \in \{1,\dots, K\}`:
+    The pseudo-outcomes are constructed for each treatment variant, :math:`\forall k \in \{1,\dots, K-1\}`:
 
     .. math::
         \varphi_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}_k(X^i) \\
         &- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}_0(X^i)
 
 #.  Finally, the CATE is estimated by regressing :math:`\varphi_k` on :math:`X` for each
-    treatment variant, :math:`\forall k \in \{1,\dots, K\}`:
+    treatment variant, :math:`\forall k \in \{1,\dots, K-1\}`:
 
     .. math::
         \hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i]
