@@ -180,6 +180,7 @@ set is used by which base learner. This is currently not supported by
 
 
 
+.. _Motivation_multiprocessing:
 
 Multiprocessing training of base learners
 """""""""""""""""""""""""""""""""""""""""

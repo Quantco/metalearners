@@ -74,6 +74,8 @@ FAQ
 
     Some other implementations of Metalearning include `causalml <https://github.com/uber/causalml>`_.
 
+.. _Cross-fit-faq:
+
 * **Why do we cross-fit for all MetaLearners?**
     Cross-fitting is described as a central part of the learning process
     for some metaLearners. For instance, the outcome and propensity score models that make up the R-Learner loss for a single

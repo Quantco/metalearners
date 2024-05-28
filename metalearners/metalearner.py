@@ -397,7 +397,11 @@ class MetaLearner(ABC):
     def fit(
         self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
     ) -> Self:
-        """Fit all models of the MetaLearner."""
+        """Fit all models of the MetaLearner.
+
+        ``n_jobs_cross_fitting`` will be used at the cross-fitting level. For more information about
+        parallelism check :ref:`parallelism`
+        """
         ...
 
     def predict_nuisance(

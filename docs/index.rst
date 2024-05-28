@@ -8,6 +8,7 @@ Welcome to metalearners's documentation!
    Motivation <motivation.rst>
    Background <background.rst>
    Glossary <glossary.rst>
+   What about parallelism? <parallelism.rst>
    Examples <examples/index.rst>
    FAQ <faq.rst>
    API Reference <api/modules>
