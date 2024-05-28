@@ -4,7 +4,263 @@ Background
 CATE estimation
 ---------------
 
-TODO
+This library is all about MetaLearners and MetaLearners are a popular
+choice to estimate CATEs. Therefore, we will discuss what CATEs are as
+well as when and how they can be useful.
+
+What are CATEs?
+"""""""""""""""
+
+CATEs, short for Conditional Average Treatment Effects, are a concept
+from the field of Causal Inference. They rely on the `potential
+outcomes framework <https://web.archive.org/web/20150513202106/http://sekhon.berkeley.edu/papers/SekhonOxfordHandbook.pdf>`_ proposed by Rubin and Neyman.
+
+Potential outcomes
+******************
+
+If, for instance, two treatment variants  can be chosen --
+i.e. :math:`W \in \{0, 1\}` -- said
+potential outcomes framework defines the potential outcomes
+:math:`Y(1)` and :math:`Y(0)` both indicating the outcome
+if the respective treatment variant had been chosen. The notion of
+these potential outcomes generalizes to a scenario with :math:`K > 2`
+treatment variants where :math:`W \in \{0, \dots, K-1\}`
+
+Gven these potential outcomes per treatment variant, we can
+investigate the pairwise differences of the potential outcomes to
+define the notion of treatment effects.
+
+Treatment effects
+*****************
+
+If we think of :math:`Y(1)` as the outcome if we had chosen treatment
+variant 1 and :math:`Y(0)` as the outcome if we had chosen treatment
+variant 0, it follows naturally that the difference of both
+:math:`Y(1) - Y(0)` quantifies the impact on the outcome of the treatment
+1 compared to treatment 0. This quantity is often referred to as a
+treatment effect.
+
+More concretely, these treatment effects can be defined for several
+levels of granulariy. Assuming treatment variants 1 and 0 we
+distinguish the following:
+
+* The **Individual Treatment Effect** is the treatment effect of one
+  treatment variant compared to another variant on a particular experiment unit
+  :math:`i`, e.g. :math:`\tau^i = Y^i(1) - Y^i(0)`.
+
+* The **Conditional Average Treatment Effect** is an expected treatment
+  effect conditioning on covariates :math:`X`: :math:`\tau(X) =
+  \mathbb{E}[Y(1) - Y(0)|X]`. Since the CATE conditions on covariates,
+  it is able to capture heterogeneity of the treatment effect,
+  In other words, it captures for which instantiations of :math:`X` the treatment effect is
+  higher and for which it is lower.
+
+* The **Average Treatment Effect** is an expected treatment effect, not
+  conditioning on covariates: :math:`\tau(X) = \mathbb{E}[Y(1) -
+  Y(0)]`.
+
+
+CATE estimation is not supervised learning
+""""""""""""""""""""""""""""""""""""""""""
+
+MetaLearners rely on off the shelf supervised Machine Learning models
+to estimate CATEs. Yet, regular supervised learning problems,
+i.e. regression an classification problems, come with labels. Thanks
+to these labels said
+Machine Learning models can learn a function fitting features or
+covariates :math:`X` to outcomes :math:`Y`. In an ideal world we could
+do the same for CATE estimation by replacing :math:`Y` with the
+individual treatment treatment effect :math:`\tau^i` from above.
+
+The fundamental problem of Causal Inference
+*******************************************
+
+Let's illustrate why doing just that isn't quite as easy with an example.
+
+Imagine we have 3 experiment participants, i.e. experiment units,
+Susan, Judea and Victor. Now we would like to figure out the treatment
+effect of making them listen to Bach, :math:`W = 1`, compared to not
+making them listen to Bach, :math:`W=0`, on their joyfulness
+:math:`Y`. There are two covariates that we can base our heterogeneity
+on:
+
+* their age
+* whether they are a musician themselves or not
+
+In an ideal world we'd observe both :math:`Y^i(1)` and :math:`Y^i(0)` and
+could therefore compute :math:`\tau^i` for each unit, see the table below.
+
+.. list-table:: Dataset in an ideal world
+   :header-rows: 1
+
+   * - unit :math:`i`
+     - age :math:`x_1^i`
+     - is_musician :math:`x_2^i`
+     - :math:`Y^i(0)`
+     - :math:`Y^i(1)`
+     - :math:`\tau^i`
+   * - Susan
+     - 28
+     - 1
+     - .6
+     - .8
+     - .2
+   * - Judea
+     - 37
+     - 1
+     - .5
+     - .6
+     - .1
+   * - Victor
+     - 42
+     - 0
+     - .9
+     - .6
+     - -.3
+
+If we did indeed have access to this data, we could train a regressor
+mapping :math:`X` to :math:`\tau`, thereby estimating the CATE.
+
+Yet, in reality, we never have access to several potential outcomes at once. We
+can, for instance, make Susan listen to Bach for a while and then not
+listen to Bach and measure her joyfullness during each period. Yet,
+these periods are not perfectly equivalent; maybe she's more tired during
+one of the periods; maybe she still draws from the joys of
+listening to Bach when not listening to Bach anymore. This aspect of
+only ever having access to one of the potential outcomes is referred
+to as the fundamental problem of Causal Inference.
+
+As a consequence of this problem, data from a real-world experiment
+would rather look as such:
+
+.. list-table:: Dataset in the real world
+   :header-rows: 1
+
+   * - unit :math:`i`
+     - age :math:`x_1^i`
+     - is_musician :math:`x_2^i`
+     - treatment :math:`W^i`
+     - :math:`Y^i(0)`
+     - :math:`Y^i(1)`
+     - :math:`\tau^i`
+   * - Susan
+     - 28
+     - 1
+     - 1
+     - ?
+     - .8
+     - ?
+   * - Judea
+     - 37
+     - 1
+     - 0
+     - .5
+     - ?
+     - ?
+   * - Victor
+     - 42
+     - 0
+     - 1
+     - ?
+     - .6
+     - ?
+
+Note that there is one treatment assignment :math:`W^i` for each unit
+and only the outcome linked to this treatment variant can be observed.
+
+Hence, CATE estimation is not a regular supervised learning problem.
+
+.. _how-can-cates-be-useful:
+
+How can CATEs be useful?
+""""""""""""""""""""""""
+
+CATEs can be very useful to quantify how well past treatment assignment
+mechanisms have been doing in light of a given outcome. Yet, they can
+also be used to prescribe a way of intervening in a forward-looking
+manner. This 'way of intevening' we call a policy.
+
+More precisely, we define a policy as a mapping from the covariate space
+:math:`\mathcal{X}` to the set of treatment variants. The set of
+treatment variants is also referred to as action space, set of arms
+or option space in other frameworks. Note that a policy could also be
+probabilistic, i.e. a distribution over treatment variants given
+covariates. We care about deterministic policies only.
+
+Learninig a policy
+******************
+
+If one is given CATE estimates :math:`\tau_{k}(X^i)`, i.e. quantifications of the effect of
+certain treatment variants on the outcome, compared to other treatment
+variants for fixed covariates, an optimal policy :math:`\pi` can be trivially
+defined:
+
+.. math::
+   \pi(X^i) := \arg\max_k \tau_{k}(X^i)
+
+As a consequence, when encountering 'new' data, which hasn't been used
+for learning a CATE model, we can apply our CATE model on it and
+assess what treatment variant it should receive.
+
+
+When can CATEs be useful?
+"""""""""""""""""""""""""
+
+As was described before, CATEs lend themselves fairly naturally to
+use cases where
+
+* there is a notion of a treatment, intervention or action
+* one suspects the treatments to behave heterogeneously with respect
+  to some covariates
+* the heterogeneity crosses a decision boundary
+
+In the following image we see some CATE estimates for an intervention
+based on a single covariate age.
+
+.. image:: imgs/heterogeneity.svg
+   :scale: 100 %
+   :alt: alternate text
+   :align: center
+
+We see that in the left image, there is fairly little heterogeneity in
+the CATE estimates with respect to age. The second image conveys the
+presence of a lot of heterogeneity of the treatment with respect to
+age. Yet, this heterogeneity is not relevant in light of a policy
+definition since all estimates are on 'one side' of the decision
+boundary, here chosen to be 0. The third picture, on the other hand,
+illustrates a scenario where heterogenity can be leveraged for policy
+learning: in some regions the CATE is negative and therefore treatment
+variant 0 to be preferred over treatment variant 1 -- in other region
+the opposite holds true.
+
+We would like to learn such policies to apply them on previously
+unseen data. In order to learn the policy, we can use data from an experiment.
+We can dinstinguish two cases when it comes to experiment data:
+observational or RCT data.
+
+Importantly, MetaLearners for CATE estimation can, in principle, be
+used for both observational or RCT data. Yet, the following conditions
+need to be validated in order for the MetaLearners to produce valid
+estimates:
+
+* Positivity/overlap
+
+.. math::
+   \forall k: \Pr[W=k|X] > 0
+
+* Conditional ignorability/unconfoundedness
+
+.. math::
+   \forall k', k''\ s.t.\ k' \neq k: (Y(k'), Y(k'')) \perp W | X
+
+* Stable Unit Treatment Value
+
+.. math::
+   \forall k: W = k \Rightarrow Y = Y(k)
+
+where :math:`k` represent a treatment variant. If the experiment data stems from a RCT, the first two conditions are
+already met. For more details see `Athey and Imbens (2016) <https://arxiv.org/pdf/1607.00698>`_.
+
 
 MetaLearners
 ------------

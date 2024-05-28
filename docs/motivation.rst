@@ -4,26 +4,7 @@ Motivation
 Why CATE estimation?
 --------------------
 
-By conditioning on covariates, CATE estimates capture heterogoneity that is not captured by population
-averages, such as the Average Treatment Effect (ATE). Yet, at times reality is heterogeneous by
-nature. Treating a population homogeneously means missing out on some potential.
-
-For instance, imagine two variants: playing Bach to a person or
-not playing Bach to a person. Let's say we care about the outcome of a
-person's joyfulness. If we now run an Randomized Control Trial (RCT) with both variants on a
-population, we might observe that playing Bach is, on average,
-slightly better for people's joyfulness than not playing Bach. Yet,
-within that population, there might have been some people who strongly
-disliked hearing Bach, while some really loved it. Therefore, overall,
-we could do much better by figuring out who enjoys Bach, who doesn't,
-and then giving each their preferred variant. In other words, we would
-like to define a heterogeneous policy based on heterogeneous
-preferences.
-
-An optimal policy can be easily defined once a
-CATE estimate is at hand by choosing the variant with the
-most favourable treatment effect compared to all others.
-
+Please see the section :ref:`how-can-cates-be-useful`.
 
 Why MetaLearners?
 -----------------
