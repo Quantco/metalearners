@@ -1,0 +1,50 @@
+name: Benchmarks
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 * *"
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+env:
+  QUETZ_API_KEY: ${{ secrets.QUETZ_API_KEY }}
+
+jobs:
+  run_benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Setup conda
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          condarc-file: .github/assets/.condarc
+          environment-file: benchmarks/environment.yml
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Run benchmark.py
+        run: python benchmarks/benchmark.py
+      - name: Update readme.md
+        run: |
+          line_number=`grep "| T-learner" benchmarks/readme.md -n | cut -f1 -d:`
+          head -n $(($line_number -1)) benchmarks/readme.md > benchmarks/new_readme.md
+          cat benchmarks/comparison.md >> benchmarks/new_readme.md
+          mv benchmarks/new_readme.md benchmarks/readme.md
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: Auto-update benchmarks/readme.md
+          title: Auto-update benchmarks/readme.md
+          body: |
+            Update benchmarks/readme.md.
+            Remember to update the corresponding values in `tests/test_learner.py`.
+          branch: update-benchmarks
+          delete-branch: true
+          add-paths: benchmarks/readme.md
+          draft: true
