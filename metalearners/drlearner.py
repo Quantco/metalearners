@@ -192,20 +192,17 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
     ) -> np.ndarray:
         y0_estimate = conditional_average_outcome_estimates[:, 0]
         y1_estimate = conditional_average_outcome_estimates[:, treatment_variant]
-        yw_estimate = conditional_average_outcome_estimates[np.arange(len(w)), w]
 
         if self.is_classification:
             y0_estimate = y0_estimate[:, 1]
             y1_estimate = y1_estimate[:, 1]
-            yw_estimate = yw_estimate[:, 1]
         else:
             y0_estimate = y0_estimate[:, 0]
             y1_estimate = y1_estimate[:, 0]
-            yw_estimate = yw_estimate[:, 0]
 
         pseudo_outcome = (
             (
-                (y - yw_estimate)
+                (y - y1_estimate)
                 / clip_element_absolute_value_to_epsilon(
                     propensity_estimates[:, treatment_variant], epsilon
                 )

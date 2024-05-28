@@ -500,7 +500,7 @@ In the case of multiple discrete treatments the stages are similar to the binary
     The pseudo-outcomes are constructed for each treatment variant, :math:`\forall k \in \{1,\dots, K\}`:
 
     .. math::
-        \varphi_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{W^i}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}_k(X^i) \\
+        \varphi_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}_k(X^i) \\
         &- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}_0(X^i)
 
 #.  Finally, the CATE is estimated by regressing :math:`\varphi_k` on :math:`X` for each
