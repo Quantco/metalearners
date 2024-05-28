@@ -6,7 +6,12 @@ import numpy as np
 from typing_extensions import Self
 
 from metalearners._typing import OosMethod
-from metalearners._utils import Matrix, Vector, index_matrix
+from metalearners._utils import (
+    Matrix,
+    Vector,
+    index_matrix,
+    validate_valid_treatment_variant_not_control,
+)
 from metalearners.cross_fit_estimator import MEDIAN, OVERALL
 from metalearners.metalearner import (
     PROPENSITY_MODEL,
@@ -226,6 +231,17 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def _pseudo_outcome(
         self, X: Matrix, y: Vector, w: Vector, treatment_variant: int
     ) -> tuple[np.ndarray, np.ndarray]:
+        """Compute the X-Learner pseudo outcome.
+
+        Importantly this method only returns the imputed treatment effect using the control
+        outcome model for the observatons treated with variant ``treatment_variant`` and
+        the imputed treatment effect using the treatment variant outcome model for the
+        observations in the control group.
+
+        This function can be used with both in-sample or out-of-sample data.
+        """
+        validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
+
         mask = (w == treatment_variant) | (w == 0)
 
         X_filt = X[mask]

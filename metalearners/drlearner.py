@@ -10,6 +10,7 @@ from metalearners._utils import (
     Vector,
     clip_element_absolute_value_to_epsilon,
     index_matrix,
+    validate_valid_treatment_variant_not_control,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -104,27 +105,11 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
 
-        conditional_average_outcome_estimates = (
-            self.predict_conditional_average_outcomes(
-                X=X,
-                is_oos=False,
-            )
-        )
-
-        propensity_estimates = self.predict_nuisance(
-            X=X,
-            is_oos=False,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-        )
-
         for treatment_variant in range(1, self.n_variants):
             pseudo_outcomes = self._pseudo_outcome(
                 X=X,
                 w=w,
                 y=y,
-                propensity_estimates=propensity_estimates,
-                conditional_average_outcome_estimates=conditional_average_outcome_estimates,
                 treatment_variant=treatment_variant,
             )
 
@@ -185,11 +170,31 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         X: Matrix,
         y: Vector,
         w: Vector,
-        propensity_estimates: Matrix,
-        conditional_average_outcome_estimates: Matrix,
         treatment_variant: int,
         epsilon: float = _EPSILON,
     ) -> np.ndarray:
+        """Compute the DR-Learner pseudo outcome.
+
+        Importantly, this method assumes to be applied on in-sample data.
+        In other words, ``is_oos`` will always be set to ``False`` when calling
+        ``predict_nuisance``.
+        """
+        validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
+
+        conditional_average_outcome_estimates = (
+            self.predict_conditional_average_outcomes(
+                X=X,
+                is_oos=False,
+            )
+        )
+
+        propensity_estimates = self.predict_nuisance(
+            X=X,
+            is_oos=False,
+            model_kind=PROPENSITY_MODEL,
+            model_ord=0,
+        )
+
         y0_estimate = conditional_average_outcome_estimates[:, 0]
         y1_estimate = conditional_average_outcome_estimates[:, treatment_variant]
 
