@@ -28,7 +28,7 @@ requirements:
     - pandas
     - numpy
     - typing-extensions
-
+    - git_root
 tests:
   - python:
       imports:
