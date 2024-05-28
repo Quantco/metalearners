@@ -52,6 +52,7 @@ autodoc_default_options = {
     "inherited-members": True,
     "undoc-members": True,
 }
+autodoc_typehints = "description"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
