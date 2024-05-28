@@ -107,13 +107,16 @@ class CrossFitEstimator:
         X: Matrix,
         y: Vector | Matrix,
         fit_params: dict | None = None,
-        **kwargs,
+        n_jobs_cross_fitting: int | None = None,
     ) -> Self:
         """Fit the underlying estimators.
 
         One estimator is trained per ``n_folds``.
 
         If ``enable_overall`` is set, an additional estimator is trained on all data.
+
+        ``n_jobs_cross_fitting`` can be used to specify the number of jobs for cross-fitting.
+        For more information see the `sklearn glossary <https://scikit-learn.org/stable/glossary.html#term-n_jobs>`_.
         """
         if fit_params is None:
             fit_params = dict()
@@ -138,6 +141,7 @@ class CrossFitEstimator:
                 return_estimator=True,
                 return_indices=True,
                 params=fit_params,
+                n_jobs=n_jobs_cross_fitting,
             )
             self._estimators = cv_result["estimator"]
             self._test_indices = cv_result["indices"]["test"]

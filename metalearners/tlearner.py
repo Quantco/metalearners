@@ -46,7 +46,9 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def _supports_multi_class(cls) -> bool:
         return True
 
-    def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
+    def fit(
+        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+    ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
 
@@ -60,6 +62,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
                 y=y[self._treatment_variants_indices[treatment_variant]],
                 model_kind=VARIANT_OUTCOME_MODEL,
                 model_ord=treatment_variant,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
 
         return self

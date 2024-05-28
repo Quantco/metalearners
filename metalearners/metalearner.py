@@ -356,6 +356,7 @@ class MetaLearner(ABC):
         model_kind: str,
         model_ord: int,
         fit_params: dict | None = None,
+        n_jobs_cross_fitting: int | None = None,
     ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
@@ -363,7 +364,10 @@ class MetaLearner(ABC):
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._nuisance_models[model_kind][model_ord].fit(
-            X_filtered, y, fit_params=fit_params
+            X_filtered,
+            y,
+            fit_params=fit_params,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
         return self
 
@@ -374,6 +378,7 @@ class MetaLearner(ABC):
         model_kind: str,
         model_ord: int,
         fit_params: dict | None = None,
+        n_jobs_cross_fitting: int | None = None,
     ) -> Self:
         """Fit the treatment model of a MetaLearner.
 
@@ -381,12 +386,17 @@ class MetaLearner(ABC):
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._treatment_models[model_kind][model_ord].fit(
-            X_filtered, y, fit_params=fit_params
+            X_filtered,
+            y,
+            fit_params=fit_params,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
         return self
 
     @abstractmethod
-    def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
+    def fit(
+        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+    ) -> Self:
         """Fit all models of the MetaLearner."""
         ...
 

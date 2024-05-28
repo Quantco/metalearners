@@ -144,6 +144,7 @@ class RLearner(MetaLearner):
         X: Matrix,
         y: Vector,
         w: Vector,
+        n_jobs_cross_fitting: int | None = None,
         epsilon: float = _EPSILON,
     ) -> Self:
         self._validate_treatment(w)
@@ -156,12 +157,14 @@ class RLearner(MetaLearner):
             y=w,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
         self.fit_nuisance(
             X=X,
             y=y,
             model_kind=OUTCOME_MODEL,
             model_ord=0,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
 
         for treatment_variant in range(1, self.n_variants):
@@ -189,6 +192,7 @@ class RLearner(MetaLearner):
                 model_kind=TREATMENT_MODEL,
                 model_ord=treatment_variant - 1,
                 fit_params={_SAMPLE_WEIGHT: weights},
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
         return self
 

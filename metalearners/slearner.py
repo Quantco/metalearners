@@ -94,7 +94,9 @@ class SLearner(MetaLearner):
             # as we need to add the treatment column.
             raise ValueError("SLearner does not support feature set definition.")
 
-    def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
+    def fit(
+        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+    ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
         self._fitted_treatments = convert_treatment(w)
@@ -112,6 +114,7 @@ class SLearner(MetaLearner):
             y=y,
             model_kind=_BASE_MODEL,
             model_ord=0,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
         return self
 

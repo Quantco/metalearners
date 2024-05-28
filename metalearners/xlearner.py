@@ -63,7 +63,9 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def _supports_multi_class(cls) -> bool:
         return False
 
-    def fit(self, X: Matrix, y: Vector, w: Vector) -> Self:
+    def fit(
+        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+    ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
 
@@ -77,6 +79,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 y=y[self._treatment_variants_indices[treatment_variant]],
                 model_kind=VARIANT_OUTCOME_MODEL,
                 model_ord=treatment_variant,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
 
         self.fit_nuisance(
@@ -84,6 +87,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             y=w,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
 
         for treatment_variant in range(1, self.n_variants):
@@ -96,12 +100,14 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 y=imputed_te_treatment,
                 model_kind=TREATMENT_EFFECT_MODEL,
                 model_ord=treatment_variant - 1,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
             self.fit_treatment(
                 X=index_matrix(X, self._treatment_variants_indices[0]),
                 y=imputed_te_control,
                 model_kind=CONTROL_EFFECT_MODEL,
                 model_ord=treatment_variant - 1,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
 
         return self

@@ -78,6 +78,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         X: Matrix,
         y: Vector,
         w: Vector,
+        n_jobs_cross_fitting: int | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
@@ -92,6 +93,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 y=y[self._treatment_variants_indices[treatment_variant]],
                 model_kind=VARIANT_OUTCOME_MODEL,
                 model_ord=treatment_variant,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
 
         self.fit_nuisance(
@@ -99,6 +101,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             y=w,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
         )
 
         conditional_average_outcome_estimates = (
@@ -130,6 +133,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 y=pseudo_outcomes,
                 model_kind=TREATMENT_MODEL,
                 model_ord=treatment_variant - 1,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
         return self
 
