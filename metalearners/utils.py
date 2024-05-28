@@ -16,11 +16,11 @@ def metalearner_factory(metalearner_prefix: str) -> type[MetaLearner]:
 
     The accepted ``metalearner_prefix`` values are:
 
-    * ``"S"`` for :class:`metalearners.slearner.SLearner`
-    * ``"T"`` for :class:`metalearners.tlearner.TLearner`
-    * ``"X"`` for :class:`metalearners.xlearner.XLearner`
-    * ``"R"`` for :class:`metalearners.rlearner.RLearner`
-    * ``"DR"`` for :class:`metalearners.drlearner.DRLearner`
+    * ``"S"`` for :class:`~metalearners.slearner.SLearner`
+    * ``"T"`` for :class:`~metalearners.tlearner.TLearner`
+    * ``"X"`` for :class:`~metalearners.xlearner.XLearner`
+    * ``"R"`` for :class:`~metalearners.rlearner.RLearner`
+    * ``"DR"`` for :class:`~metalearners.drlearner.DRLearner`
     """
     match metalearner_prefix:
         case "T":
