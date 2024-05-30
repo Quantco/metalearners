@@ -21,6 +21,8 @@ from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
 from metalearners.xlearner import XLearner
 
+_SEED = 1337
+
 
 class _TestMetaLearner(MetaLearner):
     @classmethod
@@ -245,38 +247,61 @@ def test_metalearner_format_consistent(
     covariates, _, treatment, observed_outcomes, _, _ = (
         numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te
     )
+    metalearner_params = {
+        "nuisance_model_factory": LGBMRegressor,
+        "is_classification": False,
+        "n_variants": len(np.unique(treatment)),
+        "treatment_model_factory": LGBMRegressor,
+        "propensity_model_factory": LGBMClassifier,
+        "nuisance_model_params": {
+            "n_estimators": 5,
+            "seed": _SEED,
+        },  # Just to make the test faster
+        "treatment_model_params": {
+            "n_estimators": 5,
+            "seed": _SEED,
+        },
+        "propensity_model_params": {
+            "n_estimators": 5,
+            "seed": _SEED,
+        },
+        "random_state": _SEED,
+    }
 
-    np_ml = implementation(
-        nuisance_model_factory=LGBMRegressor,
-        is_classification=False,
-        n_variants=len(np.unique(treatment)),
-        treatment_model_factory=LGBMRegressor,
-        propensity_model_factory=LGBMClassifier,
-        nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
-        treatment_model_params={"n_estimators": 1},
-        propensity_model_params={"n_estimators": 1},
-    )
-    pd_ml = implementation(
-        nuisance_model_factory=LGBMRegressor,
-        is_classification=False,
-        n_variants=len(np.unique(treatment)),
-        treatment_model_factory=LGBMRegressor,
-        propensity_model_factory=LGBMClassifier,
-        nuisance_model_params={"n_estimators": 1},  # Just to make the test faster
-        treatment_model_params={"n_estimators": 1},
-        propensity_model_params={"n_estimators": 1},
-    )
+    np_ml = implementation(**metalearner_params)
+    pd_ml = implementation(**metalearner_params)
 
     np_ml.fit(X=covariates, y=observed_outcomes, w=treatment)
-    pd_ml.fit(
-        X=pd.DataFrame(covariates),
-        y=pd.Series(observed_outcomes),
-        w=pd.Series(treatment),
-    )
+    X_pd = pd.DataFrame(covariates)
+    y_pd = pd.Series(observed_outcomes)
+    w_pd = pd.Series(treatment)
+    pd_ml.fit(X_pd, y_pd, w_pd)
 
     np_cate_estimates = np_ml.predict(covariates, is_oos=False)
-    pd_cate_estimates = np_ml.predict(pd.DataFrame(covariates), is_oos=False)
+    pd_cate_estimates = pd_ml.predict(X_pd, is_oos=False)
     np.testing.assert_allclose(np_cate_estimates, pd_cate_estimates)
+
+    if implementation != RLearner and implementation != DRLearner:
+        # For the reindexed we can only compare out-of-sample predictions with oos_method="overall"
+        # as the folds are not the same.
+        # Also RLearner and DRLearner can't be tested as in the _pseudo_outcome method
+        # they use the folds for the in-sample predictions.
+        pd_reindexed_ml = implementation(**metalearner_params)
+        X_reindexed = X_pd.sample(frac=1)
+        y_reindexed = y_pd[X_reindexed.index]
+        w_reindexed = w_pd[X_reindexed.index]
+        pd_reindexed_ml.fit(X=X_reindexed, y=y_reindexed, w=w_reindexed)
+
+        X_test = X_pd.sample(frac=0.3)
+        pd_reindexed_cate_estimates_test = pd_reindexed_ml.predict(
+            X_test, is_oos=True, oos_method="overall"
+        )
+        pd_cate_estimates_test = pd_ml.predict(
+            X_test, is_oos=True, oos_method="overall"
+        )
+        np.testing.assert_allclose(
+            pd_reindexed_cate_estimates_test, pd_cate_estimates_test
+        )
 
 
 @pytest.mark.parametrize(
