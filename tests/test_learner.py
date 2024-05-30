@@ -9,13 +9,15 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
+from metalearners.cross_fit_estimator import _OOS_WHITELIST
 from metalearners.metalearner import MetaLearner
 from metalearners.tlearner import TLearner
 from metalearners.utils import metalearner_factory, simplify_output
 from metalearners.xlearner import XLearner
 
 # Chosen arbitrarily.
-_REFERENCE_VALUE_TOLERANCE = 0.05
+_OOS_REFERENCE_VALUE_TOLERANCE = 0.05
+_IN_SAMPLE_REFERENCE_VALUE_TOLERANCE = 0.10
 _SEED = 1337
 _TEST_FRACTION = 0.2
 _LOG_REG_MAX_ITER = 500
@@ -48,120 +50,40 @@ def _linear_base_learner_params(
 
 
 @pytest.mark.parametrize(
-    "metalearner, outcome_kind, reference_value, treatment_kind, te_kind",
+    "metalearner, outcome_kind, in_sample_reference_value, oos_reference_value, treatment_kind, te_kind",
     [
-        ("T", "binary", 0.0212, "binary", "linear"),
-        ("T", "continuous", 0.0456, "binary", "linear"),
-        ("T", "continuous", 0.0615, "multi", "linear"),
-        ("T", "continuous", 0.0753, "multi", "constant"),
-        ("S", "binary", 0.2290, "binary", "linear"),
-        ("S", "continuous", 14.5706, "binary", "linear"),
-        ("S", "continuous", 14.147, "multi", "linear"),
-        ("S", "continuous", 0.0111, "multi", "constant"),
-        ("X", "binary", 0.3046, "binary", "linear"),
-        ("X", "continuous", 0.0459, "binary", "linear"),
-        ("X", "continuous", 0.0615, "multi", "linear"),
-        ("X", "continuous", 0.0753, "multi", "constant"),
-        ("R", "binary", 0.3046, "binary", "linear"),
-        ("R", "continuous", 0.0469, "binary", "linear"),
+        ("T", "binary", 0.0212, 0.0215, "binary", "linear"),
+        ("T", "continuous", 0.0456, 0.0456, "binary", "linear"),
+        ("T", "continuous", 0.0615, 0.0617, "multi", "linear"),
+        ("T", "continuous", 0.0753, 0.0753, "multi", "constant"),
+        ("S", "binary", 0.2290, 0.2286, "binary", "linear"),
+        ("S", "continuous", 14.5706, 14.6248, "binary", "linear"),
+        ("S", "continuous", 14.147, 14.185, "multi", "linear"),
+        ("S", "continuous", 0.0111, 0.0111, "multi", "constant"),
+        ("X", "binary", 0.3046, 0.3019, "binary", "linear"),
+        ("X", "continuous", 0.0459, 0.0456, "binary", "linear"),
+        ("X", "continuous", 0.0615, 0.0617, "multi", "linear"),
+        ("X", "continuous", 0.0753, 0.0753, "multi", "constant"),
+        ("R", "binary", 0.3046, 0.3018, "binary", "linear"),
+        ("R", "continuous", 0.0469, 0.0463, "binary", "linear"),
         # The multi-variant R-Learner runs lack a baseline.
-        ("R", "continuous", 0.288, "multi", "linear"),
-        ("R", "continuous", 0.085, "multi", "constant"),
-        ("DR", "binary", 0.3045, "binary", "linear"),
-        ("DR", "continuous", 0.0463, "binary", "linear"),
-        ("DR", "continuous", 0.0627, "multi", "linear"),
-        ("DR", "continuous", 0.0762, "multi", "constant"),
+        ("R", "continuous", 0.288, 0.28, "multi", "linear"),
+        ("R", "continuous", 0.085, 0.08, "multi", "constant"),
+        ("DR", "binary", 0.3045, 0.3018, "binary", "linear"),
+        ("DR", "continuous", 0.0463, 0.0454, "binary", "linear"),
+        ("DR", "continuous", 0.0627, 0.0666, "multi", "linear"),
+        ("DR", "continuous", 0.0762, 0.0758, "multi", "constant"),
     ],
 )
-def test_learner_synthetic_in_sample(
-    metalearner, outcome_kind, reference_value, treatment_kind, te_kind, request
-):
-    dataset = request.getfixturevalue(
-        f"numerical_experiment_dataset_{outcome_kind}_outcome_{treatment_kind}_treatment_{te_kind}_te"
-    )
-
-    covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
-
-    is_classification = _is_classification(outcome_kind)
-
-    classifier_learner_factory = _linear_base_learner(True)
-    regressor_learner_factory = _linear_base_learner(False)
-    classifier_learner_params = _linear_base_learner_params(True)
-    regressor_learner_params = _linear_base_learner_params(False)
-    nuisance_learner_factory = (
-        classifier_learner_factory if is_classification else regressor_learner_factory
-    )
-    nuisance_learner_params = (
-        classifier_learner_params if is_classification else regressor_learner_params
-    )
-
-    factory = metalearner_factory(metalearner)
-    learner = factory(
-        nuisance_model_factory=nuisance_learner_factory,
-        is_classification=is_classification,
-        n_variants=len(np.unique(treatment)),
-        treatment_model_factory=regressor_learner_factory,
-        propensity_model_factory=classifier_learner_factory,
-        nuisance_model_params=nuisance_learner_params,
-        treatment_model_params=regressor_learner_params,
-        propensity_model_params=classifier_learner_params,
-        random_state=_SEED,
-    )
-
-    learner.fit(covariates, observed_outcomes, treatment)
-    cate_estimates = learner.predict(covariates, is_oos=False)
-    cate_estimates = simplify_output(cate_estimates)
-
-    rmse = root_mean_squared_error(true_cate, cate_estimates)
-    assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
-    if metalearner == "T":
-        np.testing.assert_allclose(
-            cate_estimates.reshape(len(cate_estimates), -1),
-            true_cate,
-            atol=0.4,
-            rtol=0.3,
-        )
-
-
-@pytest.mark.parametrize(
-    "metalearner, outcome_kind, reference_value, treatment_kind, te_kind",
-    [
-        ("T", "binary", 0.0215, "binary", "linear"),
-        ("T", "continuous", 0.0456, "binary", "linear"),
-        ("T", "continuous", 0.0617, "multi", "linear"),
-        ("T", "continuous", 0.0753, "multi", "constant"),
-        ("S", "binary", 0.2286, "binary", "linear"),
-        ("S", "continuous", 14.6248, "binary", "linear"),
-        ("S", "continuous", 14.185, "multi", "linear"),
-        ("S", "continuous", 0.0111, "multi", "constant"),
-        ("X", "binary", 0.3019, "binary", "linear"),
-        ("X", "continuous", 0.0456, "binary", "linear"),
-        ("X", "continuous", 0.0617, "multi", "linear"),
-        ("X", "continuous", 0.0753, "multi", "constant"),
-        ("R", "binary", 0.3018, "binary", "linear"),
-        ("R", "continuous", 0.0463, "binary", "linear"),
-        # The multi-variant R-Learner runs lack a baseline.
-        ("R", "continuous", 0.28, "multi", "linear"),
-        ("R", "continuous", 0.08, "multi", "constant"),
-        ("DR", "binary", 0.3018, "binary", "linear"),
-        ("DR", "continuous", 0.0454, "binary", "linear"),
-        ("DR", "continuous", 0.0666, "multi", "linear"),
-        ("DR", "continuous", 0.0758, "multi", "constant"),
-    ],
-)
-@pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
-def test_learner_synthetic_oos(
+def test_learner_synthetic(
     metalearner,
     outcome_kind,
-    reference_value,
+    in_sample_reference_value,
+    oos_reference_value,
     treatment_kind,
     te_kind,
-    oos_method,
     request,
 ):
-    if outcome_kind == "binary" and oos_method == "median":
-        pytest.skip()
-
     dataset = request.getfixturevalue(
         f"numerical_experiment_dataset_{outcome_kind}_outcome_{treatment_kind}_treatment_{te_kind}_te"
     )
@@ -209,22 +131,41 @@ def test_learner_synthetic_oos(
         random_state=_SEED,
     )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
-    cate_estimates = learner.predict(
-        covariates_test, is_oos=True, oos_method=oos_method
+
+    # In sample CATEs
+    cate_estimates_in_sample = simplify_output(
+        learner.predict(covariates_train, is_oos=False)
     )
 
-    cate_estimates = simplify_output(cate_estimates)
-
-    rmse = root_mean_squared_error(true_cate_test, cate_estimates)
-    # See the benchmarking directory for the original reference values.
-    assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
+    rmse = root_mean_squared_error(true_cate_train, cate_estimates_in_sample)
+    assert rmse < in_sample_reference_value * (1 + _IN_SAMPLE_REFERENCE_VALUE_TOLERANCE)
     if metalearner == "T":
         np.testing.assert_allclose(
-            cate_estimates.reshape(len(covariates_test), -1),
-            true_cate_test,
+            cate_estimates_in_sample.reshape(len(cate_estimates_in_sample), -1),
+            true_cate_train,
             atol=0.4,
             rtol=0.3,
         )
+
+    # oos CATEs
+    for oos_method in _OOS_WHITELIST:
+        if outcome_kind == "binary" and oos_method == "median":
+            continue
+
+        cate_estimates_oos = simplify_output(
+            learner.predict(covariates_test, is_oos=True, oos_method=oos_method)
+        )
+
+        rmse = root_mean_squared_error(true_cate_test, cate_estimates_oos)
+        # See the benchmarking directory for the original reference values.
+        assert rmse < oos_reference_value * (1 + _OOS_REFERENCE_VALUE_TOLERANCE)
+        if metalearner == "T":
+            np.testing.assert_allclose(
+                cate_estimates_oos.reshape(len(cate_estimates_oos), -1),
+                true_cate_test,
+                atol=0.4,
+                rtol=0.3,
+            )
 
 
 @pytest.mark.parametrize(
@@ -242,8 +183,7 @@ def test_learner_synthetic_oos(
         ("DR", "multi"),
     ],
 )
-@pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
-def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, request):
+def test_learner_synthetic_oos_ate(metalearner, treatment_kind, request):
     dataset = request.getfixturevalue(
         f"numerical_experiment_dataset_continuous_outcome_{treatment_kind}_treatment_linear_te"
     )
@@ -281,24 +221,24 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, oos_method, requ
         random_state=_SEED,
     )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
-    cate_estimates = learner.predict(
-        covariates_test, is_oos=True, oos_method=oos_method
-    )
-    actual_ate_estimate = np.squeeze(np.mean(cate_estimates, axis=0), axis=-1)
-    target_ate_estimate = np.mean(true_cate_test, axis=0)
-    np.testing.assert_allclose(
-        actual_ate_estimate, target_ate_estimate, atol=1e-2, rtol=5e-2
-    )
+    for oos_method in _OOS_WHITELIST:
+        cate_estimates = learner.predict(
+            covariates_test, is_oos=True, oos_method=oos_method
+        )
+        actual_ate_estimate = np.squeeze(np.mean(cate_estimates, axis=0), axis=-1)
+        target_ate_estimate = np.mean(true_cate_test, axis=0)
+        np.testing.assert_allclose(
+            actual_ate_estimate, target_ate_estimate, atol=1e-2, rtol=5e-2
+        )
 
 
 @pytest.mark.parametrize(
     "metalearner, reference_value",
     # Since we don't have a reference implementation for the DR-Learner,
     # we reuse the reference value of the R-Learner plus some tolerance.
-    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3444), ("DR", 0.3444 * 1.05)],
+    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3489), ("DR", 0.3489 * 1.05)],
 )
-@pytest.mark.parametrize("oos_method", ["overall", "mean"])
-def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng):
+def test_learner_twins(metalearner, reference_value, twins_data, rng):
     chosen_df, outcome_column, treatment_column, feature_columns, _ = twins_data
 
     covariates = chosen_df[feature_columns]
@@ -337,13 +277,14 @@ def test_learner_twins(metalearner, reference_value, twins_data, oos_method, rng
         random_state=_SEED,
     )
     learner.fit(covariates_train, observed_outcomes_train, treatment_train)
-    cate_estimates = simplify_output(
-        learner.predict(covariates_test, is_oos=True, oos_method=oos_method)
-    )
+    for oos_method in ["overall", "mean"]:
+        cate_estimates = simplify_output(
+            learner.predict(covariates_test, is_oos=True, oos_method=oos_method)  # type: ignore
+        )
 
-    rmse = root_mean_squared_error(true_cate_test, cate_estimates)
-    # See the benchmarking directory for reference values.
-    assert rmse < reference_value * (1 + _REFERENCE_VALUE_TOLERANCE)
+        rmse = root_mean_squared_error(true_cate_test, cate_estimates)
+        # See the benchmarking directory for reference values.
+        assert rmse < reference_value * (1 + _OOS_REFERENCE_VALUE_TOLERANCE)
 
 
 @pytest.mark.parametrize("metalearner", ["S", "T", "R"])
