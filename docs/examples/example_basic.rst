@@ -1,3 +1,5 @@
+.. _example-basic:
+
 ==============================================
  Example: Estimating CATEs with a MetaLearner
 ==============================================

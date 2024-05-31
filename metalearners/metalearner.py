@@ -124,7 +124,7 @@ class _ModelSpecifications(TypedDict):
 
 
 class MetaLearner(ABC):
-    """MetaLearner abstract class. All metalearner implementations should inherit from
+    r"""MetaLearner abstract class. All metalearner implementations should inherit from
     it.
 
     All of
@@ -152,7 +152,7 @@ class MetaLearner(ABC):
 
     To reuse already fitted models  ``fitted_nuisance_models`` and ``fitted_propensity_model``
     should be used. The models should be fitted on the same data the MetaLearner is going
-    to call fit with. TODO: Add reference to example about reusage
+    to call fit with. For an illustration, see :ref:`our example on reusing models <example-reuse>`.
     """
 
     @classmethod

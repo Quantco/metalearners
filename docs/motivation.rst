@@ -6,6 +6,8 @@ Why CATE estimation?
 
 Please see the section :ref:`how-can-cates-be-useful`.
 
+.. _motivation-why-metalearners:
+
 Why MetaLearners?
 -----------------
 
@@ -29,6 +31,7 @@ reused. Given that the field of CATE estimation is still young and
 engineering efforts limited, this is a highly relevant factor.
 
 
+.. _motivation-why-not-causalml-or-econml:
 
 Why not ``causalml`` or ``econml``?
 -----------------------------------
