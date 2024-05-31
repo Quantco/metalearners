@@ -14,7 +14,9 @@ from metalearners._utils import (
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
+    NUISANCE,
     PROPENSITY_MODEL,
+    TREATMENT,
     TREATMENT_MODEL,
     VARIANT_OUTCOME_MODEL,
     _ConditionalAverageOutcomeMetaLearner,
@@ -80,9 +82,12 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         y: Vector,
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
+
+        qualified_fit_params = self._qualified_fit_params(fit_params)
 
         for treatment_variant in range(self.n_variants):
             self._treatment_variants_indices.append(w == treatment_variant)
@@ -95,6 +100,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_kind=VARIANT_OUTCOME_MODEL,
                 model_ord=treatment_variant,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
             )
 
         self.fit_nuisance(
@@ -103,6 +109,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
         )
 
         for treatment_variant in range(1, self.n_variants):
@@ -119,6 +126,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_kind=TREATMENT_MODEL,
                 model_ord=treatment_variant - 1,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL],
             )
         return self
 

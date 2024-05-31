@@ -18,7 +18,9 @@ from metalearners._utils import (
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
+    NUISANCE,
     PROPENSITY_MODEL,
+    TREATMENT,
     TREATMENT_MODEL,
     MetaLearner,
     _ModelSpecifications,
@@ -109,6 +111,16 @@ class RLearner(MetaLearner):
         super()._validate_models()
 
     @classmethod
+    def _validate_fit_params(cls, fit_params: dict[str, dict[str, dict]]) -> None:
+        if _SAMPLE_WEIGHT in fit_params[TREATMENT][TREATMENT_MODEL]:
+            raise ValueError(
+                f"The parameter {_SAMPLE_WEIGHT} has been defined to be passed to the R-Learner's "
+                "treatment model. Yet, this is not supported since the R-Learner requires freedom "
+                " to define his parameter internally. Please adapt the argument fit_params to the "
+                f"fit method to either not include any {_SAMPLE_WEIGHT} or only for nuisance models."
+            )
+
+    @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             PROPENSITY_MODEL: _ModelSpecifications(
@@ -145,12 +157,17 @@ class RLearner(MetaLearner):
         y: Vector,
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
         epsilon: float = _EPSILON,
     ) -> Self:
+
         self._validate_treatment(w)
         self._validate_outcome(y)
 
         self._variants_indices = []
+
+        qualified_fit_params = self._qualified_fit_params(fit_params)
+        self._validate_fit_params(qualified_fit_params)
 
         self.fit_nuisance(
             X=X,
@@ -158,6 +175,7 @@ class RLearner(MetaLearner):
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
         )
         self.fit_nuisance(
             X=X,
@@ -165,6 +183,7 @@ class RLearner(MetaLearner):
             model_kind=OUTCOME_MODEL,
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=qualified_fit_params[NUISANCE][OUTCOME_MODEL],
         )
 
         for treatment_variant in range(1, self.n_variants):
@@ -191,7 +210,8 @@ class RLearner(MetaLearner):
                 y=pseudo_outcomes,
                 model_kind=TREATMENT_MODEL,
                 model_ord=treatment_variant - 1,
-                fit_params={_SAMPLE_WEIGHT: weights},
+                fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL]
+                | {_SAMPLE_WEIGHT: weights},
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
             )
         return self

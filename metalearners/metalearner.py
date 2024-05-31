@@ -29,6 +29,58 @@ PROPENSITY_MODEL = "propensity_model"
 VARIANT_OUTCOME_MODEL = "variant_outcome_model"
 TREATMENT_MODEL = "treatment_model"
 
+NUISANCE = "nuisance"
+TREATMENT = "treatment"
+
+
+def _parse_fit_params(
+    fit_params: None | dict,
+    nuisance_model_names: set[str],
+    treatment_model_names: set[str],
+) -> dict[str, dict[str, dict[str, dict]]]:
+
+    def _get_raw_fit_params():
+        return fit_params
+
+    def _get_empty_dict():
+        return dict()
+
+    def _get_result_skeleton(
+        default_value_getter: Callable,
+    ) -> dict[str, dict[str, dict[str, dict]]]:
+        return {
+            NUISANCE: {
+                nuisance_model_kind: default_value_getter()
+                for nuisance_model_kind in nuisance_model_names
+            },
+            TREATMENT: {
+                treatment_model_kind: default_value_getter()
+                for treatment_model_kind in treatment_model_names
+            },
+        }
+
+    if fit_params is None or (
+        (NUISANCE not in fit_params) and (TREATMENT not in fit_params)
+    ):
+        default_value_getter = _get_raw_fit_params if fit_params else _get_empty_dict
+        return _get_result_skeleton(default_value_getter)
+
+    result = _get_result_skeleton(_get_empty_dict)
+
+    if NUISANCE in fit_params:
+        for nuisance_model_kind in nuisance_model_names:
+            if nuisance_model_kind in fit_params[NUISANCE]:
+                result[NUISANCE][nuisance_model_kind] = fit_params[NUISANCE][
+                    nuisance_model_kind
+                ]
+    if TREATMENT in fit_params:
+        for treatment_model_kind in treatment_model_names:
+            if treatment_model_kind in fit_params[TREATMENT]:
+                result[TREATMENT][treatment_model_kind] = fit_params[TREATMENT][
+                    treatment_model_kind
+                ]
+    return result
+
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
     if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
@@ -182,6 +234,16 @@ class MetaLearner(ABC):
             validate_model_and_predict_method(
                 factory, predict_method, name=f"treatment model {model_kind}"
             )
+
+    def _qualified_fit_params(
+        self,
+        fit_params: None | dict,
+    ) -> dict[str, dict[str, dict[str, dict]]]:
+        return _parse_fit_params(
+            fit_params=fit_params,
+            nuisance_model_names=set(self.nuisance_model_specifications().keys()),
+            treatment_model_names=set(self.treatment_model_specifications().keys()),
+        )
 
     def __init__(
         self,
@@ -395,12 +457,39 @@ class MetaLearner(ABC):
 
     @abstractmethod
     def fit(
-        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
     ) -> Self:
         """Fit all models of the MetaLearner.
 
         ``n_jobs_cross_fitting`` will be used at the cross-fitting level. For more information about
         parallelism check :ref:`parallelism`
+
+        ``fit_params`` is an optional ``dict`` to be forwarded to base estimator ``fit`` calls. It supports
+        two usages patterns:
+
+        * .. code-block:: python
+
+            fit_params={"parameter_of_interest": value_of_interest}
+
+        * .. code-block:: python
+
+            fit_params={
+                "nuisance": {
+                    "nuisance_model_kind1": {"parameter_of_interest1": value_of_interest1},
+                    "nuisance_model_kind3": {"parameter_of_interest3": value_of_interest3},
+                },
+                "treatment": {"treatment_model_kind1": {"parameter_of_interest4": value_of_interest4}}
+            }
+
+        In the former approach, the parameter and value of interest are passed to all base models. In the
+        the latter approach, the explicitly qualified parameter-value pairs are passed to respective base
+        models and no fitting parameters are passed to base models not explicitly listed. Note that in this
+        pattern, propensity models are considered a nuisance model.
         """
         ...
 

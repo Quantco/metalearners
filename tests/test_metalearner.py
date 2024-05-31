@@ -7,19 +7,26 @@ import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.base import BaseEstimator
+from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
 from metalearners.metalearner import (
+    NUISANCE,
+    PROPENSITY_MODEL,
+    TREATMENT,
+    TREATMENT_MODEL,
+    VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _combine_propensity_and_nuisance_specs,
     _ModelSpecifications,
+    _parse_fit_params,
 )
-from metalearners.rlearner import RLearner
-from metalearners.slearner import SLearner
+from metalearners.rlearner import _SAMPLE_WEIGHT, OUTCOME_MODEL, RLearner
+from metalearners.slearner import _BASE_MODEL, SLearner
 from metalearners.tlearner import TLearner
-from metalearners.xlearner import XLearner
+from metalearners.xlearner import CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL, XLearner
 
 _SEED = 1337
 
@@ -442,3 +449,201 @@ def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
         )
         for m in model_kind_list:
             assert m._overall_estimator.n_features_ == exp  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "fit_params, nuisance_model_names, treatment_model_names, expected",
+    [
+        (
+            None,
+            {"n1", "n2"},
+            {"t1"},
+            {NUISANCE: {"n1": dict(), "n2": dict()}, TREATMENT: {"t1": dict()}},
+        ),
+        (
+            dict(),
+            {"n1", "n2"},
+            {"t1"},
+            {NUISANCE: {"n1": dict(), "n2": dict()}, TREATMENT: {"t1": dict()}},
+        ),
+        (
+            {"arg": 0},
+            {"n1", "n2"},
+            {"t1"},
+            {
+                NUISANCE: {"n1": {"arg": 0}, "n2": {"arg": 0}},
+                TREATMENT: {"t1": {"arg": 0}},
+            },
+        ),
+        (
+            {"arg": 0},
+            {"n1", "n2"},
+            set(),
+            {NUISANCE: {"n1": {"arg": 0}, "n2": {"arg": 0}}, TREATMENT: dict()},
+        ),
+        (
+            {NUISANCE: {"n2": {"arg": 0, "arg2": 1}}},
+            {"n1", "n2"},
+            {"t1"},
+            {
+                NUISANCE: {"n1": dict(), "n2": {"arg": 0, "arg2": 1}},
+                TREATMENT: {"t1": dict()},
+            },
+        ),
+        (
+            {TREATMENT: {"t1": {"arg": 0, "arg2": 1}}},
+            {"n1", "n2"},
+            {"t1"},
+            {
+                NUISANCE: {"n1": dict(), "n2": dict()},
+                TREATMENT: {"t1": {"arg": 0, "arg2": 1}},
+            },
+        ),
+    ],
+)
+def test_parse_fit_params(
+    fit_params, nuisance_model_names, treatment_model_names, expected
+):
+    actual = _parse_fit_params(fit_params, nuisance_model_names, treatment_model_names)
+    assert actual == expected
+
+
+class ParamEstimator(BaseEstimator):
+    def __init__(self, expected_fit_params):
+        self.expected_fit_params = set(expected_fit_params)
+        self._estimator_type = "Neutral"
+
+    def fit(self, X, y, **fit_params):
+        if set(fit_params.keys()) - {"sample_weight"} != self.expected_fit_params:
+            raise ValueError()
+        return self
+
+    def predict(self, X):
+        return np.zeros(len(X))
+
+    def predict_proba(self, X):
+        return np.zeros((len(X), 2))
+
+
+class ParamEstimatorFactory:
+    def __init__(self, expected_fit_params):
+        self.expected_fit_params = expected_fit_params
+        self._estimator_type = "Neutral"
+
+    def __call__(self):
+        return ParamEstimator(self.expected_fit_params)
+
+    def fit(self, X, y, sample_weight):
+        return self
+
+
+_PROPENSITY = "propensity"
+
+
+@pytest.mark.parametrize(
+    "metalearner_factory, fit_params, expected_keys",
+    [
+        (
+            SLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {_BASE_MODEL: {"arg": 0}},
+                _PROPENSITY: dict(),
+                TREATMENT: dict(),
+            },
+        ),
+        (
+            SLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {_BASE_MODEL: {"arg": 0}},
+                _PROPENSITY: dict(),
+                TREATMENT: dict(),
+            },
+        ),
+        (
+            TLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {VARIANT_OUTCOME_MODEL: {"arg": 0}},
+                _PROPENSITY: dict(),
+                TREATMENT: dict(),
+            },
+        ),
+        (
+            XLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {VARIANT_OUTCOME_MODEL: {"arg": 0}},
+                _PROPENSITY: {PROPENSITY_MODEL: {"arg": 0}},
+                TREATMENT: {
+                    CONTROL_EFFECT_MODEL: {"arg": 0},
+                    TREATMENT_EFFECT_MODEL: {"arg": 0},
+                },
+            },
+        ),
+        (
+            RLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {OUTCOME_MODEL: {"arg": 0}},
+                _PROPENSITY: {PROPENSITY_MODEL: {"arg": 0}},
+                TREATMENT: {TREATMENT_MODEL: {"arg": 0}},
+            },
+        ),
+        (
+            DRLearner,
+            {"arg": 0},
+            {
+                NUISANCE: {VARIANT_OUTCOME_MODEL: {"arg": 0}},
+                _PROPENSITY: {PROPENSITY_MODEL: {"arg": 0}},
+                TREATMENT: {TREATMENT_MODEL: {"arg": 0}},
+            },
+        ),
+    ],
+)
+def test_fit_params(metalearner_factory, fit_params, expected_keys, dummy_dataset):
+    X, y, w = dummy_dataset
+
+    propensity_model_factory = (
+        ParamEstimatorFactory(
+            expected_fit_params=expected_keys[_PROPENSITY][PROPENSITY_MODEL]
+        )
+        if _PROPENSITY in expected_keys
+        and PROPENSITY_MODEL in expected_keys[_PROPENSITY]
+        else None
+    )
+    metalearner = metalearner_factory(
+        nuisance_model_factory={
+            model_kind: ParamEstimatorFactory(expected_fit_params=params)
+            for model_kind, params in expected_keys[NUISANCE].items()
+        },
+        propensity_model_factory=propensity_model_factory,
+        treatment_model_factory={
+            model_kind: ParamEstimatorFactory(expected_fit_params=params)
+            for model_kind, params in expected_keys[TREATMENT].items()
+        },
+        n_variants=2,
+        is_classification=False,
+        n_folds=1,
+    )
+    metalearner.fit(X=X, y=y, w=w, fit_params=fit_params)
+
+
+def test_fit_params_rlearner_error(dummy_dataset):
+    X, y, w = dummy_dataset
+
+    rlearner = RLearner(
+        nuisance_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        treatment_model_factory=LinearRegression,
+        n_variants=2,
+        is_classification=False,
+    )
+    with pytest.raises(ValueError, match=f"The parameter {_SAMPLE_WEIGHT}"):
+        rlearner.fit(
+            X=X,
+            y=y,
+            w=w,
+            fit_params={_SAMPLE_WEIGHT: np.ones(len(X))},
+        )

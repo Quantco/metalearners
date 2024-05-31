@@ -166,3 +166,13 @@ def numerical_experiment_dataset_continuous_outcome_multi_treatment_constant_te(
     return _generate_rct_experiment_data(
         covariates, False, rng, [0.2, 0.1, 0.3, 0.15, 0.25], np.array([-2, 5, 0, 3])
     )
+
+
+@pytest.fixture
+def dummy_dataset(rng):
+    sample_size = 100
+    n_features = 10
+    X = rng.standard_normal((sample_size, n_features))
+    y = rng.standard_normal(sample_size)
+    w = rng.integers(0, 2, sample_size)
+    return X, y, w

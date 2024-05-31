@@ -10,9 +10,14 @@ from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
 from metalearners._typing import OosMethod
-from metalearners._utils import Matrix, Vector, convert_treatment, supports_categoricals
+from metalearners._utils import (
+    Matrix,
+    Vector,
+    convert_treatment,
+    supports_categoricals,
+)
 from metalearners.cross_fit_estimator import OVERALL
-from metalearners.metalearner import MetaLearner, _ModelSpecifications
+from metalearners.metalearner import NUISANCE, MetaLearner, _ModelSpecifications
 
 _BASE_MODEL = "base_model"
 
@@ -95,7 +100,12 @@ class SLearner(MetaLearner):
             raise ValueError("SLearner does not support feature set definition.")
 
     def fit(
-        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
@@ -109,12 +119,15 @@ class SLearner(MetaLearner):
             X, w, self._supports_categoricals, self.n_variants
         )
 
+        qualified_fit_params = self._qualified_fit_params(fit_params)
+
         self.fit_nuisance(
             X=X_with_w,
             y=y,
             model_kind=_BASE_MODEL,
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=qualified_fit_params[NUISANCE][_BASE_MODEL],
         )
         return self
 

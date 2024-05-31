@@ -10,6 +10,7 @@ from metalearners._typing import OosMethod
 from metalearners._utils import Matrix, Vector, index_matrix
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
+    NUISANCE,
     VARIANT_OUTCOME_MODEL,
     _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
@@ -47,13 +48,20 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         return True
 
     def fit(
-        self, X: Matrix, y: Vector, w: Vector, n_jobs_cross_fitting: int | None = None
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
 
         for v in range(self.n_variants):
             self._treatment_variants_indices.append(w == v)
+
+        qualified_fit_params = self._qualified_fit_params(fit_params)
 
         # TODO: Consider multiprocessing
         for treatment_variant in range(self.n_variants):
@@ -63,6 +71,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_kind=VARIANT_OUTCOME_MODEL,
                 model_ord=treatment_variant,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
             )
 
         return self
