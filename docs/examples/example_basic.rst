@@ -54,7 +54,7 @@ Now that the data has been loaded, we can get to actually using
 MetaLearners. Let's start with the
 :class:`metalearners.TLearner`.
 Investigating its documentation, we realize that only three initialization parameters
-are necessary: ``nuisance_model_factory``, ``is_classification`` and
+are necessary in the case we do not want to reuse nuisance models: ``nuisance_model_factory``, ``is_classification`` and
 ``n_variants``. Given that our outcome is a scalar, we want to set
 ``is_classification=False`` and use a regressor as the
 ``nuisance_model_factory``. In this case we arbitrarily choose a

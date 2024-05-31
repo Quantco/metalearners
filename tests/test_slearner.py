@@ -14,7 +14,12 @@ def test_feature_set_raise():
     with pytest.raises(
         ValueError, match="SLearner does not support feature set definition."
     ):
-        SLearner(LinearRegression, False, 2, feature_set="")
+        SLearner(
+            nuisance_model_factory=LinearRegression,
+            is_classification=False,
+            n_variants=2,
+            feature_set="",
+        )
 
 
 @pytest.mark.parametrize(

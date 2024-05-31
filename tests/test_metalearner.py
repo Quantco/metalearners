@@ -10,6 +10,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
+from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
 from metalearners.metalearner import (
@@ -428,7 +429,12 @@ def test_combine_propensity_and_nuisance_specs(
 @pytest.mark.parametrize("use_pandas", [False, True])
 def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
     ml = _TestMetaLearner(
-        LGBMRegressor, False, 2, LGBMRegressor, feature_set=feature_set, n_folds=2
+        nuisance_model_factory=LGBMRegressor,
+        is_classification=False,
+        n_variants=2,
+        treatment_model_factory=LGBMRegressor,
+        feature_set=feature_set,
+        n_folds=2,
     )
     sample_size = 100
     n_features = 10
@@ -449,6 +455,35 @@ def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
         )
         for m in model_kind_list:
             assert m._overall_estimator.n_features_ == exp  # type: ignore
+
+
+def test_model_reusage_init():
+    prefitted_models = [CrossFitEstimator(10, LGBMRegressor)]
+    ml = _TestMetaLearner(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        n_variants=2,
+        treatment_model_factory=LGBMRegressor,
+        fitted_nuisance_models={"nuisance1": prefitted_models},
+    )
+    assert ml._nuisance_models["nuisance1"][0].estimator_factory == LGBMRegressor
+    assert ml._nuisance_models["nuisance2"][0].estimator_factory == LinearRegression
+    with pytest.raises(ValueError, match="A model for the nuisance model nuisance2"):
+        _TestMetaLearner(
+            is_classification=False,
+            n_variants=2,
+            treatment_model_factory=LGBMRegressor,
+            fitted_nuisance_models={"nuisance1": prefitted_models},
+        )
+
+    with pytest.raises(ValueError, match="The keys present"):
+        _TestMetaLearner(
+            nuisance_model_factory=LGBMRegressor,
+            is_classification=False,
+            n_variants=2,
+            treatment_model_factory=LGBMRegressor,
+            fitted_nuisance_models={"nuisance3": prefitted_models},
+        )
 
 
 @pytest.mark.parametrize(

@@ -87,6 +87,8 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
 
+        self._treatment_variants_indices = []
+
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
         for treatment_variant in range(self.n_variants):

@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection
+from copy import deepcopy
 from typing import TypedDict
 
 import numpy as np
@@ -148,6 +149,10 @@ class MetaLearner(ABC):
     * A list of strings or integers indicating which columns to use.
     * ``[]`` meaning that no present column should be used for that model and the
       input of the model should be a vector of 1s.
+
+    To reuse already fitted models  ``fitted_nuisance_models`` and ``fitted_propensity_model``
+    should be used. The models should be fitted on the same data the MetaLearner is going
+    to call fit with. TODO: Add reference to example about reusage
     """
 
     @classmethod
@@ -218,7 +223,10 @@ class MetaLearner(ABC):
         a classifier via ``sklearn.base.is_classifier``.
         """
         for model_kind in self.nuisance_model_specifications():
-            factory = self.nuisance_model_factory[model_kind]
+            if model_kind in self._prefitted_nuisance_models:
+                factory = self._nuisance_models[model_kind][0].estimator_factory
+            else:
+                factory = self.nuisance_model_factory[model_kind]
             predict_method = self.nuisance_model_specifications()[model_kind][
                 "predict_method"
             ](self)
@@ -247,16 +255,18 @@ class MetaLearner(ABC):
 
     def __init__(
         self,
-        nuisance_model_factory: ModelFactory,
         is_classification: bool,
         # TODO: Consider whether we can make this not a state of the MetaLearner
         # but rather just a parameter of a predict call.
         n_variants: int,
+        nuisance_model_factory: ModelFactory | None = None,
         treatment_model_factory: ModelFactory | None = None,
         propensity_model_factory: type[_ScikitModel] | None = None,
         nuisance_model_params: Params | dict[str, Params] | None = None,
         treatment_model_params: Params | dict[str, Params] | None = None,
         propensity_model_params: Params | None = None,
+        fitted_nuisance_models: dict[str, list[CrossFitEstimator]] | None = None,
+        fitted_propensity_model: CrossFitEstimator | None = None,
         feature_set: Features | dict[str, Features] | None = None,
         n_folds: int | dict[str, int] = 10,
         random_state: int | None = None,
@@ -301,10 +311,11 @@ class MetaLearner(ABC):
         if (
             PROPENSITY_MODEL in nuisance_model_specifications
             and propensity_model_factory is None
+            and fitted_propensity_model is None
         ):
             raise ValueError(
-                f"propensity_model_factory needs to be defined as the {self.__class__.__name__}"
-                " has a propensity model."
+                "propensity_model_factory or fitted_propensity_model needs to be defined "
+                f"as the {self.__class__.__name__} has a propensity model."
             )
 
         self._validate_n_variants(n_variants)
@@ -353,7 +364,44 @@ class MetaLearner(ABC):
             | set(treatment_model_specifications.keys()),
         )
 
-        self._nuisance_models: dict[str, list[CrossFitEstimator]] = {
+        self._nuisance_models: dict[str, list[CrossFitEstimator]] = {}
+        not_fitted_nuisance_models = set(nuisance_model_specifications.keys())
+        self._prefitted_nuisance_models: set[str] = set()
+
+        if fitted_nuisance_models is not None:
+            if not set(fitted_nuisance_models.keys()) <= set(
+                nuisance_model_specifications.keys()
+            ):
+                raise ValueError(
+                    "The keys present in fitted_nuisance_models should be a subset of"
+                    f"{set(nuisance_model_specifications.keys())}"
+                )
+            self._nuisance_models |= deepcopy(fitted_nuisance_models)
+            not_fitted_nuisance_models -= set(fitted_nuisance_models.keys())
+            self._prefitted_nuisance_models |= set(fitted_nuisance_models.keys())
+
+        if (
+            PROPENSITY_MODEL in nuisance_model_specifications.keys()
+            and fitted_propensity_model is not None
+        ):
+            self._nuisance_models |= {PROPENSITY_MODEL: [fitted_propensity_model]}
+            not_fitted_nuisance_models -= {PROPENSITY_MODEL}
+            self._prefitted_nuisance_models |= {PROPENSITY_MODEL}
+
+        for name in not_fitted_nuisance_models:
+            if self.nuisance_model_factory[name] is None:
+                if name == PROPENSITY_MODEL:
+                    raise ValueError(
+                        f"A model for the nuisance model {name} needs to be defined. Either "
+                        "in propensity_model_factory or in fitted_propensity_model."
+                    )
+                else:
+                    raise ValueError(
+                        f"A model for the nuisance model {name} needs to be defined. Either "
+                        "in nuisance_model_factory or in fitted_nuisance_models."
+                    )
+
+        self._nuisance_models |= {
             name: [
                 CrossFitEstimator(
                     n_folds=self.n_folds[name],
@@ -363,7 +411,7 @@ class MetaLearner(ABC):
                 )
                 for _ in range(nuisance_model_specifications[name]["cardinality"](self))
             ]
-            for name in set(nuisance_model_specifications.keys())
+            for name in not_fitted_nuisance_models
         }
         self._treatment_models: dict[str, list[CrossFitEstimator]] = {
             name: [
@@ -423,7 +471,10 @@ class MetaLearner(ABC):
         """Fit a given nuisance model of a MetaLearner.
 
         ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
+        If pre-fitted models were passed at instantiation, these are never refitted.
         """
+        if model_kind in self._prefitted_nuisance_models:
+            return self
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._nuisance_models[model_kind][model_ord].fit(
             X_filtered,
@@ -465,6 +516,8 @@ class MetaLearner(ABC):
         fit_params: dict | None = None,
     ) -> Self:
         """Fit all models of the MetaLearner.
+
+        If pre-fitted models were passed at instantiation, these are never refitted.
 
         ``n_jobs_cross_fitting`` will be used at the cross-fitting level. For more information about
         parallelism check :ref:`parallelism`
@@ -576,16 +629,18 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
 
     def __init__(
         self,
-        nuisance_model_factory: ModelFactory,
         is_classification: bool,
         # TODO: Consider whether we can make this not a state of the MetaLearner
         # but rather just a parameter of a predict call.
         n_variants: int,
+        nuisance_model_factory: ModelFactory | None = None,
         treatment_model_factory: ModelFactory | None = None,
         propensity_model_factory: type[_ScikitModel] | None = None,
         nuisance_model_params: Params | dict[str, Params] | None = None,
         treatment_model_params: Params | dict[str, Params] | None = None,
         propensity_model_params: Params | None = None,
+        fitted_nuisance_models: dict[str, list[CrossFitEstimator]] | None = None,
+        fitted_propensity_model: CrossFitEstimator | None = None,
         feature_set: Features | dict[str, Features] | None = None,
         n_folds: int | dict[str, int] = 10,
         random_state: int | None = None,
@@ -599,11 +654,13 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
             nuisance_model_params=nuisance_model_params,
             treatment_model_params=treatment_model_params,
             propensity_model_params=propensity_model_params,
+            fitted_nuisance_models=fitted_nuisance_models,
+            fitted_propensity_model=fitted_propensity_model,
             feature_set=feature_set,
             n_folds=n_folds,
             random_state=random_state,
         )
-        self._treatment_variants_indices: list[np.ndarray] = []
+        self._treatment_variants_indices: list[np.ndarray] | None = None
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
@@ -625,6 +682,12 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
           i.e. in case of a classification problem.
         """
+        if self._treatment_variants_indices is None:
+            raise ValueError(
+                "The metalearner needs to be fitted before predicting."
+                "In particular, the MetaLearner's attribute _treatment_variant_indices, "
+                "typically set during fitting, is None."
+            )
         # TODO: Consider multiprocessing
         n_obs = len(X)
         nuisance_tensors = self._nuisance_tensors(n_obs)

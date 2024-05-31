@@ -10,7 +10,13 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from metalearners.cross_fit_estimator import _OOS_WHITELIST
-from metalearners.metalearner import MetaLearner
+from metalearners.drlearner import DRLearner
+from metalearners.metalearner import (
+    PROPENSITY_MODEL,
+    VARIANT_OUTCOME_MODEL,
+    MetaLearner,
+    Params,
+)
 from metalearners.tlearner import TLearner
 from metalearners.utils import metalearner_factory, simplify_output
 from metalearners.xlearner import XLearner
@@ -194,9 +200,9 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, request):
     base_learner_params = _linear_base_learner_params(is_classification)
     factory = metalearner_factory(metalearner)
     learner = factory(
-        base_learner,
-        is_classification,
-        len(np.unique(treatment)),
+        nuisance_model_factory=base_learner,
+        is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
         nuisance_model_params=base_learner_params,
         treatment_model_factory=LinearRegression,
         propensity_model_factory=LogisticRegression,
@@ -384,8 +390,8 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
     )
 
     tlearner = TLearner(
-        nuisance_learner_factory,
-        is_classification,
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
         n_variants=len(np.unique(treatment)),
         nuisance_model_params=nuisance_learner_params,
         random_state=_SEED,
@@ -650,3 +656,76 @@ def test_predict_smoke(
         np.testing.assert_allclose(result.sum(axis=-1), 0, atol=1e-10)
     else:
         result.shape == (len(X), n_variants - 1, 1)
+
+
+@pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
+def test_model_reusage(outcome_kind, request):
+    dataset = request.getfixturevalue(
+        f"numerical_experiment_dataset_{outcome_kind}_outcome_binary_treatment_linear_te"
+    )
+    covariates, _, treatment, observed_outcomes, potential_outcomes, true_cate = dataset
+    is_classification = _is_classification(outcome_kind)
+    classifier_learner_factory = _tree_base_learner(True)
+    regressor_learner_factory = _tree_base_learner(False)
+    classifier_learner_params: Params = {"n_estimators": 5}
+    regressor_learner_params: Params = {"n_estimators": 5}
+    nuisance_learner_factory = (
+        classifier_learner_factory if is_classification else regressor_learner_factory
+    )
+    nuisance_learner_params = (
+        classifier_learner_params if is_classification else regressor_learner_params
+    )
+
+    tlearner = TLearner(
+        nuisance_model_factory=nuisance_learner_factory,
+        is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
+        nuisance_model_params=nuisance_learner_params,
+    )
+    tlearner.fit(covariates, observed_outcomes, treatment)
+    xlearner = XLearner(
+        is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
+        treatment_model_factory=regressor_learner_factory,
+        treatment_model_params=regressor_learner_params,
+        propensity_model_factory=classifier_learner_factory,
+        propensity_model_params=classifier_learner_params,
+        fitted_nuisance_models={
+            VARIANT_OUTCOME_MODEL: tlearner._nuisance_models[VARIANT_OUTCOME_MODEL]
+        },
+    )
+    # We need to manually copy _treatment_variants_indices for the xlearner as it's needed
+    # for predict, the user should not have to do this as they should call fit before predict.
+    # This is just for testing.
+    xlearner._treatment_variants_indices = tlearner._treatment_variants_indices
+    np.testing.assert_allclose(
+        tlearner.predict_conditional_average_outcomes(covariates, False),
+        xlearner.predict_conditional_average_outcomes(covariates, False),
+    )
+    assert xlearner._prefitted_nuisance_models == {VARIANT_OUTCOME_MODEL}
+    tlearner_pred_before_refitting = tlearner.predict_conditional_average_outcomes(
+        covariates, False
+    )
+    xlearner.fit(covariates, observed_outcomes, treatment)
+    np.testing.assert_allclose(
+        tlearner.predict_conditional_average_outcomes(covariates, False),
+        tlearner_pred_before_refitting,
+    )
+    drlearner = DRLearner(
+        is_classification=is_classification,
+        n_variants=len(np.unique(treatment)),
+        treatment_model_factory=regressor_learner_factory,
+        treatment_model_params=regressor_learner_params,
+        fitted_nuisance_models={
+            VARIANT_OUTCOME_MODEL: tlearner._nuisance_models[VARIANT_OUTCOME_MODEL]
+        },
+        fitted_propensity_model=xlearner._nuisance_models[PROPENSITY_MODEL][0],
+    )
+    assert drlearner._prefitted_nuisance_models == {
+        VARIANT_OUTCOME_MODEL,
+        PROPENSITY_MODEL,
+    }
+    np.testing.assert_allclose(
+        xlearner.predict_nuisance(covariates, PROPENSITY_MODEL, 0, False),
+        drlearner.predict_nuisance(covariates, PROPENSITY_MODEL, 0, False),
+    )

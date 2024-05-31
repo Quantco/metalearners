@@ -58,6 +58,8 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
 
+        self._treatment_variants_indices = []
+
         for v in range(self.n_variants):
             self._treatment_variants_indices.append(w == v)
 

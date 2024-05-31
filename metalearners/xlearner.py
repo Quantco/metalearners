@@ -81,6 +81,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
 
+        self._treatment_variants_indices = []
+
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
         for v in range(self.n_variants):
@@ -136,6 +138,12 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
+        if self._treatment_variants_indices is None:
+            raise ValueError(
+                "The MetaLearner needs to be fitted before predicting. "
+                "In particular, the X-Learner's attribute _treatment_variant_indices, "
+                "typically set during fitting, is None."
+            )
         n_outputs = 2 if self.is_classification else 1
         tau_hat = np.zeros((len(X), self.n_variants - 1, n_outputs))
         # Propensity score model is always a classifier so we can't use MEDIAN
