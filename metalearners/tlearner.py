@@ -12,6 +12,7 @@ from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
     NUISANCE,
     VARIANT_OUTCOME_MODEL,
+    MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
     _ModelSpecifications,
 )
@@ -28,10 +29,8 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             VARIANT_OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda ml: ml.n_variants,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
+                cardinality=MetaLearner._get_n_variants,
+                predict_method=MetaLearner._outcome_predict_method,
             ),
         }
 

@@ -14,6 +14,7 @@ from metalearners._utils import (
     Matrix,
     Vector,
     convert_treatment,
+    get_one,
     supports_categoricals,
 )
 from metalearners.cross_fit_estimator import OVERALL
@@ -73,10 +74,8 @@ class SLearner(MetaLearner):
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             _BASE_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
+                cardinality=get_one,
+                predict_method=MetaLearner._outcome_predict_method,
             )
         }
 

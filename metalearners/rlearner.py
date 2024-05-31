@@ -12,6 +12,9 @@ from metalearners._utils import (
     Vector,
     clip_element_absolute_value_to_epsilon,
     function_has_argument,
+    get_one,
+    get_predict,
+    get_predict_proba,
     index_matrix,
     validate_all_vectors_same_index,
     validate_valid_treatment_variant_not_control,
@@ -124,13 +127,12 @@ class RLearner(MetaLearner):
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             PROPENSITY_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1, predict_method=lambda _: "predict_proba"
+                cardinality=get_one,
+                predict_method=get_predict_proba,
             ),
             OUTCOME_MODEL: _ModelSpecifications(
-                cardinality=lambda _: 1,
-                predict_method=lambda ml: (
-                    "predict_proba" if ml.is_classification else "predict"
-                ),
+                cardinality=get_one,
+                predict_method=MetaLearner._outcome_predict_method,
             ),
         }
 
@@ -138,8 +140,8 @@ class RLearner(MetaLearner):
     def treatment_model_specifications(cls) -> dict[str, _ModelSpecifications]:
         return {
             TREATMENT_MODEL: _ModelSpecifications(
-                cardinality=lambda ml: ml.n_variants - 1,
-                predict_method=lambda _: "predict",
+                cardinality=MetaLearner._get_n_variants_minus_one,
+                predict_method=get_predict,
             )
         }
 

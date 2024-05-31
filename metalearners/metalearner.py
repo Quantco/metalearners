@@ -177,6 +177,15 @@ class MetaLearner(ABC):
     @abstractmethod
     def _supports_multi_class(cls) -> bool: ...
 
+    def _outcome_predict_method(self):
+        return "predict_proba" if self.is_classification else "predict"
+
+    def _get_n_variants(self):
+        return self.n_variants
+
+    def _get_n_variants_minus_one(self):
+        return self.n_variants - 1
+
     @classmethod
     def _validate_n_variants(cls, n_variants: int) -> None:
         if not isinstance(n_variants, int) or n_variants < 2:

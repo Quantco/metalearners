@@ -425,3 +425,15 @@ def load_twins_data(
         categorical_feature_columns,
         true_cate_column,
     )
+
+
+def get_one(*args, **kwargs) -> int:
+    return 1
+
+
+def get_predict(*args, **kwargs) -> PredictMethod:
+    return "predict"
+
+
+def get_predict_proba(*args, **kwargs) -> PredictMethod:
+    return "predict_proba"
