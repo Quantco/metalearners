@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
       - name: Build conda package
-        uses: quantco/rattler-build-action@v0.8.7
+        uses: quantco/rattler-build-action@v0.8.10
         with:
           quetz-api-key: ${{ secrets.QUETZ_API_KEY }}
           upload-quetz: ${{ startsWith(github.ref, 'refs/tags/') }}
