@@ -7,6 +7,21 @@
 Changelog
 =========
 
+0.3.0 (2024-06-03)
+------------------
+
+* Implemented :class:`metalearners.explainer.Explainer` with support for binary
+  classification and regression outcomes and discrete treatment
+  variants.
+
+* Integration of :class:`metalearners.explainer.Explainer` with :class:`metalearners.metalearner.MetaLearner`
+  for feature importance and SHAP values calculations.
+
+* Implemented model reusage through the ``fitted_nuisance_models`` and ``fitted_propensity_model``
+  parameters of :class:`metalearners.metalearner.MetaLearner`.
+
+* Allow for ``fit_params`` in :meth:`metalearners.metalearner.MetaLearner.fit`.
+
 0.2.0 (2024-05-28)
 ------------------
 
