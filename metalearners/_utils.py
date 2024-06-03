@@ -437,3 +437,27 @@ def get_predict(*args, **kwargs) -> PredictMethod:
 
 def get_predict_proba(*args, **kwargs) -> PredictMethod:
     return "predict_proba"
+
+
+def simplify_output_2d(tensor: np.ndarray) -> np.ndarray:
+    """Reduces the third dimension of a CATE estimation tensor.
+
+    In the case of a classification task it only works in the binary classification
+    outcome and returns the CATE of the positive class.
+
+    The returned array will be of shape :math:`(n_{obs}, n_{variants} - 1)`.
+    """
+    if (n_dim := len(tensor.shape)) != 3:
+        raise ValueError(
+            f"Output needs to be 3-dimensional but is {n_dim}-dimensional."
+        )
+    n_obs, n_variants, n_outputs = tensor.shape
+    if n_outputs == 1:
+        return tensor[:, :, 0]
+    elif n_outputs == 2:
+        return tensor[:, :, 1]
+    else:
+        raise ValueError(
+            "This function requires a regression or a classification with binary outcome "
+            "task."
+        )

@@ -10,7 +10,14 @@ import numpy as np
 import pandas as pd
 from typing_extensions import Self
 
-from metalearners._typing import OosMethod, PredictMethod, _ScikitModel
+from metalearners._typing import (
+    Features,
+    ModelFactory,
+    OosMethod,
+    Params,
+    PredictMethod,
+    _ScikitModel,
+)
 from metalearners._utils import (
     Matrix,
     Vector,
@@ -22,10 +29,8 @@ from metalearners.cross_fit_estimator import (
     OVERALL,
     CrossFitEstimator,
 )
+from metalearners.explainer import Explainer
 
-Params = dict[str, int | float | str]
-Features = Collection[str] | Collection[int]
-ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 PROPENSITY_MODEL = "propensity_model"
 VARIANT_OUTCOME_MODEL = "variant_outcome_model"
 TREATMENT_MODEL = "treatment_model"
@@ -632,6 +637,94 @@ class MetaLearner(ABC):
     ) -> dict[str, float | int]:
         """Evaluate all models contained in a MetaLearner."""
         ...
+
+    def get_explainer(
+        self,
+        X: Matrix | None = None,
+        cate_estimates: np.ndarray | None = None,
+        cate_model_factory: type[_ScikitModel] | None = None,
+        cate_model_params: Params | None = None,
+    ) -> Explainer:
+        r"""Create an :class:`~metalearners.explainer.Explainer` which can be used in
+        :py:meth:`~metalearners.metalearner.MetaLearner.get_feature_importance`.
+
+        This function can be used in two distinct manners based on the provided parameters:
+
+        *   When parameters ``X``, ``cate_estimates``, and ``cate_model_factory`` are all
+            set to ``None``, the function creates an :class:`~metalearners.explainer.Explainer`
+            using the pre-existing treatment models. If these models do not exist, however,
+            it triggers a ``ValueError``.
+        *   On the contrary, if ``X``, ``cate_estimates``, and ``cate_model_factory`` are
+            not ``None``, the function initiates an instance of the :class:`~metalearners.explainer.Explainer`
+            class using these parameters. This instance then fits new models for each
+            treatment variant, and these models are employed to calculate the importance
+            of features.
+        """
+        if X is None and cate_estimates is None and cate_model_factory is None:
+            try:
+                cate_cf_models = self._treatment_models[TREATMENT_MODEL]
+                cate_models = [cf._overall_estimator for cf in cate_cf_models]
+            except KeyError:
+                raise ValueError(
+                    "The metalearner does not have treatment models; hence X, cate_estimates, "
+                    "and cate_model_factory need to be defined."
+                )
+            return Explainer(cate_models=cate_models)  # type: ignore
+        elif (
+            X is not None
+            and cate_estimates is not None
+            and cate_model_factory is not None
+        ):
+            return Explainer.from_estimates(
+                X=X,
+                cate_estimates=cate_estimates,
+                cate_model_factory=cate_model_factory,
+                cate_model_params=cate_model_params,
+            )
+        else:
+            raise ValueError(
+                "Either all of [X, cate_estimates, cate_model_factory] are None or all "
+                "of them must be defined."
+            )
+
+    def get_feature_importance(
+        self,
+        feature_names: Collection[str] | None = None,
+        normalize: bool = False,
+        explainer: Explainer | None = None,
+        X: Matrix | None = None,
+        cate_estimates: np.ndarray | None = None,
+        cate_model_factory: type[_ScikitModel] | None = None,
+        cate_model_params: Params | None = None,
+    ) -> list[pd.Series]:
+        r"""Calculates the feature importance for each treatment group.
+
+        If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
+        is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
+        with the passed parameters. If `explainer`` is not ``None``, then the parameters
+        ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
+        ignored.
+
+        If ``normalization = True``, for each treatment variant the feature importances
+        are normalized so that they sum to 1.
+
+        ``feature_names`` is optional but in the case it's not passed the names of the
+        features will default to ``f"Feature {i}"`` where ``i`` is the corresponding
+        feature index.
+
+        The returned list contains the feature importances for each treatment variant in
+        ascending order.
+        """
+        if explainer is None:
+            explainer = self.get_explainer(
+                X=X,
+                cate_estimates=cate_estimates,
+                cate_model_factory=cate_model_factory,
+                cate_model_params=cate_model_params,
+            )
+        return explainer.feature_importance(
+            normalize=normalize, feature_names=feature_names
+        )
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):

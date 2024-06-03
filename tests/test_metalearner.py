@@ -79,7 +79,7 @@ class _TestMetaLearner(MetaLearner):
         return self
 
     def predict(self, X, is_oos, oos_method=None):
-        return np.zeros((len(X), 1, 1))
+        return np.zeros((len(X), self.n_variants - 1, 1))
 
     def evaluate(self, X, y, w, is_oos, oos_method=None):
         return {}
@@ -682,3 +682,131 @@ def test_fit_params_rlearner_error(dummy_dataset):
             w=w,
             fit_params={_SAMPLE_WEIGHT: np.ones(len(X))},
         )
+
+
+@pytest.mark.parametrize(
+    "implementation, needs_estimates",
+    [
+        (_TestMetaLearner, True),
+        (TLearner, True),
+        (SLearner, True),
+        (XLearner, True),
+        (RLearner, False),
+        (DRLearner, False),
+    ],
+)
+@pytest.mark.parametrize("n_variants", [2, 10])
+@pytest.mark.parametrize("normalize", [False, True])
+@pytest.mark.parametrize("use_custom_feature_names", [False, True])
+def test_get_feature_importance_smoke(
+    implementation,
+    needs_estimates,
+    normalize,
+    n_variants,
+    rng,
+    use_custom_feature_names,
+):
+    sample_size = 1000
+    n_features = 10
+
+    X = rng.standard_normal((sample_size, n_features))
+    y = rng.standard_normal(sample_size)
+    w = rng.integers(0, n_variants, sample_size)
+
+    ml = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LogisticRegression,
+        treatment_model_params={"n_estimators": 1},  # type: ignore
+    )
+
+    ml.fit(X=X, y=y, w=w)
+    cate_estimates = ml.predict(X=X, is_oos=False)
+
+    if use_custom_feature_names:
+        feature_names = [f"x_{i}" for i in range(n_features)]
+        expected_feature_names = feature_names
+    else:
+        feature_names = None
+        expected_feature_names = [f"Feature {i}" for i in range(n_features)]
+    feature_importances = ml.get_feature_importance(
+        normalize=normalize,
+        feature_names=feature_names,
+        X=X,
+        cate_estimates=cate_estimates,
+        cate_model_factory=LGBMRegressor,
+        cate_model_params={"n_estimators": 1},
+    )
+    assert len(feature_importances) == n_variants - 1
+    for tv in range(n_variants - 1):
+        assert len(feature_importances[tv]) == n_features
+        # the nan check is for _TestMetaLearner which returns a 0 importance for all
+        # and therefore when normalizing returns nan.
+        if normalize and not pd.isna(feature_importances[tv]).all():
+            assert np.sum(feature_importances[tv]) == pytest.approx(1)
+        assert (feature_importances[tv].index == expected_feature_names).all()
+
+    if not needs_estimates:
+        explainer = ml.get_explainer()
+        feature_importances = ml.get_feature_importance(
+            normalize=normalize, feature_names=feature_names, explainer=explainer
+        )
+        assert len(feature_importances) == n_variants - 1
+        for tv in range(n_variants - 1):
+            assert len(feature_importances[tv]) == n_features
+            if normalize and not pd.isna(feature_importances[tv]).all():
+                assert np.sum(feature_importances[tv]) == pytest.approx(1)
+        assert (feature_importances[tv].index == expected_feature_names).all()
+
+
+@pytest.mark.parametrize(
+    "implementation, needs_estimates",
+    [
+        (TLearner, True),
+        (XLearner, True),
+        # (RLearner, False),
+        (DRLearner, False),
+    ],
+)
+def test_get_feature_importance_known(
+    implementation, needs_estimates, feature_importance_dataset
+):
+    """The SLearner can not represent properly this CATE with LinearRegression as there
+    are no interactions.
+
+    The RLearner does not learn as good CATEs as the other metalearners because there is
+    only one outcome model. It may be interesting to test and see if other parameters
+    can help on passing this test for the S and R learners.
+    """
+    X, y, w = feature_importance_dataset
+    n_variants = len(np.unique(w))
+
+    ml = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LogisticRegression,
+    )
+    ml.fit(X=X, y=y, w=w)
+    cate_estimates = ml.predict(X=X, is_oos=False)
+    explainer = ml.get_explainer(
+        X=X,
+        cate_estimates=cate_estimates,
+        cate_model_factory=LGBMRegressor,
+    )
+    feature_importances = ml.get_feature_importance(
+        feature_names=X.columns, explainer=explainer
+    )
+
+    assert feature_importances[0].idxmax() == "x1"
+    assert feature_importances[1].idxmax() == "x2"
+
+    if not needs_estimates:
+        feature_importances = ml.get_feature_importance(
+            feature_names=X.columns,
+        )
+        assert feature_importances[0].idxmax() == "x1"
+        assert feature_importances[1].idxmax() == "x2"

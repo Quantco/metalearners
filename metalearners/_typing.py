@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
+from collections.abc import Collection
 from typing import Literal, Protocol
 
 PredictMethod = Literal["predict", "predict_proba"]
@@ -11,6 +12,9 @@ PredictMethod = Literal["predict", "predict_proba"]
 # As of 24/04/25 there is no way either to reuse variables inside a Literal definition, see
 # https://mypy.readthedocs.io/en/stable/literal_types.html#limitations
 OosMethod = Literal["overall", "median", "mean"]
+
+Params = dict[str, int | float | str]
+Features = Collection[str] | Collection[int]
 
 
 class _ScikitModel(Protocol):
@@ -24,3 +28,6 @@ class _ScikitModel(Protocol):
     def score(self, X, y, **kwargs): ...
 
     def set_params(self, **params): ...
+
+
+ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]

@@ -3,6 +3,7 @@
 
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from metalearners._utils import get_linear_dimension, load_mindset_data, load_twins_data
@@ -175,4 +176,25 @@ def dummy_dataset(rng):
     X = rng.standard_normal((sample_size, n_features))
     y = rng.standard_normal(sample_size)
     w = rng.integers(0, 2, sample_size)
+    return X, y, w
+
+
+@pytest.fixture(scope="function")
+def feature_importance_dataset(rng):
+    n_samples = 10000
+    x0 = rng.normal(10, 1, n_samples)
+    x1 = rng.normal(2, 1, n_samples)
+    x2 = rng.normal(-5, 1, n_samples)
+    w = rng.integers(0, 3, n_samples)
+
+    noise = rng.normal(0, 0.05, n_samples)
+
+    y = np.zeros(n_samples)
+    y[w == 0] = x0[w == 0] + noise[w == 0]
+    y[w == 1] = x0[w == 1] + x1[w == 1] + noise[w == 1]
+    y[w == 2] = x0[w == 2] + x2[w == 2] + noise[w == 2]
+    X = pd.DataFrame({"x0": x0, "x1": x1, "x2": x2})
+    y = pd.Series(y)
+    w = pd.Series(w)
+
     return X, y, w
