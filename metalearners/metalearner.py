@@ -8,6 +8,7 @@ from typing import TypedDict
 
 import numpy as np
 import pandas as pd
+import shap
 from typing_extensions import Self
 
 from metalearners._typing import (
@@ -724,6 +725,44 @@ class MetaLearner(ABC):
             )
         return explainer.feature_importance(
             normalize=normalize, feature_names=feature_names
+        )
+
+    def get_shap_values(
+        self,
+        X: Matrix,
+        shap_explainer_factory: type[shap.Explainer],
+        shap_explainer_params: dict | None = None,
+        explainer: Explainer | None = None,
+        cate_estimates: np.ndarray | None = None,
+        cate_model_factory: type[_ScikitModel] | None = None,
+        cate_model_params: Params | None = None,
+    ) -> list[np.ndarray]:
+        """Calculates the shap values for each treatment group.
+
+        If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
+        is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
+        with the passed parameters. If `explainer`` is not ``None``, then the parameters
+        ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
+        ignored.
+
+        The parameter ``shap_explainer_factory`` can be used to specify the type of shap
+        explainer, for the different options see
+        `here <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
+
+        The returned list contains the shap values for each treatment variant in ascending
+        order.
+        """
+        if explainer is None:
+            explainer = self.get_explainer(
+                X=X,
+                cate_estimates=cate_estimates,
+                cate_model_factory=cate_model_factory,
+                cate_model_params=cate_model_params,
+            )
+        return explainer.get_shap_values(
+            X=X,
+            shap_explainer_factory=shap_explainer_factory,
+            shap_explainer_params=shap_explainer_params,
         )
 
 

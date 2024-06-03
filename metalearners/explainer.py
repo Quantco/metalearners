@@ -5,6 +5,7 @@ from collections.abc import Collection
 
 import numpy as np
 import pandas as pd
+import shap
 
 from metalearners._typing import _ScikitModel
 from metalearners._utils import Matrix, simplify_output_2d
@@ -110,3 +111,27 @@ class Explainer:
             feature_importances.append(variant_feature_importance)
 
         return feature_importances
+
+    def get_shap_values(
+        self,
+        X: Matrix,
+        shap_explainer_factory: type[shap.Explainer],
+        shap_explainer_params: dict | None = None,
+    ) -> list[np.ndarray]:
+        """Calculates the shap values for each treatment group.
+
+        The parameter ``shap_explainer_factory`` can be used to specify the type of shap
+        explainer, for the different options see
+        `here <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
+        """
+        if shap_explainer_params is None:
+            shap_explainer_params = {}
+        shap_values = []
+        for tv in range(self.n_variants - 1):
+            shap_explainer = shap_explainer_factory(
+                model=self.cate_models[tv],
+                **shap_explainer_params,
+            )
+            variant_shap_values = shap_explainer.shap_values(X)
+            shap_values.append(variant_shap_values)
+        return shap_values

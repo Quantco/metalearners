@@ -3,10 +3,12 @@
 
 from itertools import chain
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
@@ -810,3 +812,62 @@ def test_get_feature_importance_known(
         )
         assert feature_importances[0].idxmax() == "x1"
         assert feature_importances[1].idxmax() == "x2"
+
+
+@pytest.mark.parametrize(
+    "implementation, needs_estimates",
+    [
+        (TLearner, True),
+        (SLearner, True),
+        (XLearner, True),
+        (RLearner, False),
+        (DRLearner, False),
+    ],
+)
+@pytest.mark.parametrize("n_variants", [2, 5])
+def test_get_shap_values_smoke(
+    implementation,
+    needs_estimates,
+    n_variants,
+    rng,
+):
+    sample_size = 1000
+    n_features = 10
+
+    X = rng.standard_normal((sample_size, n_features))
+    y = rng.standard_normal(sample_size)
+    w = rng.integers(0, n_variants, sample_size)
+
+    ml = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LGBMRegressor,
+        propensity_model_factory=LogisticRegression,
+        treatment_model_params={"n_estimators": 1},  # type: ignore
+    )
+
+    ml.fit(X=X, y=y, w=w)
+    cate_estimates = ml.predict(X=X, is_oos=False)
+
+    shap_values = ml.get_shap_values(
+        X,
+        TreeExplainer,
+        cate_estimates=cate_estimates,
+        cate_model_factory=LGBMRegressor,
+        cate_model_params={"n_estimators": 1},
+    )
+    assert len(shap_values) == n_variants - 1
+    for tv in range(n_variants - 1):
+        assert shap_values[tv].shape == (sample_size, n_features)
+        summary_plot(shap_values[tv], show=False, features=X)
+        plt.clf()
+
+    if not needs_estimates:
+        explainer = ml.get_explainer()
+        shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+        assert len(shap_values) == n_variants - 1
+        for tv in range(n_variants - 1):
+            assert shap_values[tv].shape == (sample_size, n_features)
+            summary_plot(shap_values[tv], show=False, features=X)
+            plt.clf()

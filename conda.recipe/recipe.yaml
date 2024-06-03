@@ -29,6 +29,7 @@ requirements:
     - numpy
     - typing-extensions
     - git_root
+    - shap
 tests:
   - python:
       imports:
