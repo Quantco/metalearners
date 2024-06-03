@@ -701,6 +701,7 @@ def test_fit_params_rlearner_error(dummy_dataset):
 @pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("use_custom_feature_names", [False, True])
 @pytest.mark.parametrize("use_get_explainer", [False, True])
+@pytest.mark.parametrize("sort_values", [False, True])
 def test_get_feature_importance_smoke(
     implementation,
     needs_estimates,
@@ -709,6 +710,7 @@ def test_get_feature_importance_smoke(
     rng,
     use_custom_feature_names,
     use_get_explainer,
+    sort_values,
 ):
     sample_size = 1000
     n_features = 10
@@ -743,12 +745,16 @@ def test_get_feature_importance_smoke(
             cate_model_params={"n_estimators": 1},
         )
         feature_importances = ml.get_feature_importance(
-            normalize=normalize, feature_names=feature_names, explainer=explainer
+            normalize=normalize,
+            feature_names=feature_names,
+            explainer=explainer,
+            sort_values=sort_values,
         )
     else:
         feature_importances = ml.get_feature_importance(
             normalize=normalize,
             feature_names=feature_names,
+            sort_values=sort_values,
             X=X,
             cate_estimates=cate_estimates,
             cate_model_factory=LGBMRegressor,
@@ -761,24 +767,37 @@ def test_get_feature_importance_smoke(
         # and therefore when normalizing returns nan.
         if normalize and not pd.isna(feature_importances[tv]).all():
             assert np.sum(feature_importances[tv]) == pytest.approx(1)
-        assert (feature_importances[tv].index == expected_feature_names).all()
+            if sort_values:
+                assert feature_importances[tv].is_monotonic_decreasing
+                assert set(feature_importances[tv].index) == set(expected_feature_names)
+            else:
+                assert (feature_importances[tv].index == expected_feature_names).all()
 
     if not needs_estimates:
         if use_get_explainer:
             explainer = ml.get_explainer()
             feature_importances = ml.get_feature_importance(
-                normalize=normalize, feature_names=feature_names, explainer=explainer
+                normalize=normalize,
+                feature_names=feature_names,
+                explainer=explainer,
+                sort_values=sort_values,
             )
         else:
             feature_importances = ml.get_feature_importance(
-                normalize=normalize, feature_names=feature_names
+                normalize=normalize,
+                feature_names=feature_names,
+                sort_values=sort_values,
             )
         assert len(feature_importances) == n_variants - 1
         for tv in range(n_variants - 1):
             assert len(feature_importances[tv]) == n_features
             if normalize and not pd.isna(feature_importances[tv]).all():
                 assert np.sum(feature_importances[tv]) == pytest.approx(1)
-        assert (feature_importances[tv].index == expected_feature_names).all()
+            if sort_values:
+                assert feature_importances[tv].is_monotonic_decreasing
+                assert set(feature_importances[tv].index) == set(expected_feature_names)
+            else:
+                assert (feature_importances[tv].index == expected_feature_names).all()
 
 
 @pytest.mark.parametrize(

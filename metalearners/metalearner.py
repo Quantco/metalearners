@@ -692,6 +692,7 @@ class MetaLearner(ABC):
         self,
         feature_names: Collection[str] | None = None,
         normalize: bool = False,
+        sort_values: bool = False,
         explainer: Explainer | None = None,
         X: Matrix | None = None,
         cate_estimates: np.ndarray | None = None,
@@ -724,7 +725,7 @@ class MetaLearner(ABC):
                 cate_model_params=cate_model_params,
             )
         return explainer.feature_importance(
-            normalize=normalize, feature_names=feature_names
+            normalize=normalize, feature_names=feature_names, sort_values=sort_values
         )
 
     def get_shap_values(

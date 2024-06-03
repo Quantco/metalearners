@@ -81,7 +81,10 @@ class Explainer:
         return cls(cate_models)
 
     def feature_importance(
-        self, normalize: bool = False, feature_names: Collection[str] | None = None
+        self,
+        normalize: bool = False,
+        feature_names: Collection[str] | None = None,
+        sort_values: bool = False,
     ) -> list[pd.Series]:
         r"""Calculates the feature importance for each treatment group.
 
@@ -108,6 +111,10 @@ class Explainer:
             variant_feature_importance = _build_feature_importance_dict(
                 variant_feature_importance, feature_names
             )
+            if sort_values:
+                variant_feature_importance = variant_feature_importance.sort_values(
+                    ascending=False
+                )
             feature_importances.append(variant_feature_importance)
 
         return feature_importances
