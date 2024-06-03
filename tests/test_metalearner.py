@@ -700,6 +700,7 @@ def test_fit_params_rlearner_error(dummy_dataset):
 @pytest.mark.parametrize("n_variants", [2, 10])
 @pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("use_custom_feature_names", [False, True])
+@pytest.mark.parametrize("use_get_explainer", [False, True])
 def test_get_feature_importance_smoke(
     implementation,
     needs_estimates,
@@ -707,6 +708,7 @@ def test_get_feature_importance_smoke(
     n_variants,
     rng,
     use_custom_feature_names,
+    use_get_explainer,
 ):
     sample_size = 1000
     n_features = 10
@@ -733,14 +735,25 @@ def test_get_feature_importance_smoke(
     else:
         feature_names = None
         expected_feature_names = [f"Feature {i}" for i in range(n_features)]
-    feature_importances = ml.get_feature_importance(
-        normalize=normalize,
-        feature_names=feature_names,
-        X=X,
-        cate_estimates=cate_estimates,
-        cate_model_factory=LGBMRegressor,
-        cate_model_params={"n_estimators": 1},
-    )
+    if use_get_explainer:
+        explainer = ml.get_explainer(
+            X=X,
+            cate_estimates=cate_estimates,
+            cate_model_factory=LGBMRegressor,
+            cate_model_params={"n_estimators": 1},
+        )
+        feature_importances = ml.get_feature_importance(
+            normalize=normalize, feature_names=feature_names, explainer=explainer
+        )
+    else:
+        feature_importances = ml.get_feature_importance(
+            normalize=normalize,
+            feature_names=feature_names,
+            X=X,
+            cate_estimates=cate_estimates,
+            cate_model_factory=LGBMRegressor,
+            cate_model_params={"n_estimators": 1},
+        )
     assert len(feature_importances) == n_variants - 1
     for tv in range(n_variants - 1):
         assert len(feature_importances[tv]) == n_features
@@ -751,10 +764,15 @@ def test_get_feature_importance_smoke(
         assert (feature_importances[tv].index == expected_feature_names).all()
 
     if not needs_estimates:
-        explainer = ml.get_explainer()
-        feature_importances = ml.get_feature_importance(
-            normalize=normalize, feature_names=feature_names, explainer=explainer
-        )
+        if use_get_explainer:
+            explainer = ml.get_explainer()
+            feature_importances = ml.get_feature_importance(
+                normalize=normalize, feature_names=feature_names, explainer=explainer
+            )
+        else:
+            feature_importances = ml.get_feature_importance(
+                normalize=normalize, feature_names=feature_names
+            )
         assert len(feature_importances) == n_variants - 1
         for tv in range(n_variants - 1):
             assert len(feature_importances[tv]) == n_features
@@ -825,10 +843,12 @@ def test_get_feature_importance_known(
     ],
 )
 @pytest.mark.parametrize("n_variants", [2, 5])
+@pytest.mark.parametrize("use_get_explainer", [False, True])
 def test_get_shap_values_smoke(
     implementation,
     needs_estimates,
     n_variants,
+    use_get_explainer,
     rng,
 ):
     sample_size = 1000
@@ -850,13 +870,22 @@ def test_get_shap_values_smoke(
     ml.fit(X=X, y=y, w=w)
     cate_estimates = ml.predict(X=X, is_oos=False)
 
-    shap_values = ml.get_shap_values(
-        X,
-        TreeExplainer,
-        cate_estimates=cate_estimates,
-        cate_model_factory=LGBMRegressor,
-        cate_model_params={"n_estimators": 1},
-    )
+    if use_get_explainer:
+        explainer = ml.get_explainer(
+            X=X,
+            cate_estimates=cate_estimates,
+            cate_model_factory=LGBMRegressor,
+            cate_model_params={"n_estimators": 1},
+        )
+        shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+    else:
+        shap_values = ml.get_shap_values(
+            X,
+            TreeExplainer,
+            cate_estimates=cate_estimates,
+            cate_model_factory=LGBMRegressor,
+            cate_model_params={"n_estimators": 1},
+        )
     assert len(shap_values) == n_variants - 1
     for tv in range(n_variants - 1):
         assert shap_values[tv].shape == (sample_size, n_features)
@@ -864,8 +893,11 @@ def test_get_shap_values_smoke(
         plt.clf()
 
     if not needs_estimates:
-        explainer = ml.get_explainer()
-        shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+        if use_get_explainer:
+            explainer = ml.get_explainer()
+            shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+        else:
+            shap_values = ml.get_shap_values(X, TreeExplainer)
         assert len(shap_values) == n_variants - 1
         for tv in range(n_variants - 1):
             assert shap_values[tv].shape == (sample_size, n_features)

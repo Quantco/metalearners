@@ -742,7 +742,7 @@ class MetaLearner(ABC):
         If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
         is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
         with the passed parameters. If `explainer`` is not ``None``, then the parameters
-        ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
+        ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
         ignored.
 
         The parameter ``shap_explainer_factory`` can be used to specify the type of shap
@@ -754,7 +754,7 @@ class MetaLearner(ABC):
         """
         if explainer is None:
             explainer = self.get_explainer(
-                X=X,
+                X=None if cate_estimates is None else X,
                 cate_estimates=cate_estimates,
                 cate_model_factory=cate_model_factory,
                 cate_model_params=cate_model_params,
