@@ -702,7 +702,7 @@ def test_fit_params_rlearner_error(dummy_dataset):
 @pytest.mark.parametrize("use_custom_feature_names", [False, True])
 @pytest.mark.parametrize("use_get_explainer", [False, True])
 @pytest.mark.parametrize("sort_values", [False, True])
-def test_get_feature_importance_smoke(
+def test_get_feature_importances_smoke(
     implementation,
     needs_estimates,
     normalize,
@@ -744,14 +744,14 @@ def test_get_feature_importance_smoke(
             cate_model_factory=LGBMRegressor,
             cate_model_params={"n_estimators": 1},
         )
-        feature_importances = ml.get_feature_importance(
+        feature_importances = ml.get_feature_importances(
             normalize=normalize,
             feature_names=feature_names,
             explainer=explainer,
             sort_values=sort_values,
         )
     else:
-        feature_importances = ml.get_feature_importance(
+        feature_importances = ml.get_feature_importances(
             normalize=normalize,
             feature_names=feature_names,
             sort_values=sort_values,
@@ -776,14 +776,14 @@ def test_get_feature_importance_smoke(
     if not needs_estimates:
         if use_get_explainer:
             explainer = ml.get_explainer()
-            feature_importances = ml.get_feature_importance(
+            feature_importances = ml.get_feature_importances(
                 normalize=normalize,
                 feature_names=feature_names,
                 explainer=explainer,
                 sort_values=sort_values,
             )
         else:
-            feature_importances = ml.get_feature_importance(
+            feature_importances = ml.get_feature_importances(
                 normalize=normalize,
                 feature_names=feature_names,
                 sort_values=sort_values,
@@ -809,7 +809,7 @@ def test_get_feature_importance_smoke(
         (DRLearner, False),
     ],
 )
-def test_get_feature_importance_known(
+def test_get_feature_importances_known(
     implementation, needs_estimates, feature_importance_dataset
 ):
     """The SLearner can not represent properly this CATE with LinearRegression as there
@@ -836,7 +836,7 @@ def test_get_feature_importance_known(
         cate_estimates=cate_estimates,
         cate_model_factory=LGBMRegressor,
     )
-    feature_importances = ml.get_feature_importance(
+    feature_importances = ml.get_feature_importances(
         feature_names=X.columns, explainer=explainer
     )
 
@@ -844,7 +844,7 @@ def test_get_feature_importance_known(
     assert feature_importances[1].idxmax() == "x2"
 
     if not needs_estimates:
-        feature_importances = ml.get_feature_importance(
+        feature_importances = ml.get_feature_importances(
             feature_names=X.columns,
         )
         assert feature_importances[0].idxmax() == "x1"

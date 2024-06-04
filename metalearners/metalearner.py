@@ -647,7 +647,7 @@ class MetaLearner(ABC):
         cate_model_params: Params | None = None,
     ) -> Explainer:
         r"""Create an :class:`~metalearners.explainer.Explainer` which can be used in
-        :py:meth:`~metalearners.metalearner.MetaLearner.get_feature_importance`.
+        :py:meth:`~metalearners.metalearner.MetaLearner.get_feature_importances`.
 
         This function can be used in two distinct manners based on the provided parameters:
 
@@ -688,7 +688,7 @@ class MetaLearner(ABC):
                 "of them must be defined."
             )
 
-    def get_feature_importance(
+    def get_feature_importances(
         self,
         feature_names: Collection[str] | None = None,
         normalize: bool = False,
@@ -724,7 +724,7 @@ class MetaLearner(ABC):
                 cate_model_factory=cate_model_factory,
                 cate_model_params=cate_model_params,
             )
-        return explainer.feature_importance(
+        return explainer.get_feature_importances(
             normalize=normalize, feature_names=feature_names, sort_values=sort_values
         )
 

@@ -7,6 +7,16 @@
 Changelog
 =========
 
+0.4.0 (2024-06-**)
+------------------
+
+* Renamed :meth:`metalearners.explainer.Explainer.get_feature_importances`. Note this is
+  a breaking change.
+
+* Renamed :meth:`metalearners.metalearner.MetaLearner.get_feature_importances`. Note this
+  is a breaking change.
+
+
 0.3.0 (2024-06-03)
 ------------------
 

@@ -80,7 +80,7 @@ class Explainer:
         ]
         return cls(cate_models)
 
-    def feature_importance(
+    def get_feature_importances(
         self,
         normalize: bool = False,
         feature_names: Collection[str] | None = None,
