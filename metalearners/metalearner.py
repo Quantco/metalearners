@@ -639,7 +639,7 @@ class MetaLearner(ABC):
         """Evaluate all models contained in a MetaLearner."""
         ...
 
-    def get_explainer(
+    def explainer(
         self,
         X: Matrix | None = None,
         cate_estimates: np.ndarray | None = None,
@@ -647,7 +647,7 @@ class MetaLearner(ABC):
         cate_model_params: Params | None = None,
     ) -> Explainer:
         r"""Create an :class:`~metalearners.explainer.Explainer` which can be used in
-        :py:meth:`~metalearners.metalearner.MetaLearner.get_feature_importances`.
+        :py:meth:`~metalearners.metalearner.MetaLearner.feature_importances`.
 
         This function can be used in two distinct manners based on the provided parameters:
 
@@ -688,7 +688,7 @@ class MetaLearner(ABC):
                 "of them must be defined."
             )
 
-    def get_feature_importances(
+    def feature_importances(
         self,
         feature_names: Collection[str] | None = None,
         normalize: bool = False,
@@ -702,7 +702,7 @@ class MetaLearner(ABC):
         r"""Calculates the feature importance for each treatment group.
 
         If ``explainer`` is ``None``, a new :class:`~metalearners.explainer.Explainer`
-        is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
+        is created using :py:meth:`~metalearners.metalearner.MetaLearner.explainer`
         with the passed parameters. If ``explainer`` is not ``None``, then the parameters
         ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
         ignored.
@@ -718,17 +718,17 @@ class MetaLearner(ABC):
         ascending order.
         """
         if explainer is None:
-            explainer = self.get_explainer(
+            explainer = self.explainer(
                 X=X,
                 cate_estimates=cate_estimates,
                 cate_model_factory=cate_model_factory,
                 cate_model_params=cate_model_params,
             )
-        return explainer.get_feature_importances(
+        return explainer.feature_importances(
             normalize=normalize, feature_names=feature_names, sort_values=sort_values
         )
 
-    def get_shap_values(
+    def shap_values(
         self,
         X: Matrix,
         shap_explainer_factory: type[shap.Explainer],
@@ -741,7 +741,7 @@ class MetaLearner(ABC):
         """Calculates the shap values for each treatment group.
 
         If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
-        is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
+        is created using :py:meth:`~metalearners.metalearner.MetaLearner.explainer`
         with the passed parameters. If `explainer`` is not ``None``, then the parameters
         ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
         ignored.
@@ -754,13 +754,13 @@ class MetaLearner(ABC):
         order.
         """
         if explainer is None:
-            explainer = self.get_explainer(
+            explainer = self.explainer(
                 X=None if cate_estimates is None else X,
                 cate_estimates=cate_estimates,
                 cate_model_factory=cate_model_factory,
                 cate_model_params=cate_model_params,
             )
-        return explainer.get_shap_values(
+        return explainer.shap_values(
             X=X,
             shap_explainer_factory=shap_explainer_factory,
             shap_explainer_params=shap_explainer_params,

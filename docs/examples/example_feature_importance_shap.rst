@@ -180,7 +180,7 @@ which uses the final stage models with the following code:
 
 .. code-block:: python
 
-    rlearner_explainer = rlearner.get_explainer()
+    rlearner_explainer = rlearner.explainer()
 
 
 The MetaLearner does not have a unique treatment model for each variant
@@ -190,12 +190,12 @@ In the scenario where the MetaLearner does not have a unique treatment model for
 variant, the proposed solution is to fit an interpretable model for each treatment variant.
 The input for these models will be the same covariates, while the output is the estimated CATE
 by the MetaLearner. For this we can use the same method as before
-:meth:`~metalearners.metalearner.MetaLearner.get_explainer` but passing also the ``X``,
+:meth:`~metalearners.metalearner.MetaLearner.explainer` but passing also the ``X``,
 ``cate_estimates`` and ``cate_model_factory`` parameters:
 
 .. code-block:: python
 
-    tlearner_explainer = tlearner.get_explainer(
+    tlearner_explainer = tlearner.explainer(
         X=df[feature_columns],
         cate_estimates=tlearner.predict(X=df[feature_columns], is_oos=False),
         cate_model_factory=LGBMRegressor,
@@ -206,7 +206,7 @@ new models to interpret, for example with the previously trained RLearner:
 
 .. code-block:: python
 
-    rlearner_explainer_from_estimates = rlearner.get_explainer(
+    rlearner_explainer_from_estimates = rlearner.explainer(
         X=df[feature_columns],
         cate_estimates=rlearner.predict(X=df[feature_columns], is_oos=False),
         cate_model_factory=LGBMRegressor,
@@ -219,9 +219,9 @@ Now we can compute the feature importances:
 
 .. code-block:: python
 
-    print(rlearner_explainer.get_feature_importances(feature_names=feature_columns, sort_values=True)[0])
-    print(tlearner_explainer.get_feature_importances(feature_names=feature_columns, sort_values=True)[0])
-    print(rlearner_explainer_from_estimates.get_feature_importances(feature_names=feature_columns, sort_values=True)[0])
+    print(rlearner_explainer.feature_importances(feature_names=feature_columns, sort_values=True)[0])
+    print(tlearner_explainer.feature_importances(feature_names=feature_columns, sort_values=True)[0])
+    print(rlearner_explainer_from_estimates.feature_importances(feature_names=feature_columns, sort_values=True)[0])
 
 Which returns the following output:
 
@@ -266,14 +266,14 @@ Which returns the following output:
     school_urbanicity           7
     dtype: int32
 
-Note that the method :meth:`~metalearners.explainer.Explainer.get_feature_importances`
+Note that the method :meth:`~metalearners.explainer.Explainer.feature_importances`
 returns a list of length :math:`n_{variats} -1` that indicates the feature importance for
 each variant against control.
 
 Computing and plotting the SHAP values
 """"""""""""""""""""""""""""""""""""""
 
-We can compute the SHAP values with the corresponding calls to :meth:`~metalearners.explainer.Explainer.get_shap_values`
+We can compute the SHAP values with the corresponding calls to :meth:`~metalearners.explainer.Explainer.shap_values`
 with the desired ``shap_explainer_factory``, in our case as we are are always interpreting
 ``LGBMRegressor`` models we will use `TreeExplainer <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html>`_:
 
@@ -281,17 +281,17 @@ with the desired ``shap_explainer_factory``, in our case as we are are always in
 
     from shap import TreeExplainer, summary_plot
 
-    shap_values_rlearner = rlearner_explainer.get_shap_values(
+    shap_values_rlearner = rlearner_explainer.shap_values(
         X=df[feature_columns], shap_explainer_factory=TreeExplainer
     )
     summary_plot(shap_values_rlearner[0], features=df[feature_columns])
 
-    shap_values_tlearner = tlearner_explainer.get_shap_values(
+    shap_values_tlearner = tlearner_explainer.shap_values(
         X=df[feature_columns], shap_explainer_factory=TreeExplainer
     )
     summary_plot(shap_values_tlearner[0], features=df[feature_columns])
 
-    shap_values_rlearner_from_estimates = rlearner_explainer_from_estimates.get_shap_values(
+    shap_values_rlearner_from_estimates = rlearner_explainer_from_estimates.shap_values(
         X=df[feature_columns], shap_explainer_factory=TreeExplainer
     )
     summary_plot(shap_values_rlearner_from_estimates[0], features=df[feature_columns])
@@ -315,7 +315,7 @@ Which shows the following images:
 
 For guidelines on how to interpret such SHAP plots please see the `SHAP documentation <https://github.com/shap/shap>`_.
 
-Note that the method :meth:`~metalearners.explainer.Explainer.get_shap_values`
+Note that the method :meth:`~metalearners.explainer.Explainer.shap_values`
 returns a list of length :math:`n_{variats} -1` that indicates the SHAP values for
 each variant against control.
 
@@ -324,7 +324,7 @@ Further comments
 
 * In the scenario where the model has a unique treatment model for each variant and the used
   base model does not compute ``feature_importances_``, the :class:`~metalearners.explainer.Explainer`
-  object will raise an error when calling :meth:`~metalearners.explainer.Explainer.get_feature_importances`.
+  object will raise an error when calling :meth:`~metalearners.explainer.Explainer.feature_importances`.
   In that case, it is required to retrain a model which computes ``feature_importances_``
   by passing ``X``, ``cate_estimates`` and a compatible ``cate_model_factory`` to
-  :meth:`~metalearners.MetaLearner.get_explainer`.
+  :meth:`~metalearners.MetaLearner.explainer`.

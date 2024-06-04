@@ -700,16 +700,16 @@ def test_fit_params_rlearner_error(dummy_dataset):
 @pytest.mark.parametrize("n_variants", [2, 10])
 @pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("use_custom_feature_names", [False, True])
-@pytest.mark.parametrize("use_get_explainer", [False, True])
+@pytest.mark.parametrize("use_explainer", [False, True])
 @pytest.mark.parametrize("sort_values", [False, True])
-def test_get_feature_importances_smoke(
+def test_feature_importances_smoke(
     implementation,
     needs_estimates,
     normalize,
     n_variants,
     rng,
     use_custom_feature_names,
-    use_get_explainer,
+    use_explainer,
     sort_values,
 ):
     sample_size = 1000
@@ -737,21 +737,21 @@ def test_get_feature_importances_smoke(
     else:
         feature_names = None
         expected_feature_names = [f"Feature {i}" for i in range(n_features)]
-    if use_get_explainer:
-        explainer = ml.get_explainer(
+    if use_explainer:
+        explainer = ml.explainer(
             X=X,
             cate_estimates=cate_estimates,
             cate_model_factory=LGBMRegressor,
             cate_model_params={"n_estimators": 1},
         )
-        feature_importances = ml.get_feature_importances(
+        feature_importances = ml.feature_importances(
             normalize=normalize,
             feature_names=feature_names,
             explainer=explainer,
             sort_values=sort_values,
         )
     else:
-        feature_importances = ml.get_feature_importances(
+        feature_importances = ml.feature_importances(
             normalize=normalize,
             feature_names=feature_names,
             sort_values=sort_values,
@@ -774,16 +774,16 @@ def test_get_feature_importances_smoke(
                 assert (feature_importances[tv].index == expected_feature_names).all()
 
     if not needs_estimates:
-        if use_get_explainer:
-            explainer = ml.get_explainer()
-            feature_importances = ml.get_feature_importances(
+        if use_explainer:
+            explainer = ml.explainer()
+            feature_importances = ml.feature_importances(
                 normalize=normalize,
                 feature_names=feature_names,
                 explainer=explainer,
                 sort_values=sort_values,
             )
         else:
-            feature_importances = ml.get_feature_importances(
+            feature_importances = ml.feature_importances(
                 normalize=normalize,
                 feature_names=feature_names,
                 sort_values=sort_values,
@@ -809,7 +809,7 @@ def test_get_feature_importances_smoke(
         (DRLearner, False),
     ],
 )
-def test_get_feature_importances_known(
+def test_feature_importances_known(
     implementation, needs_estimates, feature_importance_dataset
 ):
     """The SLearner can not represent properly this CATE with LinearRegression as there
@@ -831,12 +831,12 @@ def test_get_feature_importances_known(
     )
     ml.fit(X=X, y=y, w=w)
     cate_estimates = ml.predict(X=X, is_oos=False)
-    explainer = ml.get_explainer(
+    explainer = ml.explainer(
         X=X,
         cate_estimates=cate_estimates,
         cate_model_factory=LGBMRegressor,
     )
-    feature_importances = ml.get_feature_importances(
+    feature_importances = ml.feature_importances(
         feature_names=X.columns, explainer=explainer
     )
 
@@ -844,7 +844,7 @@ def test_get_feature_importances_known(
     assert feature_importances[1].idxmax() == "x2"
 
     if not needs_estimates:
-        feature_importances = ml.get_feature_importances(
+        feature_importances = ml.feature_importances(
             feature_names=X.columns,
         )
         assert feature_importances[0].idxmax() == "x1"
@@ -862,12 +862,12 @@ def test_get_feature_importances_known(
     ],
 )
 @pytest.mark.parametrize("n_variants", [2, 5])
-@pytest.mark.parametrize("use_get_explainer", [False, True])
-def test_get_shap_values_smoke(
+@pytest.mark.parametrize("use_explainer", [False, True])
+def test_shap_values_smoke(
     implementation,
     needs_estimates,
     n_variants,
-    use_get_explainer,
+    use_explainer,
     rng,
 ):
     sample_size = 1000
@@ -889,16 +889,16 @@ def test_get_shap_values_smoke(
     ml.fit(X=X, y=y, w=w)
     cate_estimates = ml.predict(X=X, is_oos=False)
 
-    if use_get_explainer:
-        explainer = ml.get_explainer(
+    if use_explainer:
+        explainer = ml.explainer(
             X=X,
             cate_estimates=cate_estimates,
             cate_model_factory=LGBMRegressor,
             cate_model_params={"n_estimators": 1},
         )
-        shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+        shap_values = ml.shap_values(X, TreeExplainer, explainer=explainer)
     else:
-        shap_values = ml.get_shap_values(
+        shap_values = ml.shap_values(
             X,
             TreeExplainer,
             cate_estimates=cate_estimates,
@@ -912,11 +912,11 @@ def test_get_shap_values_smoke(
         plt.clf()
 
     if not needs_estimates:
-        if use_get_explainer:
-            explainer = ml.get_explainer()
-            shap_values = ml.get_shap_values(X, TreeExplainer, explainer=explainer)
+        if use_explainer:
+            explainer = ml.explainer()
+            shap_values = ml.shap_values(X, TreeExplainer, explainer=explainer)
         else:
-            shap_values = ml.get_shap_values(X, TreeExplainer)
+            shap_values = ml.shap_values(X, TreeExplainer)
         assert len(shap_values) == n_variants - 1
         for tv in range(n_variants - 1):
             assert shap_values[tv].shape == (sample_size, n_features)

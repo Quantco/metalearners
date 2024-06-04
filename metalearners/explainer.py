@@ -80,7 +80,7 @@ class Explainer:
         ]
         return cls(cate_models)
 
-    def get_feature_importances(
+    def feature_importances(
         self,
         normalize: bool = False,
         feature_names: Collection[str] | None = None,
@@ -119,7 +119,7 @@ class Explainer:
 
         return feature_importances
 
-    def get_shap_values(
+    def shap_values(
         self,
         X: Matrix,
         shap_explainer_factory: type[shap.Explainer],
