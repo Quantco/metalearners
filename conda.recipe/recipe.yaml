@@ -43,6 +43,7 @@ tests:
         - metalearners.xlearner
         - metalearners.rlearner
         - metalearners.drlearner
+        - metalearners.explainer
       pip_check: true
 
 about:
