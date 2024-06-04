@@ -701,9 +701,9 @@ class MetaLearner(ABC):
     ) -> list[pd.Series]:
         r"""Calculates the feature importance for each treatment group.
 
-        If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
+        If ``explainer`` is ``None``, a new :class:`~metalearners.explainer.Explainer`
         is created using :py:meth:`~metalearners.metalearner.MetaLearner.get_explainer`
-        with the passed parameters. If `explainer`` is not ``None``, then the parameters
+        with the passed parameters. If ``explainer`` is not ``None``, then the parameters
         ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
         ignored.
 
