@@ -5,7 +5,6 @@ import operator
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -16,11 +15,7 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
 )
 
-from metalearners._typing import PredictMethod, _ScikitModel
-
-# ruff is not happy about the usage of Union.
-Vector = Union[pd.Series, np.ndarray]  # noqa
-Matrix = Union[pd.DataFrame, np.ndarray]  # noqa
+from metalearners._typing import Matrix, PredictMethod, Vector, _ScikitModel
 
 _PREDICT = "predict"
 _PREDICT_PROBA = "predict_proba"

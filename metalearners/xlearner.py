@@ -5,10 +5,8 @@
 import numpy as np
 from typing_extensions import Self
 
-from metalearners._typing import OosMethod
+from metalearners._typing import Matrix, OosMethod, Vector
 from metalearners._utils import (
-    Matrix,
-    Vector,
     get_one,
     get_predict,
     get_predict_proba,

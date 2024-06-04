@@ -6,10 +6,8 @@ import numpy as np
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
-from metalearners._typing import OosMethod
+from metalearners._typing import Matrix, OosMethod, Vector
 from metalearners._utils import (
-    Matrix,
-    Vector,
     clip_element_absolute_value_to_epsilon,
     function_has_argument,
     get_one,

@@ -10,8 +10,8 @@ from sklearn.base import is_classifier
 from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
 from typing_extensions import Self
 
-from metalearners._typing import OosMethod, PredictMethod
-from metalearners._utils import Matrix, Vector, _ScikitModel, index_matrix
+from metalearners._typing import Matrix, OosMethod, PredictMethod, Vector
+from metalearners._utils import _ScikitModel, index_matrix
 
 OVERALL: OosMethod = "overall"
 MEDIAN: OosMethod = "median"

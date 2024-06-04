@@ -2,7 +2,10 @@
 # SPDX-License-Identifier: LicenseRef-QuantCo
 
 from collections.abc import Collection
-from typing import Literal, Protocol
+from typing import Literal, Protocol, Union
+
+import numpy as np
+import pandas as pd
 
 PredictMethod = Literal["predict", "predict_proba"]
 
@@ -15,6 +18,10 @@ OosMethod = Literal["overall", "median", "mean"]
 
 Params = dict[str, int | float | str]
 Features = Collection[str] | Collection[int]
+
+# ruff is not happy about the usage of Union.
+Vector = Union[pd.Series, np.ndarray]  # noqa
+Matrix = Union[pd.DataFrame, np.ndarray]  # noqa
 
 
 class _ScikitModel(Protocol):

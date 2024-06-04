@@ -13,15 +13,15 @@ from typing_extensions import Self
 
 from metalearners._typing import (
     Features,
+    Matrix,
     ModelFactory,
     OosMethod,
     Params,
     PredictMethod,
+    Vector,
     _ScikitModel,
 )
 from metalearners._utils import (
-    Matrix,
-    Vector,
     index_matrix,
     validate_model_and_predict_method,
     validate_number_positive,

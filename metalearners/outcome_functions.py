@@ -6,7 +6,8 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 
-from metalearners._utils import Matrix, default_rng
+from metalearners._typing import Matrix
+from metalearners._utils import default_rng
 
 
 def _beta(

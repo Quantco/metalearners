@@ -7,9 +7,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wishart
 
+from metalearners._typing import Matrix, Vector
 from metalearners._utils import (
-    Matrix,
-    Vector,
     check_probability,
     check_propensity_score,
     convert_and_pad_propensity_score,

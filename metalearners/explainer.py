@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import shap
 
-from metalearners._typing import _ScikitModel
-from metalearners._utils import Matrix, simplify_output_2d
+from metalearners._typing import Matrix, _ScikitModel
+from metalearners._utils import simplify_output_2d
 from metalearners.metalearner import Params
 
 
