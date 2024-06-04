@@ -83,7 +83,7 @@ class RLearner(MetaLearner):
 
     The R-Learner contains two nuisance models
 
-        * a ``"propensity_model"`` estimating :math:`\Pr[W=1|X]`
+        * a ``"propensity_model"`` estimating :math:`\Pr[W=k|X]`
         * an ``"outcome_model"`` estimating :math:`\mathbb{E}[Y|X]`
 
     and one treatment model per treatment variant which isn't control
