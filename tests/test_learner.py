@@ -58,27 +58,27 @@ def _linear_base_learner_params(
 @pytest.mark.parametrize(
     "metalearner, outcome_kind, in_sample_reference_value, oos_reference_value, treatment_kind, te_kind",
     [
-        ("T", "binary", 0.0215, 0.0217, "binary", "linear"),
-        ("T", "continuous", 0.0456, 0.0456, "binary", "linear"),
+        ("T", "binary", 0.0212, 0.0215, "binary", "linear"),
+        ("T", "continuous", 0.0459, 0.0456, "binary", "linear"),
         ("T", "continuous", 0.0615, 0.0617, "multi", "linear"),
         ("T", "continuous", 0.0753, 0.0753, "multi", "constant"),
         ("S", "binary", 0.2291, 0.2286, "binary", "linear"),
         ("S", "continuous", 14.5706, 14.6248, "binary", "linear"),
         ("S", "continuous", 14.147, 14.185, "multi", "linear"),
-        ("S", "continuous", 0.00898, 0.00898, "multi", "constant"),
+        ("S", "continuous", 0.0111, 0.0111, "multi", "constant"),
         ("X", "binary", 0.3046, 0.3019, "binary", "linear"),
         ("X", "continuous", 0.0459, 0.0456, "binary", "linear"),
         ("X", "continuous", 0.0615, 0.0617, "multi", "linear"),
         ("X", "continuous", 0.0753, 0.0753, "multi", "constant"),
         ("R", "binary", 0.3046, 0.3018, "binary", "linear"),
-        ("R", "continuous", 0.0465, 0.0472, "binary", "linear"),
+        ("R", "continuous", 0.0455, 0.0460, "binary", "linear"),
         # The multi-variant R-Learner runs lack a baseline.
         ("R", "continuous", 0.288, 0.28, "multi", "linear"),
         ("R", "continuous", 0.085, 0.08, "multi", "constant"),
         ("DR", "binary", 0.3046, 0.3019, "binary", "linear"),
-        ("DR", "continuous", 0.0452, 0.0459, "binary", "linear"),
-        ("DR", "continuous", 0.0641, 0.0637, "multi", "linear"),
-        ("DR", "continuous", 0.0754, 0.0784, "multi", "constant"),
+        ("DR", "continuous", 0.0465, 0.0454, "binary", "linear"),
+        ("DR", "continuous", 0.0649, 0.0649, "multi", "linear"),
+        ("DR", "continuous", 0.0754, 0.0761, "multi", "constant"),
     ],
 )
 def test_learner_synthetic(
@@ -136,7 +136,12 @@ def test_learner_synthetic(
         test_size=_TEST_FRACTION,
         random_state=_SEED,
     )
-    learner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    learner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=True,
+    )
 
     # In sample CATEs
     cate_estimates_in_sample = simplify_output(
@@ -226,7 +231,12 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, request):
         test_size=_TEST_FRACTION,
         random_state=_SEED,
     )
-    learner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    learner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=True,
+    )
     for oos_method in _OOS_WHITELIST:
         cate_estimates = learner.predict(
             covariates_test, is_oos=True, oos_method=oos_method
@@ -242,7 +252,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, request):
     "metalearner, reference_value",
     # Since we don't have a reference implementation for the DR-Learner,
     # we reuse the reference value of the R-Learner plus some tolerance.
-    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3481), ("DR", 0.3481 * 1.05)],
+    [("T", 0.3456), ("S", 0.3186), ("X", 0.3353), ("R", 0.3474), ("DR", 0.3474 * 1.05)],
 )
 def test_learner_twins(metalearner, reference_value, twins_data, rng):
     chosen_df, outcome_column, treatment_column, feature_columns, _ = twins_data
@@ -282,7 +292,12 @@ def test_learner_twins(metalearner, reference_value, twins_data, rng):
         propensity_model_params={"random_state": rng},
         random_state=_SEED,
     )
-    learner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    learner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=True,
+    )
     for oos_method in ["overall", "mean"]:
         cate_estimates = simplify_output(
             learner.predict(covariates_test, is_oos=True, oos_method=oos_method)  # type: ignore
@@ -407,8 +422,18 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         propensity_model_params=classifier_learner_params,
         random_state=_SEED,
     )
-    tlearner.fit(covariates_train, observed_outcomes_train, treatment_train)
-    xlearner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    tlearner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=False,
+    )
+    xlearner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=False,
+    )
 
     if not is_oos:
         covariates_test = covariates_train

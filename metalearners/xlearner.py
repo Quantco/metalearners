@@ -76,6 +76,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
@@ -84,8 +85,17 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
-        for v in range(self.n_variants):
-            self._treatment_variants_indices.append(w == v)
+        cvs: list = []
+
+        for treatment_variant in range(self.n_variants):
+            self._treatment_variants_indices.append(w == treatment_variant)
+            if synchronize_cross_fitting:
+                cv_split_indices = self._split(
+                    index_matrix(X, self._treatment_variants_indices[treatment_variant])
+                )
+            else:
+                cv_split_indices = None
+            cvs.append(cv_split_indices)
 
         # TODO: Consider multiprocessing
         for treatment_variant in range(self.n_variants):
@@ -96,6 +106,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_ord=treatment_variant,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
                 fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+                cv=cvs[treatment_variant],
             )
 
         self.fit_nuisance(
@@ -119,6 +130,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_ord=treatment_variant - 1,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
                 fit_params=qualified_fit_params[TREATMENT][TREATMENT_EFFECT_MODEL],
+                cv=cvs[treatment_variant],
             )
             self.fit_treatment(
                 X=index_matrix(X, self._treatment_variants_indices[0]),
@@ -127,6 +139,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_ord=treatment_variant - 1,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
                 fit_params=qualified_fit_params[TREATMENT][CONTROL_EFFECT_MODEL],
+                cv=cvs[0],
             )
 
         return self

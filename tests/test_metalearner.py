@@ -25,6 +25,7 @@ from metalearners.metalearner import (
     _combine_propensity_and_nuisance_specs,
     _ModelSpecifications,
     _parse_fit_params,
+    _validate_n_folds_synchronize,
 )
 from metalearners.rlearner import _SAMPLE_WEIGHT, OUTCOME_MODEL, RLearner
 from metalearners.slearner import _BASE_MODEL, SLearner
@@ -67,7 +68,15 @@ class _TestMetaLearner(MetaLearner):
 
     def _validate_models(self) -> None: ...
 
-    def fit(self, X, y, w):
+    def fit(
+        self,
+        X,
+        y,
+        w,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+    ):
         for model_kind in self.__class__.nuisance_model_specifications():
             for model_ord in range(
                 self.nuisance_model_specifications()[model_kind]["cardinality"](self)
@@ -664,7 +673,10 @@ def test_fit_params(metalearner_factory, fit_params, expected_keys, dummy_datase
         is_classification=False,
         n_folds=1,
     )
-    metalearner.fit(X=X, y=y, w=w, fit_params=fit_params)
+    # Using cross-fitting is not possible with a single fold.
+    metalearner.fit(
+        X=X, y=y, w=w, fit_params=fit_params, synchronize_cross_fitting=False
+    )
 
 
 def test_fit_params_rlearner_error(dummy_dataset):
@@ -922,3 +934,52 @@ def test_shap_values_smoke(
             assert shap_values[tv].shape == (sample_size, n_features)
             summary_plot(shap_values[tv], show=False, features=X)
             plt.clf()
+
+
+@pytest.mark.parametrize(
+    "implementation",
+    [
+        TLearner,
+        SLearner,
+        XLearner,
+        RLearner,
+        DRLearner,
+    ],
+)
+@pytest.mark.parametrize("n_variants", [2, 5])
+@pytest.mark.parametrize("synchronize_cross_fitting", [False, True])
+def test_synchronization_smoke(
+    implementation, n_variants, synchronize_cross_fitting, rng
+):
+    sample_size = 100
+    n_features = 2
+
+    X = rng.standard_normal((sample_size, n_features))
+    y = rng.standard_normal(sample_size)
+    w = rng.integers(0, n_variants, sample_size)
+
+    ml = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+    )
+    ml.fit(X=X, y=y, w=w, synchronize_cross_fitting=synchronize_cross_fitting)
+
+
+@pytest.mark.parametrize(
+    "n_folds,success",
+    [
+        ({"propensity": 5, "outcome": 2}, False),
+        ({"propensity": 5, "outcome": 5}, True),
+        ({"propensity": 1, "outcome": 2}, False),
+        ({"propensity": 1, "outcome": 1}, False),
+    ],
+)
+def test_validate_n_folds_synchronize(n_folds, success):
+    if success:
+        _validate_n_folds_synchronize(n_folds)
+    else:
+        with pytest.raises(ValueError, match="synchronization"):
+            _validate_n_folds_synchronize(n_folds)

@@ -157,6 +157,7 @@ class RLearner(MetaLearner):
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
         epsilon: float = _EPSILON,
     ) -> Self:
 
@@ -168,6 +169,11 @@ class RLearner(MetaLearner):
         qualified_fit_params = self._qualified_fit_params(fit_params)
         self._validate_fit_params(qualified_fit_params)
 
+        if synchronize_cross_fitting:
+            cv_split_indices = self._split(X)
+        else:
+            cv_split_indices = None
+
         self.fit_nuisance(
             X=X,
             y=w,
@@ -175,6 +181,7 @@ class RLearner(MetaLearner):
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
             fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
+            cv=cv_split_indices,
         )
         self.fit_nuisance(
             X=X,
@@ -183,6 +190,7 @@ class RLearner(MetaLearner):
             model_ord=0,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
             fit_params=qualified_fit_params[NUISANCE][OUTCOME_MODEL],
+            cv=cv_split_indices,
         )
 
         for treatment_variant in range(1, self.n_variants):

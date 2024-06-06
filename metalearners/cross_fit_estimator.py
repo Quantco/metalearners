@@ -7,11 +7,15 @@ from functools import partial
 
 import numpy as np
 from sklearn.base import is_classifier
-from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
+from sklearn.model_selection import (
+    KFold,
+    StratifiedKFold,
+    cross_validate,
+)
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, PredictMethod, Vector
-from metalearners._utils import _ScikitModel, index_matrix
+from metalearners._typing import Matrix, OosMethod, PredictMethod, SplitIndices, Vector
+from metalearners._utils import _ScikitModel, index_matrix, validate_number_positive
 
 OVERALL: OosMethod = "overall"
 MEDIAN: OosMethod = "median"
@@ -40,9 +44,26 @@ def _validate_oos_method(
 
 
 def _validate_n_folds(n_folds: int) -> None:
+    # TODO: Use _utils.validate_number_positive instead.
     if n_folds <= 0:
         raise ValueError(
             f"n_folds needs to be a strictly positive integer but is {n_folds}."
+        )
+
+
+def _validate_data_match_prior_split(
+    n_observations: int, test_indices: tuple[np.ndarray] | None
+) -> None:
+    """Validate whether the previous test_indices and the passed data are based on the
+    same number of observations."""
+    validate_number_positive(n_observations, "n_observations", strict=False)
+    if test_indices is None:
+        return
+    expected_n_observations = sum(len(x) for x in test_indices)
+    if expected_n_observations != n_observations:
+        raise ValueError(
+            "CrossFitEstimator is given data to fit X and splits cv "
+            "which rely on different numbers of observations."
         )
 
 
@@ -108,6 +129,7 @@ class CrossFitEstimator:
         y: Vector | Matrix,
         fit_params: dict | None = None,
         n_jobs_cross_fitting: int | None = None,
+        cv: SplitIndices | None = None,
     ) -> Self:
         """Fit the underlying estimators.
 
@@ -117,22 +139,29 @@ class CrossFitEstimator:
 
         ``n_jobs_cross_fitting`` can be used to specify the number of jobs for cross-fitting.
         For more information see the `sklearn glossary <https://scikit-learn.org/stable/glossary.html#term-n_jobs>`_.
+
+        ``cv`` can optionally be passed. If passed, it is expected to be a list of
+        (train_indices, test_indices) tuples indicating how to split the data at hand
+        into train and test/estimation sets for different folds.
         """
+        _validate_data_match_prior_split(len(X), self._test_indices)
+
         if fit_params is None:
             fit_params = dict()
         if self.n_folds > 1:
-            if is_classifier(self):
-                cv = StratifiedKFold(
-                    n_splits=self.n_folds,
-                    shuffle=True,
-                    random_state=self.random_state,
-                )
-            else:
-                cv = KFold(
-                    n_splits=self.n_folds,
-                    shuffle=True,
-                    random_state=self.random_state,
-                )
+            if cv is None:
+                if is_classifier(self):
+                    cv = StratifiedKFold(
+                        n_splits=self.n_folds,
+                        shuffle=True,
+                        random_state=self.random_state,
+                    )
+                else:
+                    cv = KFold(
+                        n_splits=self.n_folds,
+                        shuffle=True,
+                        random_state=self.random_state,
+                    )
             cv_result = cross_validate(
                 self.estimator_factory(**self.estimator_params),
                 X,

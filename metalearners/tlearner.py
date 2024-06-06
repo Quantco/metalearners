@@ -53,6 +53,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)

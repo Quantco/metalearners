@@ -38,3 +38,9 @@ class _ScikitModel(Protocol):
 
 
 ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
+
+# List of (train_indices, test_indices) tuples where each
+# list item corresponds to one way of splitting or folding data.
+# For instance, if converting the Generator resulting from a call to
+# sklearn.model_selection.KFold.split to a list we obtain this type.
+SplitIndices = list[tuple[np.ndarray, np.ndarray]]

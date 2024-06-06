@@ -25,6 +25,11 @@ Changelog
 * Renamed :meth:`metalearners.metalearner.MetaLearner.explainer`. Note this is
   a breaking change.
 
+* Implemented ``synchronize_cross_fitting`` parameter for
+  :meth:`metalearners.metalearner.MetaLearner.fit`.
+
+* Implemented ``cv`` parameter for :meth:`metalearners.cross_fit_estimator.fit`.
+
 
 0.3.0 (2024-06-03)
 ------------------

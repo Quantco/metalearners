@@ -8,8 +8,13 @@ import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
+from sklearn.model_selection import KFold
 
-from metalearners.cross_fit_estimator import CrossFitEstimator, _PredictContext
+from metalearners.cross_fit_estimator import (
+    CrossFitEstimator,
+    _PredictContext,
+    _validate_data_match_prior_split,
+)
 
 _SEED = 1337
 
@@ -19,8 +24,9 @@ _SEED = 1337
 @pytest.mark.parametrize("is_oos", [True, False])
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
 @pytest.mark.parametrize("use_np", [True, False])
+@pytest.mark.parametrize("pass_cv", [True, False])
 def test_crossfitestimator_oos_smoke(
-    mindset_data, rng, use_clf, predict_proba, is_oos, oos_method, use_np
+    mindset_data, rng, use_clf, predict_proba, is_oos, oos_method, use_np, pass_cv
 ):
     if not use_clf and predict_proba:
         pytest.skip()
@@ -54,7 +60,12 @@ def test_crossfitestimator_oos_smoke(
         enable_overall=True,
         random_state=_SEED,
     )
-    cfe.fit(X=X, y=y)
+    if pass_cv:
+        cv = list(KFold(n_splits=5, shuffle=True, random_state=_SEED).split(X))
+    else:
+        cv = None
+
+    cfe.fit(X=X, y=y, cv=cv)
     predictions = getattr(cfe, predict_method)(
         X=X, is_oos=is_oos, oos_method=oos_method
     )
@@ -185,3 +196,40 @@ def test_crossfitestimator_n_folds_1(rng, sample_size):
     ):
         in_sample_predictions = cfe.predict(X, False)
     np.testing.assert_allclose(cfe.predict(X, True, "overall"), in_sample_predictions)
+
+
+@pytest.mark.parametrize(
+    "n_observations,test_indices,success",
+    [
+        (5, None, True),
+        (-1, None, False),
+        (0, None, False),
+        (5, (np.array([1, 2]), np.array([3, 4, 5])), True),
+        (
+            5,
+            (
+                np.array([1, 2]),
+                np.array(
+                    [
+                        3,
+                        4,
+                    ]
+                ),
+            ),
+            False,
+        ),
+        (5, (np.array([1, 2]), np.array([3, 4, 5, 6])), False),
+    ],
+)
+def test_validate_data_match(n_observations, test_indices, success):
+    if n_observations < 1:
+        with pytest.raises(ValueError, match="was expected to be positive"):
+            _validate_data_match_prior_split(n_observations, test_indices)
+        return
+    if success:
+        _validate_data_match_prior_split(n_observations, test_indices)
+    else:
+        with pytest.raises(
+            ValueError, match="rely on different numbers of observations"
+        ):
+            _validate_data_match_prior_split(n_observations, test_indices)

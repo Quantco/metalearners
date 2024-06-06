@@ -9,6 +9,7 @@ from typing import TypedDict
 import numpy as np
 import pandas as pd
 import shap
+from sklearn.model_selection import KFold
 from typing_extensions import Self
 
 from metalearners._typing import (
@@ -18,6 +19,7 @@ from metalearners._typing import (
     OosMethod,
     Params,
     PredictMethod,
+    SplitIndices,
     Vector,
     _ScikitModel,
 )
@@ -119,6 +121,15 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
         else:
             X_filtered = X[:, np.array(feature_set)]
     return X_filtered
+
+
+def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
+    if min(n_folds.values()) != max(n_folds.values()):
+        raise ValueError(
+            "When using synchronization of cross-fitting, all provided n_folds values must be equal."
+        )
+    if min(n_folds.values()) < 2:
+        raise ValueError("Need at least two folds to use synchronization.")
 
 
 class _ModelSpecifications(TypedDict):
@@ -267,6 +278,18 @@ class MetaLearner(ABC):
             nuisance_model_names=set(self.nuisance_model_specifications().keys()),
             treatment_model_names=set(self.treatment_model_specifications().keys()),
         )
+
+    def _split(self, X: Matrix) -> SplitIndices:
+        _validate_n_folds_synchronize(self.n_folds)
+        n_folds = min(self.n_folds.values())
+        cv_split_indices = list(
+            KFold(
+                n_splits=n_folds,
+                shuffle=True,
+                random_state=self.random_state,
+            ).split(X)
+        )
+        return cv_split_indices
 
     def __init__(
         self,
@@ -482,6 +505,7 @@ class MetaLearner(ABC):
         model_ord: int,
         fit_params: dict | None = None,
         n_jobs_cross_fitting: int | None = None,
+        cv: SplitIndices | None = None,
     ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
@@ -496,6 +520,7 @@ class MetaLearner(ABC):
             y,
             fit_params=fit_params,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            cv=cv,
         )
         return self
 
@@ -507,6 +532,7 @@ class MetaLearner(ABC):
         model_ord: int,
         fit_params: dict | None = None,
         n_jobs_cross_fitting: int | None = None,
+        cv: SplitIndices | None = None,
     ) -> Self:
         """Fit the treatment model of a MetaLearner.
 
@@ -518,6 +544,7 @@ class MetaLearner(ABC):
             y,
             fit_params=fit_params,
             n_jobs_cross_fitting=n_jobs_cross_fitting,
+            cv=cv,
         )
         return self
 
@@ -529,6 +556,7 @@ class MetaLearner(ABC):
         w: Vector,
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
     ) -> Self:
         """Fit all models of the MetaLearner.
 
@@ -558,6 +586,10 @@ class MetaLearner(ABC):
         the latter approach, the explicitly qualified parameter-value pairs are passed to respective base
         models and no fitting parameters are passed to base models not explicitly listed. Note that in this
         pattern, propensity models are considered a nuisance model.
+
+        ``synchronize_cross_fitting`` indicates whether the learning of different base models should use exactly
+        the same data splits where possible. Note that if there are several to be synchronize models which are
+        classifiers, these cannot be split via stratification.
         """
         ...
 

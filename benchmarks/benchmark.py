@@ -354,7 +354,12 @@ def metalearner_estimates(
         random_state=_SEED,
     )
 
-    learner.fit(covariates_train, observed_outcomes_train, treatment_train)
+    learner.fit(
+        covariates_train,
+        observed_outcomes_train,
+        treatment_train,
+        synchronize_cross_fitting=True,
+    )
     estimates = learner.predict(covariates_test, is_oos=is_oos, oos_method="overall")
 
     return simplify_output(estimates)
