@@ -1,4 +1,3 @@
-exclude: ^\.copier-answers\.yml$
 repos:
   - repo: https://github.com/Quantco/pre-commit-mirrors-insert-license
     rev: 1.3.0
