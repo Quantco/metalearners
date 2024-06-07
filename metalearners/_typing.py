@@ -1,7 +1,7 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from typing import Literal, Protocol, Union
 
 import numpy as np
@@ -16,7 +16,7 @@ PredictMethod = Literal["predict", "predict_proba"]
 # https://mypy.readthedocs.io/en/stable/literal_types.html#limitations
 OosMethod = Literal["overall", "median", "mean"]
 
-Params = dict[str, int | float | str]
+Params = Mapping[str, int | float | str]
 Features = Collection[str] | Collection[int]
 
 # ruff is not happy about the usage of Union.

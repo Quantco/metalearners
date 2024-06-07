@@ -588,13 +588,13 @@ def test_conditional_average_outcomes_smoke(
     factory = metalearner_factory(metalearner_prefix)
     learner = factory(
         nuisance_model_factory=_tree_base_learner(is_classification),
-        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        nuisance_model_params={"n_estimators": 1},
         is_classification=is_classification,
         n_variants=len(np.unique(df[treatment_column])),
         treatment_model_factory=LGBMRegressor,
-        treatment_model_params={"n_estimators": 1},  # type: ignore
+        treatment_model_params={"n_estimators": 1},
         propensity_model_factory=LGBMClassifier,
-        propensity_model_params={"n_estimators": 1},  # type: ignore
+        propensity_model_params={"n_estimators": 1},
         n_folds=2,
     )
     learner.fit(df[feature_columns], df[outcome_column], df[treatment_column])
@@ -626,7 +626,7 @@ def test_conditional_average_outcomes_smoke_multi_class(
     y = rng.integers(0, n_classes, size=sample_size)
     learner = factory(
         nuisance_model_factory=_tree_base_learner(True),
-        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        nuisance_model_params={"n_estimators": 1},
         n_variants=n_variants,
         is_classification=True,
         n_folds=2,
@@ -665,13 +665,13 @@ def test_predict_smoke(
         y = rng.standard_normal(sample_size)
     learner = factory(
         nuisance_model_factory=_tree_base_learner(is_classification),
-        nuisance_model_params={"n_estimators": 1},  # type: ignore
+        nuisance_model_params={"n_estimators": 1},
         n_variants=n_variants,
         is_classification=is_classification,
         treatment_model_factory=LGBMRegressor,
-        treatment_model_params={"n_estimators": 1},  # type: ignore
+        treatment_model_params={"n_estimators": 1},
         propensity_model_factory=LGBMClassifier,
-        propensity_model_params={"n_estimators": 1},  # type: ignore
+        propensity_model_params={"n_estimators": 1},
         n_folds=2,
     )
     learner.fit(X, y, w)

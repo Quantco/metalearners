@@ -737,7 +737,7 @@ def test_feature_importances_smoke(
         nuisance_model_factory=LinearRegression,
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LogisticRegression,
-        treatment_model_params={"n_estimators": 1},  # type: ignore
+        treatment_model_params={"n_estimators": 1},
     )
 
     ml.fit(X=X, y=y, w=w)
@@ -895,7 +895,7 @@ def test_shap_values_smoke(
         nuisance_model_factory=LinearRegression,
         treatment_model_factory=LGBMRegressor,
         propensity_model_factory=LogisticRegression,
-        treatment_model_params={"n_estimators": 1},  # type: ignore
+        treatment_model_params={"n_estimators": 1},
     )
 
     ml.fit(X=X, y=y, w=w)
