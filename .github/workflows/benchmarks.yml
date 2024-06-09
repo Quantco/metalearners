@@ -8,9 +8,6 @@ defaults:
   run:
     shell: bash -el {0}
 
-env:
-  QUETZ_API_KEY: ${{ secrets.QUETZ_API_KEY }}
-
 jobs:
   run_benchmarks:
     name: Run benchmarks

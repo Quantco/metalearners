@@ -10,9 +10,6 @@ defaults:
   run:
     shell: bash -el {0}
 
-env:
-  QUETZ_API_KEY: ${{ secrets.QUETZ_API_KEY }}
-
 jobs:
   pre-commit-checks:
     name: Pre-commit Checks
@@ -79,8 +76,3 @@ jobs:
         with:
           report-title: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
           custom-arguments: --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.4.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: Quantco/metalearners

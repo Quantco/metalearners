@@ -1,6 +1,5 @@
-# Copyright (c) QuantCo 2024-2024
-# SPDX-License-Identifier: LicenseRef-QuantCo
-
+# # Copyright (c) QuantCo 2024-2024
+# # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from sklearn.metrics import log_loss, root_mean_squared_error

@@ -48,5 +48,7 @@ tests:
 
 about:
   homepage: https://github.com/quantco/metalearners
-  license: LicenseRef-QuantCo
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: LICENSE
   summary: "MetaLearners for CATE estimation"

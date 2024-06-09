@@ -5,6 +5,8 @@ repos:
       - id: insert-license
         types: [python]
         args:
+          - --license-base64
+          - IyBDb3B5cmlnaHQgKGMpIFF1YW50Q28gMjAyNC0yMDI0CiMgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEJTRC0zLUNsYXVzZQo=
           - --dynamic-years
           - --comment-style
           - "#"
