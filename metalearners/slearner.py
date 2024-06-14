@@ -2,10 +2,10 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from collections.abc import Callable, Mapping
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Vector
@@ -15,7 +15,12 @@ from metalearners._utils import (
     supports_categoricals,
 )
 from metalearners.cross_fit_estimator import OVERALL
-from metalearners.metalearner import NUISANCE, MetaLearner, _ModelSpecifications
+from metalearners.metalearner import (
+    NUISANCE,
+    MetaLearner,
+    _evaluate_model,
+    _ModelSpecifications,
+)
 
 _BASE_MODEL = "base_model"
 
@@ -150,17 +155,29 @@ class SLearner(MetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        # TODO: Parameterize evaluation approaches.
+        scoring: Mapping[str, list[str | Callable]] | None = None,
+    ) -> dict[str, float]:
+        if scoring is None:
+            scoring = {}
+        self._validate_scoring(scoring=scoring)
+
+        default_metric = (
+            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
+        )
+
         X_with_w = _append_treatment_to_covariates(
             X, w, self._supports_categoricals, self.n_variants
         )
-        y_pred = self.predict_nuisance(
-            X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=is_oos
+        return _evaluate_model(
+            cfes=self._nuisance_models[_BASE_MODEL],
+            X=[X_with_w],
+            y=[y],
+            scorers=scoring.get(_BASE_MODEL, [default_metric]),
+            model_kind=_BASE_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment=False,
         )
-        if self.is_classification:
-            return {"cross_entropy": log_loss(y, y_pred)}
-        return {"rmse": root_mean_squared_error(y, y_pred)}
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL

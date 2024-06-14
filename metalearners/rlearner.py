@@ -1,14 +1,17 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
+from collections.abc import Callable, Mapping
+
 import numpy as np
 from joblib import Parallel, delayed
-from sklearn.metrics import log_loss, root_mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Vector
 from metalearners._utils import (
     clip_element_absolute_value_to_epsilon,
+    copydoc,
     function_has_argument,
     get_one,
     get_predict,
@@ -24,6 +27,7 @@ from metalearners.metalearner import (
     TREATMENT,
     TREATMENT_MODEL,
     MetaLearner,
+    _evaluate_model,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -323,6 +327,7 @@ class RLearner(MetaLearner):
             tau_hat[variant_indices, treatment_variant - 1] = variant_estimates
         return tau_hat
 
+    @copydoc(MetaLearner.evaluate, sep="\n\t")
     def evaluate(
         self,
         X: Matrix,
@@ -330,7 +335,41 @@ class RLearner(MetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
+        scoring: Mapping[str, list[str | Callable]] | None = None,
+    ) -> dict[str, float]:
+        """In the RLearner case, the ``"treatment_model"`` is always evaluated with the
+        :func:`~metalearners.rlearner.r_loss` and the ``scoring["treatment_model"]``
+        parameter is ignored."""
+        if scoring is None:
+            scoring = {}
+        self._validate_scoring(scoring=scoring)
+
+        propensity_evaluation = _evaluate_model(
+            cfes=self._nuisance_models[PROPENSITY_MODEL],
+            X=[X],
+            y=[w],
+            scorers=scoring.get(PROPENSITY_MODEL, ["neg_log_loss"]),
+            model_kind=PROPENSITY_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment=False,
+        )
+
+        default_metric = (
+            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
+        )
+        outcome_evaluation = _evaluate_model(
+            cfes=self._nuisance_models[OUTCOME_MODEL],
+            X=[X],
+            y=[y],
+            scorers=scoring.get(OUTCOME_MODEL, [default_metric]),
+            model_kind=OUTCOME_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment=False,
+        )
+
+        # TODO: improve this? generalize it to other metalearners?
         w_hat = self.predict_nuisance(
             X=X,
             is_oos=is_oos,
@@ -338,7 +377,6 @@ class RLearner(MetaLearner):
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
         )
-        propensity_evaluation = {"propensity_cross_entropy": log_loss(w, w_hat)}
 
         y_hat = self.predict_nuisance(
             X=X,
@@ -350,15 +388,13 @@ class RLearner(MetaLearner):
         if self.is_classification:
             y_hat = y_hat[:, 1]
 
-        outcome_evaluation = (
-            {"outcome_log_loss": log_loss(y, y_hat)}
-            if self.is_classification
-            else {"outcome_rmse": root_mean_squared_error(y, y_hat)}
-        )
-
         treatment_evaluation = {}
         tau_hat = self.predict(X=X, is_oos=is_oos, oos_method=oos_method)
         for treatment_variant in range(1, self.n_variants):
+            is_treatment = w == treatment_variant
+            is_control = w == 0
+            mask = is_treatment | is_control
+
             propensity_estimates = w_hat[:, treatment_variant] / (
                 w_hat[:, 0] + w_hat[:, treatment_variant]
             )
@@ -368,11 +404,11 @@ class RLearner(MetaLearner):
                 else tau_hat[:, treatment_variant - 1, 0]
             )
             treatment_evaluation[f"r_loss_{treatment_variant}_vs_0"] = r_loss(
-                cate_estimates=cate_estimates,
-                outcome_estimates=y_hat,
-                propensity_scores=propensity_estimates,
-                outcomes=y,
-                treatments=w,
+                cate_estimates=cate_estimates[mask],
+                outcome_estimates=y_hat[mask],
+                propensity_scores=propensity_estimates[mask],
+                outcomes=y[mask],
+                treatments=w[mask] == treatment_variant,
             )
 
         return propensity_evaluation | outcome_evaluation | treatment_evaluation

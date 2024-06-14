@@ -2,7 +2,7 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TypedDict
@@ -10,6 +10,7 @@ from typing import TypedDict
 import numpy as np
 import pandas as pd
 import shap
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import KFold
 from typing_extensions import Self
 
@@ -32,6 +33,7 @@ from metalearners._utils import (
 from metalearners.cross_fit_estimator import (
     OVERALL,
     CrossFitEstimator,
+    _PredictContext,
 )
 from metalearners.explainer import Explainer
 
@@ -131,6 +133,41 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
         )
     if min(n_folds.values()) < 2:
         raise ValueError("Need at least two folds to use synchronization.")
+
+
+def _evaluate_model(
+    cfes: Sequence[CrossFitEstimator],
+    X: Sequence[Matrix],
+    y: Sequence[Vector],
+    scorers: Sequence[str | Callable],
+    model_kind: str,
+    is_oos: bool,
+    is_treatment: bool,
+    oos_method: OosMethod = OVERALL,
+) -> dict[str, float]:
+    """Helper function to evaluate all the models of the same model kind."""
+    prefix = f"{model_kind}_"
+    evaluation_metrics: dict[str, float] = {}
+    for idx, scorer in enumerate(scorers):
+        if isinstance(scorer, str):
+            scorer_str = scorer
+            scorer_call: Callable = get_scorer(scorer)
+        else:
+            scorer_str = f"custom_scorer_{idx}"
+            scorer_call = scorer
+        for i, cfe in enumerate(cfes):
+            if is_treatment:
+                treatment_variant = i + 1
+                index_str = f"{treatment_variant}_vs_0_"
+            else:
+                if len(cfes) == 1:
+                    index_str = ""
+                else:
+                    index_str = f"{i}_"
+            name = f"{prefix}{index_str}{scorer_str}"
+            with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
+                evaluation_metrics[name] = scorer_call(modified_cfe, X[i], y[i])
+    return evaluation_metrics
 
 
 class _ModelSpecifications(TypedDict):
@@ -309,6 +346,16 @@ class MetaLearner(ABC):
             ](self)
             validate_model_and_predict_method(
                 factory, predict_method, name=f"treatment model {model_kind}"
+            )
+
+    @classmethod
+    def _validate_scoring(cls, scoring: Mapping[str, list[str | Callable]]):
+        if not set(scoring.keys()) <= (
+            set(cls.nuisance_model_specifications().keys())
+            | set(cls.treatment_model_specifications().keys())
+        ):
+            raise ValueError(
+                "scoring dict keys need to be a subset of the model names in the MetaLearner"
             )
 
     def _qualified_fit_params(
@@ -824,8 +871,39 @@ class MetaLearner(ABC):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        """Evaluate all models contained in a MetaLearner."""
+        scoring: Mapping[str, list[str | Callable]] | None = None,
+    ) -> dict[str, float]:
+        r"""Evaluate the models models contained in the MetaLearner.
+
+        ``scoring`` keys must be a subset of the names of the models contained in the
+        MetaLearner, for information about this names check :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications`
+        and :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
+        The values must be a list of:
+
+        * ``string`` representing a ``sklearn`` scoring method. Check
+          `here <https://scikit-learn.org/stable/modules/model_evaluation.html#common-cases-predefined-values>`__
+          for the possible values.
+        * ``Callable`` with signature ``scorer(estimator, X, y_true, **kwargs)``. We recommend
+          using `sklearn.metrics.make_scorer <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html>`_
+          to create this callables.
+
+        If some model name is not present in the keys of ``scoring`` then the default used
+        metrics will be ``neg_log_loss`` if it is a classifier and ``neg_root_mean_squared_error``
+        if it is a regressor.
+
+        The returned dictionary keys have the following structure:
+
+        * For nuisance models:
+
+            * If the cardinality is one:  ``f"{model_kind}_{scorer}"``
+            * If there is one model for each treatment variant (including control):
+              ``f"{model_kind}_{treatment_variant}_{scorer}"``
+
+        * For treatment models: ``f"{model_kind}_{treatment_variant}_vs_0_{scorer}"``
+
+        Where ``scorer`` is the name of the scorer if it is a string and ``"custom_scorer_{idx}"``
+        if it is a callable where ``idx`` is the index in the ``scorers`` list.
+        """
         ...
 
     def explainer(

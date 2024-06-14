@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.metrics import root_mean_squared_error
+from sklearn.metrics import make_scorer, root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from metalearners.cross_fit_estimator import _OOS_WHITELIST
@@ -310,11 +310,12 @@ def test_learner_twins(metalearner, reference_value, twins_data, rng):
         assert rmse < reference_value * (1 + _OOS_REFERENCE_VALUE_TOLERANCE)
 
 
-@pytest.mark.parametrize("metalearner", ["S", "T", "R"])
+@pytest.mark.parametrize("metalearner", ["S", "T", "X", "R", "DR"])
 @pytest.mark.parametrize("n_classes", [2, 5, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])
-def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_variants):
+@pytest.mark.parametrize("is_oos", [True, False])
+def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_variants, is_oos):
     sample_size = 1000
     factory = metalearner_factory(metalearner)
     if n_variants > 2 and not factory._supports_multi_treatment():
@@ -323,12 +324,17 @@ def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_vari
         pytest.skip()  # skip repeated tests
     if is_classification and n_classes > 2 and not factory._supports_multi_class():
         pytest.skip()
+    test_size = 250
     X = rng.standard_normal((sample_size, 10))
+    X_test = rng.standard_normal((test_size, 10)) if is_oos else X
     w = rng.integers(0, n_variants, size=sample_size)
+    w_test = rng.integers(0, n_variants, test_size) if is_oos else w
     if is_classification:
         y = rng.integers(0, n_classes, size=sample_size)
+        y_test = rng.integers(0, n_classes, test_size) if is_oos else y
     else:
         y = rng.standard_normal(sample_size)
+        y_test = rng.standard_normal(test_size) if is_oos else y
 
     base_learner = _linear_base_learner(is_classification)
 
@@ -341,28 +347,163 @@ def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_vari
         n_folds=2,
     )
     learner.fit(X=X, y=y, w=w)
-    evaluation = learner.evaluate(X=X, y=y, w=w, is_oos=False)
+    evaluation = learner.evaluate(X=X_test, y=y_test, w=w_test, is_oos=is_oos)
     if is_classification:
         if metalearner == "S":
-            assert "cross_entropy" in evaluation
-        elif metalearner == "T":
+            assert set(evaluation.keys()) == {"base_model_neg_log_loss"}
+        elif metalearner in ["T", "X", "DR"]:
             for v in range(n_variants):
-                assert f"variant_{v}_cross_entropy" in evaluation
+                assert f"variant_outcome_model_{v}_neg_log_loss" in evaluation
         elif metalearner == "R":
-            assert "outcome_log_loss" in evaluation
+            assert "outcome_model_neg_log_loss" in evaluation
     else:
         if metalearner == "S":
-            assert "rmse" in evaluation
-        elif metalearner == "T":
+            assert set(evaluation.keys()) == {"base_model_neg_root_mean_squared_error"}
+        elif metalearner in ["T", "X", "DR"]:
             for v in range(n_variants):
-                assert f"variant_{v}_rmse" in evaluation
+                assert (
+                    f"variant_outcome_model_{v}_neg_root_mean_squared_error"
+                    in evaluation
+                )
         elif metalearner == "R":
-            assert "outcome_rmse" in evaluation
+            assert "outcome_model_neg_root_mean_squared_error" in evaluation
     if metalearner == "R":
         assert (
             {f"r_loss_{i}_vs_0" for i in range(1, n_variants)}
-            | {"propensity_cross_entropy"}
+            | {"propensity_model_neg_log_loss"}
         ) <= set(evaluation.keys())
+    elif metalearner == "X":
+        assert "propensity_model_neg_log_loss" in evaluation
+        for v in range(1, n_variants):
+            assert (
+                f"treatment_effect_model_{v}_vs_0_neg_root_mean_squared_error"
+                in evaluation
+            )
+            assert (
+                f"control_effect_model_{v}_vs_0_neg_root_mean_squared_error"
+                in evaluation
+            )
+    elif metalearner == "DR":
+        assert "propensity_model_neg_log_loss" in evaluation
+        for v in range(1, n_variants):
+            assert f"treatment_model_{v}_vs_0_neg_root_mean_squared_error" in evaluation
+
+
+def new_score(estimator, X, y):
+    # This score doesn't make sense.
+    return np.mean(y - estimator.predict(X))
+
+
+def new_score_2(y, y_pred):
+    # This score doesn't make sense.
+    return np.mean(y - y_pred)
+
+
+@pytest.mark.parametrize(
+    "metalearner, is_classification, scoring, expected_keys",
+    [
+        ("S", True, {"base_model": ["accuracy"]}, {"base_model_accuracy"}),
+        ("S", False, {"base_model": ["max_error"]}, {"base_model_max_error"}),
+        (
+            "T",
+            False,
+            {"variant_outcome_model": [new_score, make_scorer(new_score_2)]},
+            {
+                "variant_outcome_model_0_custom_scorer_0",
+                "variant_outcome_model_0_custom_scorer_1",
+                "variant_outcome_model_1_custom_scorer_0",
+                "variant_outcome_model_1_custom_scorer_1",
+                "variant_outcome_model_2_custom_scorer_0",
+                "variant_outcome_model_2_custom_scorer_1",
+            },
+        ),
+        (
+            "X",
+            True,
+            {
+                "variant_outcome_model": ["f1"],
+                "propensity_model": [],
+                "control_effect_model": [],
+                "treatment_effect_model": ["r2", new_score],
+            },
+            {
+                "variant_outcome_model_0_f1",
+                "variant_outcome_model_1_f1",
+                "variant_outcome_model_2_f1",
+                "treatment_effect_model_1_vs_0_r2",
+                "treatment_effect_model_1_vs_0_custom_scorer_1",
+                "treatment_effect_model_2_vs_0_r2",
+                "treatment_effect_model_2_vs_0_custom_scorer_1",
+            },
+        ),
+        (
+            "R",
+            False,
+            {
+                "outcome_model": [make_scorer(new_score_2)],
+                "propensity_model": [],
+            },
+            {
+                "outcome_model_custom_scorer_0",
+                "r_loss_1_vs_0",
+                "r_loss_2_vs_0",
+            },
+        ),
+        (
+            "DR",
+            True,
+            {
+                "variant_outcome_model": ["f1"],
+                "propensity_model": [],
+                "treatment_model": ["r2", new_score],
+            },
+            {
+                "variant_outcome_model_0_f1",
+                "variant_outcome_model_1_f1",
+                "variant_outcome_model_2_f1",
+                "treatment_model_1_vs_0_r2",
+                "treatment_model_1_vs_0_custom_scorer_1",
+                "treatment_model_2_vs_0_r2",
+                "treatment_model_2_vs_0_custom_scorer_1",
+            },
+        ),
+    ],
+)
+@pytest.mark.parametrize("is_oos", [True, False])
+def test_learner_evaluate_scoring(
+    metalearner, is_classification, scoring, expected_keys, is_oos, rng
+):
+    factory = metalearner_factory(metalearner)
+    nuisance_model_factory = _linear_base_learner(is_classification)
+    nuisance_model_params = _linear_base_learner_params(is_classification)
+
+    n_variants = 3
+    sample_size = 1000
+    test_size = 250
+    X = rng.standard_normal((sample_size, 10))
+    X_test = rng.standard_normal((test_size, 10)) if is_oos else X
+    w = rng.integers(0, n_variants, size=sample_size)
+    w_test = rng.integers(0, n_variants, test_size) if is_oos else w
+    if is_classification:
+        y = rng.integers(0, 2, size=sample_size)
+        y_test = rng.integers(0, 2, test_size) if is_oos else y
+    else:
+        y = rng.standard_normal(sample_size)
+        y_test = rng.standard_normal(test_size) if is_oos else y
+
+    ml = factory(
+        is_classification=is_classification,
+        n_variants=n_variants,
+        nuisance_model_factory=nuisance_model_factory,
+        propensity_model_factory=LGBMClassifier,
+        treatment_model_factory=LinearRegression,
+        nuisance_model_params=nuisance_model_params,
+        propensity_model_params={"n_estimators": 1},
+        n_folds=2,
+    )
+    ml.fit(X, y, w)
+    evaluation = ml.evaluate(X_test, y_test, w_test, is_oos, scoring=scoring)
+    assert set(evaluation.keys()) == expected_keys
 
 
 @pytest.mark.parametrize("outcome_kind", ["binary", "continuous"])
