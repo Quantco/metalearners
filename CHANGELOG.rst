@@ -10,6 +10,10 @@ Changelog
 0.4.0 (2024-06-**)
 ------------------
 
+* Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
+  implemented the abstract method for the :class:`metalearners.XLearner` and
+  :class:`metalearners.DRLearner`.
+
 * Implemented :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.clone`.
 
 * Added ``n_jobs_base_learners`` to :meth:`metalearners.metalearner.MetaLearner.fit`.
