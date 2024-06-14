@@ -988,7 +988,7 @@ def test_validate_n_folds_synchronize(n_folds, success):
 
 @pytest.mark.parametrize(
     "implementation",
-    [TLearner],
+    [TLearner, XLearner, RLearner, DRLearner],
 )
 def test_n_jobs_base_learners(implementation, rng):
     n_variants = 5
