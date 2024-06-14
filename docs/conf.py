@@ -40,7 +40,11 @@ extensions = [
     "numpydoc",
     "sphinx.ext.linkcode",
     "sphinxcontrib.apidoc",
+    "myst_nb",
 ]
+
+# Raise an exception on failed execution, rather than emitting a warning
+nb_execution_raise_on_error = True
 
 apidoc_module_dir = "../metalearners"
 apidoc_output_dir = "api"
