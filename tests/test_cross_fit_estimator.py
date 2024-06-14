@@ -223,7 +223,9 @@ def test_crossfitestimator_n_folds_1(rng, sample_size):
 )
 def test_validate_data_match(n_observations, test_indices, success):
     if n_observations < 1:
-        with pytest.raises(ValueError, match="was expected to be positive"):
+        with pytest.raises(
+            ValueError, match=r"was expected to be (strictly )?positive"
+        ):
             _validate_data_match_prior_split(n_observations, test_indices)
         return
     if success:
