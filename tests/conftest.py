@@ -75,8 +75,9 @@ def mindset_data():
     return load_mindset_data()
 
 
-@pytest.fixture(scope="function")
-def twins_data(rng):
+@pytest.fixture(scope="session")
+def twins_data():
+    rng = np.random.default_rng(_SEED)
     (
         chosen_df,
         outcome_column,
@@ -94,28 +95,30 @@ def twins_data(rng):
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def n_numericals():
     return 25
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def n_categoricals():
     return 5
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sample_size():
     return 100_000
 
 
-@pytest.fixture(scope="function")
-def numerical_covariates(sample_size, n_numericals, rng):
+@pytest.fixture(scope="session")
+def numerical_covariates(sample_size, n_numericals):
+    rng = np.random.default_rng(_SEED)
     return generate_covariates(sample_size, n_numericals, format="numpy", rng=rng)
 
 
-@pytest.fixture(scope="function")
-def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
+@pytest.fixture(scope="session")
+def mixed_covariates(sample_size, n_numericals, n_categoricals):
+    rng = np.random.default_rng(_SEED)
     return generate_covariates(
         sample_size,
         n_numericals + n_categoricals,
@@ -125,52 +128,72 @@ def mixed_covariates(sample_size, n_numericals, n_categoricals, rng):
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te(
-    numerical_covariates, rng
+    sample_size, n_numericals
 ):
-    covariates, _, _ = numerical_covariates
+    rng = np.random.default_rng(_SEED)
+    covariates, _, _ = generate_covariates(
+        sample_size, n_numericals, format="numpy", rng=rng
+    )
     return _generate_rct_experiment_data(covariates, False, rng, 0.3, None)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def numerical_experiment_dataset_binary_outcome_binary_treatment_linear_te(
-    numerical_covariates, rng
+    sample_size, n_numericals
 ):
-    covariates, _, _ = numerical_covariates
+    rng = np.random.default_rng(_SEED)
+    covariates, _, _ = generate_covariates(
+        sample_size, n_numericals, format="numpy", rng=rng
+    )
     return _generate_rct_experiment_data(covariates, True, rng, 0.3, None)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def mixed_experiment_dataset_continuous_outcome_binary_treatment_linear_te(
-    mixed_covariates, rng
+    sample_size, n_numericals, n_categoricals
 ):
-    covariates, _, _ = mixed_covariates
+    rng = np.random.default_rng(_SEED)
+    covariates, _, _ = generate_covariates(
+        sample_size,
+        n_numericals + n_categoricals,
+        n_categoricals=n_categoricals,
+        format="pandas",
+        rng=rng,
+    )
     return _generate_rct_experiment_data(covariates, False, rng, 0.3, None)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def numerical_experiment_dataset_continuous_outcome_multi_treatment_linear_te(
-    numerical_covariates, rng
+    sample_size, n_numericals
 ):
-    covariates, _, _ = numerical_covariates
+    rng = np.random.default_rng(_SEED)
+    covariates, _, _ = generate_covariates(
+        sample_size, n_numericals, format="numpy", rng=rng
+    )
     return _generate_rct_experiment_data(
         covariates, False, rng, [0.2, 0.1, 0.3, 0.15, 0.25], None
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def numerical_experiment_dataset_continuous_outcome_multi_treatment_constant_te(
-    numerical_covariates, rng
+    sample_size, n_numericals
 ):
-    covariates, _, _ = numerical_covariates
+    rng = np.random.default_rng(_SEED)
+    covariates, _, _ = generate_covariates(
+        sample_size, n_numericals, format="numpy", rng=rng
+    )
     return _generate_rct_experiment_data(
         covariates, False, rng, [0.2, 0.1, 0.3, 0.15, 0.25], np.array([-2, 5, 0, 3])
     )
 
 
-@pytest.fixture
-def dummy_dataset(rng):
+@pytest.fixture(scope="session")
+def dummy_dataset():
+    rng = np.random.default_rng(_SEED)
     sample_size = 100
     n_features = 10
     X = rng.standard_normal((sample_size, n_features))
@@ -179,8 +202,9 @@ def dummy_dataset(rng):
     return X, y, w
 
 
-@pytest.fixture(scope="function")
-def feature_importance_dataset(rng):
+@pytest.fixture(scope="session")
+def feature_importance_dataset():
+    rng = np.random.default_rng(_SEED)
     n_samples = 10000
     x0 = rng.normal(10, 1, n_samples)
     x1 = rng.normal(2, 1, n_samples)
