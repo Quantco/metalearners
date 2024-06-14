@@ -17,6 +17,13 @@ dependencies:
   - sphinx
   - sphinxcontrib-apidoc
   - sphinx_rtd_theme
+  - myst-nb
+  - ipykernel
+  - ipywidgets
+  ## Documentation examples
+  - lime
+  - optuna
+  - nbconvert
   # Development
   - mypy =1.9.0
   # Testing
