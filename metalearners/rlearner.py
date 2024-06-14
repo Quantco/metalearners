@@ -2,6 +2,7 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
@@ -23,7 +24,9 @@ from metalearners.metalearner import (
     TREATMENT,
     TREATMENT_MODEL,
     MetaLearner,
+    _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
+    _ParallelJoblibSpecification,
 )
 
 OUTCOME_MODEL = "outcome_model"
@@ -175,25 +178,40 @@ class RLearner(MetaLearner):
         else:
             cv_split_indices = None
 
-        self.fit_nuisance(
-            X=X,
-            y=w,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-            n_jobs_cross_fitting=n_jobs_cross_fitting,
-            fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
-            cv=cv_split_indices,
+        nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
+
+        nuisance_jobs.append(
+            self._nuisance_joblib_specifications(
+                X=X,
+                y=w,
+                model_kind=PROPENSITY_MODEL,
+                model_ord=0,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
+                cv=cv_split_indices,
+            )
         )
-        self.fit_nuisance(
-            X=X,
-            y=y,
-            model_kind=OUTCOME_MODEL,
-            model_ord=0,
-            n_jobs_cross_fitting=n_jobs_cross_fitting,
-            fit_params=qualified_fit_params[NUISANCE][OUTCOME_MODEL],
-            cv=cv_split_indices,
+        nuisance_jobs.append(
+            self._nuisance_joblib_specifications(
+                X=X,
+                y=y,
+                model_kind=OUTCOME_MODEL,
+                model_ord=0,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][OUTCOME_MODEL],
+                cv=cv_split_indices,
+            )
         )
 
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job)
+            for job in nuisance_jobs
+            if job is not None
+        )
+        self._assign_joblib_nuisance_results(results)
+
+        treatment_jobs: list[_ParallelJoblibSpecification] = []
         for treatment_variant in range(1, self.n_variants):
 
             is_treatment = w == treatment_variant
@@ -213,15 +231,21 @@ class RLearner(MetaLearner):
 
             X_filtered = index_matrix(X, mask)
 
-            self.fit_treatment(
-                X=X_filtered,
-                y=pseudo_outcomes,
-                model_kind=TREATMENT_MODEL,
-                model_ord=treatment_variant - 1,
-                fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL]
-                | {_SAMPLE_WEIGHT: weights},
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
+            treatment_jobs.append(
+                self._treatment_joblib_specifications(
+                    X=X_filtered,
+                    y=pseudo_outcomes,
+                    model_kind=TREATMENT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL]
+                    | {_SAMPLE_WEIGHT: weights},
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                )
             )
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
+        )
+        self._assign_joblib_treatment_results(results)
         return self
 
     def predict(

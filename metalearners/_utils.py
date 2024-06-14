@@ -1,7 +1,6 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
-import operator
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
@@ -66,14 +65,22 @@ def validate_all_vectors_same_index(*args: Vector) -> None:
 
 
 def validate_number_positive(
-    value: int | float, name: str, strict: bool = False
+    value: int | float, name: str, strict: bool = True
 ) -> None:
+    """Validates that a number is positive.
+
+    If ``strict = True`` then it validates that the number is strictly positive.
+    """
     if strict:
-        comparison = operator.lt
+        if value <= 0:
+            raise ValueError(
+                f"{name} was expected to be strictly positive but was {value}."
+            )
     else:
-        comparison = operator.le
-    if comparison(value, 0):
-        raise ValueError(f"{name} was expected to be positive but was {value}.")
+        if value < 0:
+            raise ValueError(
+                f"{name} was expected to be positive or zero but was {value}."
+            )
 
 
 def check_propensity_score(
