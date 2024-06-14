@@ -315,7 +315,9 @@ def test_learner_twins(metalearner, reference_value, twins_data, rng):
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])
 @pytest.mark.parametrize("is_oos", [True, False])
-def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_variants, is_oos):
+def test_learner_evaluate(
+    metalearner, is_classification, rng, n_classes, n_variants, is_oos
+):
     sample_size = 1000
     factory = metalearner_factory(metalearner)
     if n_variants > 2 and not factory._supports_multi_treatment():
