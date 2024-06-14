@@ -34,3 +34,5 @@ dependencies:
   - glum
   - shap
   - matplotlib-base
+  # Same as sklearn
+  - joblib>=1.2.0

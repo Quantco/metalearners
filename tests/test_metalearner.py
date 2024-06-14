@@ -76,6 +76,7 @@ class _TestMetaLearner(MetaLearner):
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
     ):
         for model_kind in self.__class__.nuisance_model_specifications():
             for model_ord in range(
@@ -983,3 +984,39 @@ def test_validate_n_folds_synchronize(n_folds, success):
     else:
         with pytest.raises(ValueError, match="synchronization"):
             _validate_n_folds_synchronize(n_folds)
+
+
+@pytest.mark.parametrize(
+    "implementation",
+    [TLearner],
+)
+def test_n_jobs_base_learners(implementation, rng):
+    n_variants = 5
+    X = rng.standard_normal((1000, 10))
+    y = rng.standard_normal(1000)
+    w = rng.integers(0, n_variants, 1000)
+
+    ml = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        random_state=_SEED,
+    )
+
+    ml.fit(X, y, w, n_jobs_base_learners=None)
+
+    ml_2 = implementation(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        random_state=_SEED,
+    )
+
+    ml_2.fit(X, y, w, n_jobs_base_learners=-1)
+
+    np.testing.assert_allclose(ml.predict(X, False), ml_2.predict(X, False))
+    np.testing.assert_allclose(ml.predict(X, True), ml_2.predict(X, True))

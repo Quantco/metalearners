@@ -30,6 +30,7 @@ requirements:
     - typing-extensions
     - git_root
     - shap
+    - joblib >= 1.2.0
 tests:
   - python:
       imports:

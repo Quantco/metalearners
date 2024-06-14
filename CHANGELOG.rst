@@ -10,6 +10,10 @@ Changelog
 0.4.0 (2024-06-**)
 ------------------
 
+* Implemented :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.clone`.
+
+* Added ``n_jobs_base_learners`` to :meth:`metalearners.metalearner.MetaLearner.fit`.
+
 * Renamed :meth:`metalearners.explainer.Explainer.feature_importances`. Note this is
   a breaking change.
 

@@ -123,6 +123,16 @@ class CrossFitEstimator:
         model = self.estimator_factory(**self.estimator_params)
         return model.fit(X, y, **fit_params)
 
+    def clone(self) -> "CrossFitEstimator":
+        r"""Construct a new unfitted CrossFitEstimator with the same init parameters."""
+        return CrossFitEstimator(
+            n_folds=self.n_folds,
+            estimator_factory=self.estimator_factory,
+            estimator_params=self.estimator_params,
+            enable_overall=self.enable_overall,
+            random_state=self.random_state,
+        )
+
     def fit(
         self,
         X: Matrix,

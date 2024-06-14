@@ -3,6 +3,7 @@
 
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
@@ -14,7 +15,9 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
+    _ParallelJoblibSpecification,
 )
 
 
@@ -54,6 +57,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)
@@ -65,17 +69,28 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
-        # TODO: Consider multiprocessing
+        nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
-            self.fit_nuisance(
-                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
-                y=y[self._treatment_variants_indices[treatment_variant]],
-                model_kind=VARIANT_OUTCOME_MODEL,
-                model_ord=treatment_variant,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+            nuisance_jobs.append(
+                self._nuisance_joblib_specifications(
+                    X=index_matrix(
+                        X, self._treatment_variants_indices[treatment_variant]
+                    ),
+                    y=y[self._treatment_variants_indices[treatment_variant]],
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=treatment_variant,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+                )
             )
 
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job)
+            for job in nuisance_jobs
+            if job is not None
+        )
+        self._assign_joblib_nuisance_results(results)
         return self
 
     def predict(
