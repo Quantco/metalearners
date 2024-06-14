@@ -141,6 +141,7 @@ def test_learner_synthetic(
         observed_outcomes_train,
         treatment_train,
         synchronize_cross_fitting=True,
+        n_jobs_base_learners=-1,
     )
 
     # In sample CATEs
@@ -236,6 +237,7 @@ def test_learner_synthetic_oos_ate(metalearner, treatment_kind, request):
         observed_outcomes_train,
         treatment_train,
         synchronize_cross_fitting=True,
+        n_jobs_base_learners=-1,
     )
     for oos_method in _OOS_WHITELIST:
         cate_estimates = learner.predict(
@@ -427,12 +429,14 @@ def test_x_t_conditional_average_outcomes(outcome_kind, is_oos, request):
         observed_outcomes_train,
         treatment_train,
         synchronize_cross_fitting=False,
+        n_jobs_base_learners=-1,
     )
     xlearner.fit(
         covariates_train,
         observed_outcomes_train,
         treatment_train,
         synchronize_cross_fitting=False,
+        n_jobs_base_learners=-1,
     )
 
     if not is_oos:
@@ -707,7 +711,7 @@ def test_model_reusage(outcome_kind, request):
         n_variants=len(np.unique(treatment)),
         nuisance_model_params=nuisance_learner_params,
     )
-    tlearner.fit(covariates, observed_outcomes, treatment)
+    tlearner.fit(covariates, observed_outcomes, treatment, n_jobs_base_learners=-1)
     xlearner = XLearner(
         is_classification=is_classification,
         n_variants=len(np.unique(treatment)),
@@ -731,7 +735,7 @@ def test_model_reusage(outcome_kind, request):
     tlearner_pred_before_refitting = tlearner.predict_conditional_average_outcomes(
         covariates, False
     )
-    xlearner.fit(covariates, observed_outcomes, treatment)
+    xlearner.fit(covariates, observed_outcomes, treatment, n_jobs_base_learners=-1)
     np.testing.assert_allclose(
         tlearner.predict_conditional_average_outcomes(covariates, False),
         tlearner_pred_before_refitting,

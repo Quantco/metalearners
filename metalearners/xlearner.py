@@ -2,6 +2,7 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from joblib import Parallel, delayed
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Vector
@@ -20,7 +21,9 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
+    _ParallelJoblibSpecification,
 )
 
 CONTROL_EFFECT_MODEL = "control_effect_model"
@@ -98,51 +101,76 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 cv_split_indices = None
             cvs.append(cv_split_indices)
 
-        # TODO: Consider multiprocessing
+        nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
-            self.fit_nuisance(
-                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
-                y=y[self._treatment_variants_indices[treatment_variant]],
-                model_kind=VARIANT_OUTCOME_MODEL,
-                model_ord=treatment_variant,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
-                cv=cvs[treatment_variant],
+            nuisance_jobs.append(
+                self._nuisance_joblib_specifications(
+                    X=index_matrix(
+                        X, self._treatment_variants_indices[treatment_variant]
+                    ),
+                    y=y[self._treatment_variants_indices[treatment_variant]],
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=treatment_variant,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+                    cv=cvs[treatment_variant],
+                )
             )
 
-        self.fit_nuisance(
-            X=X,
-            y=w,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-            n_jobs_cross_fitting=n_jobs_cross_fitting,
-            fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
+        nuisance_jobs.append(
+            self._nuisance_joblib_specifications(
+                X=X,
+                y=w,
+                model_kind=PROPENSITY_MODEL,
+                model_ord=0,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
+            )
         )
 
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job)
+            for job in nuisance_jobs
+            if job is not None
+        )
+        self._assign_joblib_nuisance_results(results)
+
+        treatment_jobs: list[_ParallelJoblibSpecification] = []
         for treatment_variant in range(1, self.n_variants):
             imputed_te_control, imputed_te_treatment = self._pseudo_outcome(
                 X, y, w, treatment_variant
             )
-
-            self.fit_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
-                y=imputed_te_treatment,
-                model_kind=TREATMENT_EFFECT_MODEL,
-                model_ord=treatment_variant - 1,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[TREATMENT][TREATMENT_EFFECT_MODEL],
-                cv=cvs[treatment_variant],
-            )
-            self.fit_treatment(
-                X=index_matrix(X, self._treatment_variants_indices[0]),
-                y=imputed_te_control,
-                model_kind=CONTROL_EFFECT_MODEL,
-                model_ord=treatment_variant - 1,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[TREATMENT][CONTROL_EFFECT_MODEL],
-                cv=cvs[0],
+            treatment_jobs.append(
+                self._treatment_joblib_specifications(
+                    X=index_matrix(
+                        X, self._treatment_variants_indices[treatment_variant]
+                    ),
+                    y=imputed_te_treatment,
+                    model_kind=TREATMENT_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[TREATMENT][TREATMENT_EFFECT_MODEL],
+                    cv=cvs[treatment_variant],
+                )
             )
 
+            treatment_jobs.append(
+                self._treatment_joblib_specifications(
+                    X=index_matrix(X, self._treatment_variants_indices[0]),
+                    y=imputed_te_control,
+                    model_kind=CONTROL_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[TREATMENT][CONTROL_EFFECT_MODEL],
+                    cv=cvs[0],
+                )
+            )
+
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
+        )
+        self._assign_joblib_treatment_results(results)
         return self
 
     def predict(

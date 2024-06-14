@@ -2,6 +2,7 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from joblib import Parallel, delayed
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Vector
@@ -22,7 +23,9 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
+    _ParallelJoblibSpecification,
 )
 
 _EPSILON = 1e-09
@@ -102,27 +105,43 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         else:
             cv_split_indices = None
 
-        # TODO: Consider multiprocessing
+        nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
-            self.fit_nuisance(
-                X=index_matrix(X, self._treatment_variants_indices[treatment_variant]),
-                y=y[self._treatment_variants_indices[treatment_variant]],
-                model_kind=VARIANT_OUTCOME_MODEL,
-                model_ord=treatment_variant,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+            nuisance_jobs.append(
+                self._nuisance_joblib_specifications(
+                    X=index_matrix(
+                        X, self._treatment_variants_indices[treatment_variant]
+                    ),
+                    y=y[self._treatment_variants_indices[treatment_variant]],
+                    model_kind=VARIANT_OUTCOME_MODEL,
+                    model_ord=treatment_variant,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
+                )
             )
 
-        self.fit_nuisance(
-            X=X,
-            y=w,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-            n_jobs_cross_fitting=n_jobs_cross_fitting,
-            fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
-            cv=cv_split_indices,
+        nuisance_jobs.append(
+            self._nuisance_joblib_specifications(
+                X=X,
+                y=w,
+                model_kind=PROPENSITY_MODEL,
+                model_ord=0,
+                n_jobs_cross_fitting=n_jobs_cross_fitting,
+                fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
+                cv=cv_split_indices,
+            )
         )
 
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job)
+            for job in nuisance_jobs
+            if job is not None
+        )
+
+        self._assign_joblib_nuisance_results(results)
+
+        treatment_jobs: list[_ParallelJoblibSpecification] = []
         for treatment_variant in range(1, self.n_variants):
             pseudo_outcomes = self._pseudo_outcome(
                 X=X,
@@ -131,15 +150,21 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 treatment_variant=treatment_variant,
             )
 
-            self.fit_treatment(
-                X=X,
-                y=pseudo_outcomes,
-                model_kind=TREATMENT_MODEL,
-                model_ord=treatment_variant - 1,
-                n_jobs_cross_fitting=n_jobs_cross_fitting,
-                fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL],
-                cv=cv_split_indices,
+            treatment_jobs.append(
+                self._treatment_joblib_specifications(
+                    X=X,
+                    y=pseudo_outcomes,
+                    model_kind=TREATMENT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    n_jobs_cross_fitting=n_jobs_cross_fitting,
+                    fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL],
+                    cv=cv_split_indices,
+                )
             )
+        results = parallel(
+            delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
+        )
+        self._assign_joblib_treatment_results(results)
         return self
 
     def predict(
