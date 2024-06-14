@@ -4,6 +4,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import TypedDict
 
 import numpy as np
@@ -138,6 +139,47 @@ class _ModelSpecifications(TypedDict):
     # At some point evaluation at runtime will be the default and then this won't be needed.
     cardinality: Callable[["MetaLearner"], int]
     predict_method: Callable[["MetaLearner"], PredictMethod]
+
+
+@dataclass(frozen=True)
+class _ParallelJoblibSpecification:
+    r"""Specification parameters for a joblib delayed call."""
+
+    model_kind: str
+    model_ord: int
+    X: Matrix
+    y: Vector
+    fit_params: dict | None
+    n_jobs_cross_fitting: int | None
+    cross_fit_estimator: CrossFitEstimator
+    cv: SplitIndices | None
+
+
+@dataclass(frozen=True)
+class _ParallelJoblibResult:
+    r"""Result of a parallel joblib delayed call."""
+
+    model_kind: str
+    model_ord: int
+    cross_fit_estimator: CrossFitEstimator
+
+
+def _fit_cross_fit_estimator_joblib(
+    parallel_joblib_job: _ParallelJoblibSpecification,
+) -> _ParallelJoblibResult:
+    r"""Helper function to call from a delayed ``joblib`` object to fit a
+    :class:`~metaleaners.cross_fit_estimator.CrossFitEstimator` in parallel."""
+    return _ParallelJoblibResult(
+        model_kind=parallel_joblib_job.model_kind,
+        model_ord=parallel_joblib_job.model_ord,
+        cross_fit_estimator=parallel_joblib_job.cross_fit_estimator.fit(
+            X=parallel_joblib_job.X,
+            y=parallel_joblib_job.y,
+            fit_params=parallel_joblib_job.fit_params,
+            n_jobs_cross_fitting=parallel_joblib_job.n_jobs_cross_fitting,
+            cv=parallel_joblib_job.cv,
+        ),
+    )
 
 
 class MetaLearner(ABC):
@@ -524,6 +566,62 @@ class MetaLearner(ABC):
         )
         return self
 
+    def _nuisance_joblib_specifications(
+        self,
+        X: Matrix,
+        y: Vector,
+        model_kind: str,
+        model_ord: int,
+        fit_params: dict | None = None,
+        n_jobs_cross_fitting: int | None = None,
+        cv: SplitIndices | None = None,
+    ) -> _ParallelJoblibSpecification | None:
+        r"""Create a :class:`metalearners.metalearner._ParallelJoblibSpecification` to
+        fit the corresponding nuisance model.
+
+        ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
+        If pre-fitted models were passed at instantiation, these are never refitted.
+        """
+        if model_kind in self._prefitted_nuisance_models:
+            return None
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
+
+        # Clone creates a new never fitted CrossFitEstimator, we could pass directly the
+        # object in self._treatment_models[model_kind][model_ord] but this could be have
+        # some state already set. To avoid any issues we clone it.
+        return _ParallelJoblibSpecification(
+            cross_fit_estimator=self._nuisance_models[model_kind][model_ord].clone(),
+            model_kind=model_kind,
+            model_ord=model_ord,
+            X=X_filtered,
+            y=y,
+            fit_params=fit_params,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            cv=cv,
+        )
+
+    def _assign_joblib_nuisance_results(
+        self, joblib_results: list[_ParallelJoblibResult]
+    ) -> None:
+        r"""Collect the ``joblib`` results and assign the fitted
+        :class:`~metalearners.cross_fit_estimator.CrossFitEstimator` s."""
+        for result in joblib_results:
+            if result.model_kind not in self._nuisance_models:
+                raise ValueError(
+                    f"{result.model_kind} is not a nuisance model for "
+                    "{self.__class__.__name__}"
+                )
+            if result.model_ord >= (
+                cardinality := len(self._nuisance_models[result.model_kind])
+            ):
+                raise ValueError(
+                    f"{result.model_kind} has cardinality {cardinality} and "
+                    f"model_ord is {result.model_ord}"
+                )
+            self._nuisance_models[result.model_kind][
+                result.model_ord
+            ] = result.cross_fit_estimator
+
     def fit_treatment(
         self,
         X: Matrix,
@@ -548,6 +646,60 @@ class MetaLearner(ABC):
         )
         return self
 
+    def _treatment_joblib_specifications(
+        self,
+        X: Matrix,
+        y: Vector,
+        model_kind: str,
+        model_ord: int,
+        fit_params: dict | None = None,
+        n_jobs_cross_fitting: int | None = None,
+        cv: SplitIndices | None = None,
+    ) -> _ParallelJoblibSpecification:
+        r"""Create a :class:`metalearners.metalearner._ParallelJoblibSpecification` to
+        fit the corresponding treatment model.
+
+        `y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
+        If pre-fitted models were passed at instantiation, these are never refitted.
+        """
+        X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
+
+        # Clone creates a new never fitted CrossFitEstimator, we could pass directly the
+        # object in self._treatment_models[model_kind][model_ord] but this could be have
+        # some state already set. To avoid any issues we clone it.
+        return _ParallelJoblibSpecification(
+            cross_fit_estimator=self._treatment_models[model_kind][model_ord].clone(),
+            model_kind=model_kind,
+            model_ord=model_ord,
+            X=X_filtered,
+            y=y,
+            fit_params=fit_params,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            cv=cv,
+        )
+
+    def _assign_joblib_treatment_results(
+        self, joblib_results: list[_ParallelJoblibResult]
+    ) -> None:
+        r"""Collect the ``joblib`` results and assign the fitted
+        :class:`~metalearners.cross_fit_estimator.CrossFitEstimator` s."""
+        for result in joblib_results:
+            if result.model_kind not in self._treatment_models:
+                raise ValueError(
+                    f"{result.model_kind} is not a treatment model for "
+                    "{self.__class__.__name__}"
+                )
+            if result.model_ord >= (
+                cardinality := len(self._treatment_models[result.model_kind])
+            ):
+                raise ValueError(
+                    f"{result.model_kind} has cardinality {cardinality} and "
+                    f"model_ord is {result.model_ord}"
+                )
+            self._treatment_models[result.model_kind][
+                result.model_ord
+            ] = result.cross_fit_estimator
+
     @abstractmethod
     def fit(
         self,
@@ -557,13 +709,18 @@ class MetaLearner(ABC):
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
     ) -> Self:
         """Fit all models of the MetaLearner.
 
         If pre-fitted models were passed at instantiation, these are never refitted.
 
-        ``n_jobs_cross_fitting`` will be used at the cross-fitting level. For more information about
-        parallelism check :ref:`parallelism`
+        ``n_jobs_cross_fitting`` will be used at the cross-fitting level and
+        ``n_jobs_base_learners`` will be used at the stage level. ``None`` means 1 unless in a
+        `joblib.parallel_backend <https://joblib.readthedocs.io/en/latest/generated/joblib.parallel_backend.html#joblib.parallel_backend>`_
+        context. ``-1`` means using all processors.
+        For more information about parallelism check :ref:`parallelism`
+
 
         ``fit_params`` is an optional ``dict`` to be forwarded to base estimator ``fit`` calls. It supports
         two usages patterns:

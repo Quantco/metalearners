@@ -85,6 +85,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y)

@@ -158,6 +158,7 @@ class RLearner(MetaLearner):
         n_jobs_cross_fitting: int | None = None,
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
         epsilon: float = _EPSILON,
     ) -> Self:
 

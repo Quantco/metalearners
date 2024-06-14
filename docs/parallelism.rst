@@ -30,7 +30,8 @@ We've discovered three potential levels for executing parallelism:
     this would be one propensity model and an outcome model for each treatment variant.
     This independence translates into another possibility for parallelism.
 
-    This level of parallelism is not yet implemented in ``metalearners``
+    To use parallelism at this level one can use the ``n_jobs_base_learners`` parameter of the
+    :py:meth:`~metalearners.metalearner.MetaLearner.fit` method of the metalearner.
 
 Our experiments leveraging parallelism at various levels reveal that there is not a
 'one-size-fits-all' setting; the optimal configuration varies significantly based on factors
