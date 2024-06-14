@@ -10,6 +10,8 @@ Changelog
 0.4.0 (2024-06-**)
 ------------------
 
+* Implemented :class:`metalearners.metalearner_grid_search_cv.MetaLearnerGridSearchCV`.
+
 * Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
   implemented the abstract method for the :class:`metalearners.XLearner` and
   :class:`metalearners.DRLearner`.
