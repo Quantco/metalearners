@@ -56,7 +56,7 @@ def _validate_data_match_prior_split(
 ) -> None:
     """Validate whether the previous test_indices and the passed data are based on the
     same number of observations."""
-    validate_number_positive(n_observations, "n_observations", strict=False)
+    validate_number_positive(n_observations, "n_observations", strict=True)
     if test_indices is None:
         return
     expected_n_observations = sum(len(x) for x in test_indices)
