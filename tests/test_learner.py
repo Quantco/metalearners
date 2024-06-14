@@ -312,9 +312,8 @@ def test_learner_twins(metalearner, reference_value, twins_data, rng):
 @pytest.mark.parametrize("n_classes", [2, 5, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])
-def test_learner_evaluate(
-    metalearner, is_classification, rng, sample_size, n_classes, n_variants
-):
+def test_learner_evaluate(metalearner, is_classification, rng, n_classes, n_variants):
+    sample_size = 1000
     factory = metalearner_factory(metalearner)
     if n_variants > 2 and not factory._supports_multi_treatment():
         pytest.skip()
@@ -617,8 +616,9 @@ def test_conditional_average_outcomes_smoke(
 @pytest.mark.parametrize("n_classes", [5, 10])
 @pytest.mark.parametrize("n_variants", [2, 5])
 def test_conditional_average_outcomes_smoke_multi_class(
-    metalearner_prefix, rng, sample_size, n_classes, n_variants
+    metalearner_prefix, rng, n_classes, n_variants
 ):
+    sample_size = 1000
     factory = metalearner_factory(metalearner_prefix)
 
     X = rng.standard_normal((sample_size, 10))
@@ -648,8 +648,9 @@ def test_conditional_average_outcomes_smoke_multi_class(
 @pytest.mark.parametrize("n_variants", [2, 5])
 @pytest.mark.parametrize("is_classification", [True, False])
 def test_predict_smoke(
-    metalearner_prefix, is_classification, rng, sample_size, n_classes, n_variants
+    metalearner_prefix, is_classification, rng, n_classes, n_variants
 ):
+    sample_size = 1000
     factory = metalearner_factory(metalearner_prefix)
     if n_variants > 2 and not factory._supports_multi_treatment():
         pytest.skip()
