@@ -93,7 +93,10 @@ class SLearner(MetaLearner):
             # For SLearner it does not make sense to allow feature set as we only have one model
             # and having it would bring problems when using fit_nuisance and predict_nuisance
             # as we need to add the treatment column.
-            raise ValueError("SLearner does not support feature set definition.")
+            warnings.warn(
+                "Base-model specific feature_sets were provided to S-Learner. "
+                "These will be ignored and all available features will be used instead."
+            )
 
     def fit(
         self,
