@@ -7,7 +7,12 @@
 Changelog
 =========
 
-0.4.0 (2024-06-**)
+0.4.1 (2024-06-18)
+------------------
+
+* Fix dependencies for pip.
+
+0.4.0 (2024-06-18)
 ------------------
 
 * Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
