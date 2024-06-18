@@ -358,9 +358,9 @@ class RLearner(MetaLearner):
 
         treatment_evaluation = {}
         tau_hat = self.predict(X=X, is_oos=is_oos, oos_method=oos_method)
+        is_control = w == 0
         for treatment_variant in range(1, self.n_variants):
             is_treatment = w == treatment_variant
-            is_control = w == 0
             mask = is_treatment | is_control
 
             propensity_estimates = w_hat[:, treatment_variant] / (
