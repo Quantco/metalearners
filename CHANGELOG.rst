@@ -7,7 +7,7 @@
 Changelog
 =========
 
-0.4.0 (2024-06-**)
+0.4.0 (2024-06-18)
 ------------------
 
 * Implemented :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.clone`.
