@@ -1,6 +1,6 @@
 # metalearners
 
-[![CI](https://github.com/Quantco/metalearners/actions/workflows/ci.yaml/badge.svg)](https://github.com/Quantco/metalearners/actions/workflows/ci.yaml)
+[![CI](https://github.com/Quantco/metalearners/actions/workflows/ci.yml/badge.svg)](https://github.com/Quantco/metalearners/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/metalearners/badge/?version=latest)](https://metalearners.readthedocs.io/en/latest/?badge=latest)
 [![Conda-forge](https://img.shields.io/conda/vn/conda-forge/metalearners?logoColor=white&logo=conda-forge)](https://anaconda.org/conda-forge/metalearners)
 [![PypiVersion](https://img.shields.io/pypi/v/metalearners.svg?logo=pypi&logoColor=white)](https://pypi.org/project/metalearners)
