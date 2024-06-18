@@ -123,6 +123,33 @@ def test_n_classes(estimator_factory, twins_data):
     assert cfe._n_classes == 2
 
 
+@pytest.mark.parametrize("estimator_factory", [LGBMClassifier, LogisticRegression])
+def test_crossfitestimator_classes(estimator_factory, twins_data):
+    (
+        df,
+        outcome_column,
+        _,
+        feature_columns,
+        categorical_feature_columns,
+    ) = twins_data
+    cfe = CrossFitEstimator(
+        n_folds=2,
+        estimator_factory=estimator_factory,
+        enable_overall=False,
+    )
+    numerical_features = [
+        column
+        for column in feature_columns
+        if column not in categorical_feature_columns
+    ]
+    missing_indices = df[numerical_features].isna().any(axis=1)
+    X = df[numerical_features][~missing_indices]
+    y = df[outcome_column][~missing_indices]
+    cfe.fit(X=X, y=y)
+    assert cfe.classes_ is not None
+    assert np.array_equal(cfe.classes_, np.array([0.0, 1.0]))
+
+
 def test_fit_params(mindset_data):
     df, outcome_column, _, feature_columns, _ = mindset_data
 
