@@ -24,6 +24,7 @@ jobs:
           fetch-depth: 0
       - name: Run pre-commit-conda
         uses: quantco/pre-commit-conda@v1
+
   mypy-type-checks:
     name: Mypy Type Checks
     runs-on: ubuntu-latest
@@ -45,7 +46,7 @@ jobs:
         run: mypy .
 
   unit-tests:
-    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest-8core' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
+    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
