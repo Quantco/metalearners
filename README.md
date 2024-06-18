@@ -1,24 +1,23 @@
 # metalearners
 
+[![CI](https://github.com/Quantco/metalearners/actions/workflows/ci.yaml/badge.svg)](https://github.com/Quantco/metalearners/actions/workflows/ci.yaml)
+[![Documentation Status](https://readthedocs.org/projects/metalearners/badge/?version=latest)](https://metalearners.readthedocs.io/en/latest/?badge=latest)
+[![Conda-forge](https://img.shields.io/conda/vn/conda-forge/metalearners?logoColor=white&logo=conda-forge)](https://anaconda.org/conda-forge/metalearners)
+[![PypiVersion](https://img.shields.io/pypi/v/metalearners.svg?logo=pypi&logoColor=white)](https://pypi.org/project/metalearners)
+[![codecov.io](https://codecov.io/github/QuantCo/metalearners/coverage.svg?branch=main)](https://codecov.io/github/QuantCo/metalearners?branch=main)
+
 MetaLearners for CATE estimation
 
 ## Installation
 
-You can install the package in development mode using:
+`metalearners` can either be installed via PyPI with
 
 ```bash
-git clone https://github.com/quantco/metalearners
-cd metalearners
-
-# create and activate a fresh environment named metalearners
-# see environment.yml for details
-micromamba create -f environment.yml
-micromamba activate metalearners
-
-pre-commit install
-pip install --no-build-isolation -e .
+$ pip install metalearners
 ```
 
-## Credits
+or via conda-forge with
 
-Original implementation by @FrancescMartiEscofetQC and @kklein.
+```bash
+$ conda install metalearners -c conda-forge
+```
