@@ -114,6 +114,7 @@ class _TestMetaLearner(MetaLearner):
             TREATMENT_MODEL: ["X2"],
             PROPENSITY_MODEL: ["Xp"],
             OUTCOME_MODEL: ["X1"],
+            _BASE_MODEL: ["X2"],
         },
     ],
 )
@@ -128,6 +129,7 @@ class _TestMetaLearner(MetaLearner):
             TREATMENT_MODEL: 5,
             PROPENSITY_MODEL: 5,
             OUTCOME_MODEL: 5,
+            _BASE_MODEL: 5,
         },
     ],
 )
@@ -135,7 +137,7 @@ class _TestMetaLearner(MetaLearner):
 @pytest.mark.parametrize("n_variants", [2, 5, 10])
 @pytest.mark.parametrize(
     "implementation",
-    [TLearner, XLearner, RLearner, DRLearner],
+    [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
 def test_metalearner_init(
     is_classification,
