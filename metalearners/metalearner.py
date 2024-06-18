@@ -93,8 +93,8 @@ def _parse_fit_params(
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
-    if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
-        return argument
+    if isinstance(argument, dict) and set(argument.keys()) >= set(expected_names):
+        return {key: argument[key] for key in expected_names}
     return {name: argument for name in expected_names}
 
 
