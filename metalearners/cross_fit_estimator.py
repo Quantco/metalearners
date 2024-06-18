@@ -101,6 +101,7 @@ class CrossFitEstimator:
     _overall_estimator: _ScikitModel | None = field(init=False)
     _test_indices: tuple[np.ndarray] | None = field(init=False)
     _n_classes: int | None = field(init=False)
+    classes_: np.ndarray | None = field(init=False)
 
     def __post_init__(self):
         _validate_n_folds(self.n_folds)
@@ -115,6 +116,7 @@ class CrossFitEstimator:
         self._overall_estimator: _ScikitModel | None = None
         self._test_indices: tuple[np.ndarray] | None = None
         self._n_classes: int | None = None
+        self.classes_: np.ndarray | None = None
 
     def _train_overall_estimator(
         self, X: Matrix, y: Matrix | Vector, fit_params: dict | None = None
@@ -189,7 +191,14 @@ class CrossFitEstimator:
 
         if is_classifier(self):
             self._n_classes = len(np.unique(y))
-
+            self.classes_ = np.unique(y)
+            for e in self._estimators:
+                if set(e.classes_) != set(self.classes_):  # type: ignore
+                    raise ValueError(
+                        "Some folds in cross-fitting had fewer classes than "
+                        "the overall dataset. Please check the cv parameter. If you are "
+                        "synchronizing the folds in a MetaLearner consider not doing it."
+                    )
         return self
 
     def _initialize_prediction_tensor(

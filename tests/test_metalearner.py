@@ -470,6 +470,7 @@ def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
 
 
 def test_model_reusage_init():
+    # TODO: Split up into several tests.
     prefitted_models = [CrossFitEstimator(10, LGBMRegressor)]
     ml = _TestMetaLearner(
         nuisance_model_factory=LinearRegression,
@@ -495,6 +496,16 @@ def test_model_reusage_init():
             n_variants=2,
             treatment_model_factory=LGBMRegressor,
             fitted_nuisance_models={"nuisance3": prefitted_models},
+        )
+
+    with pytest.raises(ValueError, match="The keys present"):
+        RLearner(
+            propensity_model_factory=LGBMClassifier,
+            nuisance_model_factory=LGBMRegressor,
+            is_classification=False,
+            n_variants=2,
+            treatment_model_factory=LGBMRegressor,
+            fitted_nuisance_models={PROPENSITY_MODEL: prefitted_models},
         )
 
 
