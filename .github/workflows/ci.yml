@@ -43,7 +43,8 @@ jobs:
           condarc-file: .github/assets/.condarc
           environment-file: environment.yml
           cache-environment: true
-      - uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
+      - name: Set up pixi env
+        uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
         with:
           environments: ${{ matrix.env }}
       - name: Install repository
@@ -60,17 +61,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        env:
-          - py310
-          - py311
-          - py312
+        env: [py310, py311, py312]
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
+      - name: Set up pixi env
+        uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
         with:
           environments: ${{ matrix.env }}
       - name: Install repository
