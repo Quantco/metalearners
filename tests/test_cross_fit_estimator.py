@@ -146,6 +146,7 @@ def test_crossfitestimator_classes(estimator_factory, twins_data):
     X = df[numerical_features][~missing_indices]
     y = df[outcome_column][~missing_indices]
     cfe.fit(X=X, y=y)
+    assert cfe.classes_ is not None
     assert np.array_equal(cfe.classes_, np.array([0.0, 1.0]))
 
 
