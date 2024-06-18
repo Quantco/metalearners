@@ -10,7 +10,12 @@ Changelog
 0.5.0 (2024-06-18)
 ------------------
 
-* No longer raise an error if ``feature_set`` is provided to :class:`metalearners.SLearner`.
+* No longer raise an error if ``feature_set`` is provided to
+  :class:`metalearners.SLearner`.
+
+* Fix a bug where base model dictionaries -- e.g. ``n_folds`` or
+  ``feature-set`` -- were improperly initialized if the provided
+  dictionary's keys were a strict superset of the expected keys.
 
 0.4.2 (2024-06-18)
 ------------------
