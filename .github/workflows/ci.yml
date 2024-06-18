@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: py312
+        env: "py312"
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        env: [py310, py311, py312]
+        env: ["py310", "py311", "py312"]
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
