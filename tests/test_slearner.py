@@ -10,16 +10,13 @@ from sklearn.linear_model import LinearRegression
 from metalearners.slearner import SLearner, _append_treatment_to_covariates
 
 
-def test_feature_set_raise():
-    with pytest.raises(
-        ValueError, match="SLearner does not support feature set definition."
-    ):
-        SLearner(
-            nuisance_model_factory=LinearRegression,
-            is_classification=False,
-            n_variants=2,
-            feature_set="",
-        )
+def test_feature_set_doesnt_raise():
+    SLearner(
+        nuisance_model_factory=LinearRegression,
+        is_classification=False,
+        n_variants=2,
+        feature_set="",
+    )
 
 
 @pytest.mark.parametrize(
