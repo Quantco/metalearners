@@ -196,7 +196,7 @@ class CrossFitEstimator:
                 if set(e.classes_) != set(self.classes_):  # type: ignore
                     raise ValueError(
                         "Some cross fit estimators training data had less classes than "
-                        "the overall estimator. Please check the cv parameter. If you are "
+                        "the overall dataset. Please check the cv parameter. If you are "
                         "synchronizing the folds in a MetaLearner consider not doing it."
                     )
         return self
