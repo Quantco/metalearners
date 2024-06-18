@@ -498,10 +498,10 @@ class MetaLearner(ABC):
         if fitted_nuisance_models is not None:
             if not set(fitted_nuisance_models.keys()) <= set(
                 nuisance_model_specifications.keys()
-            ):
+            ) - {PROPENSITY_MODEL}:
                 raise ValueError(
-                    "The keys present in fitted_nuisance_models should be a subset of"
-                    f"{set(nuisance_model_specifications.keys())}"
+                    "The keys present in fitted_nuisance_models should be a subset of "
+                    f"{set(nuisance_model_specifications.keys()) - {PROPENSITY_MODEL}}"
                 )
             self._nuisance_models |= deepcopy(fitted_nuisance_models)
             not_fitted_nuisance_models -= set(fitted_nuisance_models.keys())
