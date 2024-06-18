@@ -508,6 +508,7 @@ def test_model_reusage_init():
             fitted_nuisance_models={PROPENSITY_MODEL: prefitted_models},
         )
 
+
 @pytest.mark.parametrize(
     "fit_params, nuisance_model_names, treatment_model_names, expected",
     [
