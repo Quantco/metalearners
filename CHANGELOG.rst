@@ -7,6 +7,16 @@
 Changelog
 =========
 
+0.5.0 (2024-06-18)
+------------------
+
+* No longer raise an error if ``feature_set`` is provided to :class:`metalearners.SLearner`.
+
+0.4.2 (2024-06-18)
+------------------
+
+* Add license file.
+
 0.4.1 (2024-06-18)
 ------------------
 
