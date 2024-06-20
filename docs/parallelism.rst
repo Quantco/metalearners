@@ -4,10 +4,10 @@ What about parallelism?
 ************************
 
 In the context of the topic outlined in :ref:`Motivation_multiprocessing`, one of the factors
-motivating the implementation of this library is the introduction of parallelism in metalearners.
+motivating the implementation of this library is the introduction of parallelism in ``metalearners``.
 We've discovered three potential levels for executing parallelism:
 
-#.  **Base model level**: Certain base models implement the option to use multiple threads
+#.  **Base model level**: Certain :term:`base models <Base model>` implement the option to use multiple threads
     during their training. Examples of these models include
     `LightGBM <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html#lightgbm.LGBMRegressor>`_
     or `RandomForest from sklearn <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html>`_.
@@ -25,13 +25,15 @@ We've discovered three potential levels for executing parallelism:
     To use parallelism at this level one can use the ``n_jobs_cross_fitting`` parameter of the
     :py:meth:`~metalearners.metalearner.MetaLearner.fit` method of the metalearner.
 
-#.  **Stage level**: A majority of MetaLearners entails multiple nuisance and/or treatment models.
+#.  **Stage level**: A majority of MetaLearners entails multiple
+    :term:`nuisance<Nuisance model>` and/or :term:`treatment models<Treatment effect model>`.
     Within an individual stage, these models are independent of each other, an example of
-    this would be one propensity model and an outcome model for each treatment variant.
+    this would be one :term:`propensity model<Propensity model>` and
+    an :term:`outcome model<Outcome model>` for each treatment variant.
     This independence translates into another possibility for parallelism.
 
     To use parallelism at this level one can use the ``n_jobs_base_learners`` parameter of the
-    :py:meth:`~metalearners.metalearner.MetaLearner.fit` method of the metalearner.
+    :py:meth:`~metalearners.metalearner.MetaLearner.fit` method of the MetaLearner.
 
 Our experiments leveraging parallelism at various levels reveal that there is not a
 'one-size-fits-all' setting; the optimal configuration varies significantly based on factors
