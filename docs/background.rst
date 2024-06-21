@@ -236,7 +236,7 @@ the opposite holds true.
 We would like to learn such policies to apply them on previously
 unseen data. In order to learn the policy, we can use data from an experiment.
 We can dinstinguish two cases when it comes to experiment data:
-:term:`observational <Observational data>` or
+:term:`observational<Observational data>` or
 :term:`RCT<Randomized Control Trial (RCT)>` data.
 
 Importantly, MetaLearners for CATE estimation can, in principle, be
