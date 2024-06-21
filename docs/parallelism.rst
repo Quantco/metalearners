@@ -7,7 +7,7 @@ In the context of the topic outlined in :ref:`Motivation_multiprocessing`, one o
 motivating the implementation of this library is the introduction of parallelism in ``metalearners``.
 We've discovered three potential levels for executing parallelism:
 
-#.  **Base model level**: Certain :term:`base models <Base model>` implement the option to use multiple threads
+#.  **Base model level**: Certain :term:`base models<Base model>` implement the option to use multiple threads
     during their training. Examples of these models include
     `LightGBM <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html#lightgbm.LGBMRegressor>`_
     or `RandomForest from sklearn <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html>`_.
