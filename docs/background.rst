@@ -421,13 +421,13 @@ It consists of two stages:
         \DeclareMathOperator*{\argmin}{arg\,min}
         \hat{\tau}^R (\cdot) &:= \argmin_{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
         &=\argmin_{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
-        &= \argmin_{\tau}\left\{\mathbb{E}\left[{\tilde{W}^i}^2\bigg(\frac{\tilde{Y}^i}{\tilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
+        &= \argmin_{\tau}\left\{\mathbb{E}\left[{\widetilde{W}^i}^2\bigg(\frac{\widetilde{Y}^i}{\widetilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
 
     Where
 
     .. math::
-      \tilde{W}^i &= W^i - \hat{e}(X^i) \\
-      \tilde{Y}^i &= Y^i - \hat{m}(X^i)
+      \widetilde{W}^i &= W^i - \hat{e}(X^i) \\
+      \widetilde{Y}^i &= Y^i - \hat{m}(X^i)
 
     And therefore any ML model which supports weighting each observation differently can be used for the final model.
 
