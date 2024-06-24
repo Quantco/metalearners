@@ -342,7 +342,6 @@ class RLearner(MetaLearner):
         parameter is ignored."""
         if scoring is None:
             scoring = {}
-        self._validate_scoring(scoring=scoring)
 
         propensity_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[PROPENSITY_MODEL],

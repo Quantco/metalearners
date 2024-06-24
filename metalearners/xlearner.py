@@ -292,7 +292,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     ) -> dict[str, float]:
         if scoring is None:
             scoring = {}
-        self._validate_scoring(scoring=scoring)
 
         default_metric = (
             "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"

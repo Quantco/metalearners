@@ -348,16 +348,6 @@ class MetaLearner(ABC):
                 factory, predict_method, name=f"treatment model {model_kind}"
             )
 
-    @classmethod
-    def _validate_scoring(cls, scoring: Mapping[str, list[str | Callable]]):
-        if not set(scoring.keys()) <= (
-            set(cls.nuisance_model_specifications().keys())
-            | set(cls.treatment_model_specifications().keys())
-        ):
-            raise ValueError(
-                "scoring dict keys need to be a subset of the model names in the MetaLearner"
-            )
-
     def _qualified_fit_params(
         self,
         fit_params: None | dict,
@@ -875,9 +865,10 @@ class MetaLearner(ABC):
     ) -> dict[str, float]:
         r"""Evaluate the MetaLearner.
 
-        ``scoring`` keys must be a subset of the names of the models contained in the
-        MetaLearner, for information about this names check :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications`
-        and :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
+        The keys in ``scoring`` which are not a name of a model contained in the MetaLearner
+        will be ignored, for information about this names check
+        :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
+        :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
         The values must be a list of:
 
         * ``string`` representing a ``sklearn`` scoring method. Check
