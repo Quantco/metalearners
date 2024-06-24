@@ -88,8 +88,8 @@ class SLearner(MetaLearner):
     def _supports_multi_class(cls) -> bool:
         return True
 
-    def _validate_params(self, feature_set, **kwargs):
-        if feature_set is not None:
+    def _validate_params(self):
+        if self.feature_set != {_BASE_MODEL: None}:
             # For SLearner it does not make sense to allow feature set as we only have one model
             # and having it would bring problems when using fit_nuisance and predict_nuisance
             # as we need to add the treatment column.
@@ -97,6 +97,7 @@ class SLearner(MetaLearner):
                 "Base-model specific feature_sets were provided to S-Learner. "
                 "These will be ignored and all available features will be used instead."
             )
+            self.feature_set = {_BASE_MODEL: None}
 
     def fit(
         self,
