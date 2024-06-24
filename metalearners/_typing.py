@@ -1,7 +1,7 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Collection, Mapping
+from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Literal, Protocol, Union
 
 import numpy as np
@@ -29,7 +29,6 @@ class _ScikitModel(Protocol):
 
     # https://stackoverflow.com/questions/54868698/what-type-is-a-sklearn-model/60542986#60542986
     def fit(self, X, y, *params, **kwargs): ...
-
     def predict(self, X, *params, **kwargs): ...
 
     def score(self, X, y, **kwargs): ...
@@ -44,3 +43,7 @@ ModelFactory = type[_ScikitModel] | dict[str, type[_ScikitModel]]
 # For instance, if converting the Generator resulting from a call to
 # sklearn.model_selection.KFold.split to a list we obtain this type.
 SplitIndices = list[tuple[np.ndarray, np.ndarray]]
+
+Scorer = str | Callable
+Scorers = Sequence[Scorer]
+Scoring = Mapping[str, Scorers]

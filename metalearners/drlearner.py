@@ -1,13 +1,12 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Callable, Mapping
 
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
     clip_element_absolute_value_to_epsilon,
     get_one,
@@ -209,14 +208,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
     ) -> dict[str, float]:
-        if scoring is None:
-            scoring = {}
+        safe_scoring = self._scoring(scoring)
 
-        default_metric = (
-            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
-        )
         masks = []
         for tv in range(self.n_variants):
             masks.append(w == tv)
@@ -224,7 +219,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
             Xs=[X[w == tv] for tv in range(self.n_variants)],
             ys=[y[w == tv] for tv in range(self.n_variants)],
-            scorers=scoring.get(VARIANT_OUTCOME_MODEL, [default_metric]),
+            scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
@@ -235,7 +230,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             cfes=self._nuisance_models[PROPENSITY_MODEL],
             Xs=[X],
             ys=[w],
-            scorers=scoring.get(PROPENSITY_MODEL, ["neg_log_loss"]),
+            scorers=safe_scoring[PROPENSITY_MODEL],
             model_kind=PROPENSITY_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
@@ -258,7 +253,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             self._treatment_models[TREATMENT_MODEL],
             Xs=[X for _ in range(1, self.n_variants)],
             ys=pseudo_outcome,
-            scorers=scoring.get(TREATMENT_MODEL, ["neg_root_mean_squared_error"]),
+            scorers=safe_scoring[TREATMENT_MODEL],
             model_kind=TREATMENT_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,

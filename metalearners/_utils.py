@@ -480,3 +480,9 @@ def copydoc(fromfunc, sep="\n"):
         return func
 
     return _decorator
+
+
+def default_metric(predict_method: PredictMethod) -> str:
+    if predict_method == _PREDICT_PROBA:
+        return "neg_log_loss"
+    return "neg_root_mean_squared_error"
