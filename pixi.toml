@@ -51,6 +51,7 @@ typos = "*"
 pyupgrade = "*"
 docformatter = "*"
 pre-commit-hooks = "*"
+types-setuptools = "*"
 
 [feature.lint.tasks]
 pre-commit-install = "pre-commit install"

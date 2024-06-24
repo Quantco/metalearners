@@ -1057,6 +1057,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h4845f30_101.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tokenize-rt-5.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/types-setuptools-70.0.0.20240524-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/typos-1.22.7-he9194b0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h0c530f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ukkonen-1.0.1-py312h8572e83_4.conda
@@ -1119,6 +1120,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/tk-8.6.13-h1abcd95_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tokenize-rt-5.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/types-setuptools-70.0.0.20240524-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/typos-1.22.7-h686f776_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h0c530f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/ukkonen-1.0.1-py312h49ebfd2_4.conda
@@ -1181,6 +1183,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h5083fa2_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tokenize-rt-5.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/types-setuptools-70.0.0.20240524-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/typos-1.22.7-h6e96688_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h0c530f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ukkonen-1.0.1-py312h389731b_4.conda
@@ -1248,6 +1251,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/tk-8.6.13-h5226925_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tokenize-rt-5.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/types-setuptools-70.0.0.20240524-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/typos-1.22.7-h813c833_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h0c530f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/ucrt-10.0.22621.0-h57928b3_0.tar.bz2
@@ -21379,6 +21383,20 @@ packages:
   license_family: BSD
   size: 110187
   timestamp: 1713535244513
+- kind: conda
+  name: types-setuptools
+  version: 70.0.0.20240524
+  build: pyhd8ed1ab_0
+  subdir: noarch
+  noarch: python
+  url: https://conda.anaconda.org/conda-forge/noarch/types-setuptools-70.0.0.20240524-pyhd8ed1ab_0.conda
+  sha256: 9df03606db0bb68551114594cf6833ac9312252ae33f6ea4318ed6da87677e31
+  md5: 3c9afa99b59c39b14419712a937bfde5
+  depends:
+  - python >=3.8
+  license: Apache-2.0 AND MIT
+  size: 46230
+  timestamp: 1716544882707
 - kind: conda
   name: typing-extensions
   version: 4.12.2

@@ -40,6 +40,13 @@ repos:
         language: system
         require_serial: true
         types: [python]
+      - id: mypy
+        name: mypy
+        entry: pixi run -e lint mypy
+        language: system
+        types: [python]
+        args: ["--ignore-missing-imports", "--scripts-are-modules"]
+        require_serial: true
       - id: prettier
         name: prettier
         entry: pixi run -e lint prettier
