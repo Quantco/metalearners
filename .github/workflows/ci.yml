@@ -18,12 +18,12 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
-          ref: ${{ github.head_ref }}
-          # needed for 'pre-commit-mirrors-insert-license'
-          fetch-depth: 0
-      - name: Run pre-commit-conda
-        uses: quantco/pre-commit-conda@v1
+          environments: default lint
+      - name: pre-commit
+        run: pixi run pre-commit-run --color=always --show-diff-on-failure
 
   mypy-type-checks:
     name: Mypy Type Checks
@@ -34,9 +34,6 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
       - name: Set up Conda env
         uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
         with:
@@ -65,25 +62,22 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-      - name: Set up pixi env
-        uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
           environments: ${{ matrix.env }}
       - name: Install repository
         run: |
           pixi run -e ${{ matrix.env }} postinstall
-      - name: Run unittests
-        uses: quantco/pytest-action@v2
-        with:
-          custom-pytest: pixi run -e ${{ matrix.env }} coverage
-          report-title: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - ${{ matrix.env }}
-          custom-arguments: --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes
-      - name: Upload coverage reports to Codecov
+          pixi run -e ${{ matrix.env }} coverage
+      - name: Generate code coverage report
         if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c
+        uses: codecov/codecov-action@v3.1.3
+        with:
+          file: ./coverage.xml
+      - name: Upload coverage reports to Codecov
+        if: $${ matrix.env } == "py312"
+        uses: codecov/codecov-action@v3.1.3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml

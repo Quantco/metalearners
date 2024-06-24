@@ -1,13 +1,11 @@
 [project]
 name = "metalearners"
-version = "0.4.0"
-description = "MetaLearners for CATE estimation"
-authors = ["kklein <kevin.klein@quantco.com>", "FrancescMartiEscofetQC <francesc.marti.escofet@quantco.com>"]
 channels = ["conda-forge", "nodefaults"]
 platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
 [tasks]
 postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e ."
+coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes"
 
 [dependencies]
 pre-commit = "*"
@@ -42,6 +40,15 @@ shap = "*"
 matplotlib-base = "*"
 joblib = ">=1.2.0"
 
+[feature.lint.dependencies]
+pre-commit = "*"
+black = "*"
+flake8 = "*"
+isort = "*"
+taplo = "*"
+typos = "*"
+pyupgrade = "*"
+
 [feature.py310.dependencies]
 python = "3.10.*"
 [feature.py311.dependencies]
@@ -53,3 +60,5 @@ python = "3.12.*"
 py310 = ["py310"]
 py311 = ["py311"]
 py312 = ["py312"]
+
+lint = { features = ["lint"], no-default-feature = true }
