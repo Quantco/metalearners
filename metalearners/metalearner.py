@@ -135,7 +135,7 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
         raise ValueError("Need at least two folds to use synchronization.")
 
 
-def _evaluate_model(
+def _evaluate_model_kind(
     cfes: Sequence[CrossFitEstimator],
     X: Sequence[Matrix],
     y: Sequence[Vector],
