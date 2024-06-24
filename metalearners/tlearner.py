@@ -118,21 +118,17 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         oos_method: OosMethod = OVERALL,
         scoring: Mapping[str, list[str | Callable]] | None = None,
     ) -> dict[str, float]:
-        if scoring is None:
-            scoring = {}
-
-        default_metric = (
-            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
-        )
+        safe_scoring = self._scoring(scoring)
 
         masks = []
         for tv in range(self.n_variants):
             masks.append(w == tv)
+
         return _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
             Xs=[X[w == tv] for tv in range(self.n_variants)],
             ys=[y[w == tv] for tv in range(self.n_variants)],
-            scorers=scoring.get(VARIANT_OUTCOME_MODEL, [default_metric]),
+            scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,

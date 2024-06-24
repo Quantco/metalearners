@@ -21,11 +21,13 @@ from metalearners._typing import (
     OosMethod,
     Params,
     PredictMethod,
+    Scoring,
     SplitIndices,
     Vector,
     _ScikitModel,
 )
 from metalearners._utils import (
+    default_metric,
     index_matrix,
     validate_model_and_predict_method,
     validate_number_positive,
@@ -1024,6 +1026,35 @@ class MetaLearner(ABC):
             shap_explainer_factory=shap_explainer_factory,
             shap_explainer_params=shap_explainer_params,
         )
+
+    def _scoring(self, scoring: Scoring | None) -> Scoring:
+
+        def _default_scoring() -> Scoring:
+            return {
+                nuisance_model: [
+                    default_metric(
+                        self.nuisance_model_specifications()[nuisance_model][
+                            "predict_method"
+                        ](self)
+                    )
+                ]
+                for nuisance_model in self.nuisance_model_specifications()
+            } | {
+                treatment_model: [
+                    default_metric(
+                        self.treatment_model_specifications()[treatment_model][
+                            "predict_method"
+                        ](self)
+                    )
+                ]
+                for treatment_model in self.treatment_model_specifications()
+            }
+
+        default_scoring = _default_scoring()
+
+        if scoring is None:
+            return default_scoring
+        return dict(default_scoring) | dict(scoring)
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):

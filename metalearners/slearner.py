@@ -160,12 +160,7 @@ class SLearner(MetaLearner):
         oos_method: OosMethod = OVERALL,
         scoring: Mapping[str, list[str | Callable]] | None = None,
     ) -> dict[str, float]:
-        if scoring is None:
-            scoring = {}
-
-        default_metric = (
-            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
-        )
+        safe_scoring = self._scoring(scoring)
 
         X_with_w = _append_treatment_to_covariates(
             X, w, self._supports_categoricals, self.n_variants
@@ -174,7 +169,7 @@ class SLearner(MetaLearner):
             cfes=self._nuisance_models[_BASE_MODEL],
             Xs=[X_with_w],
             ys=[y],
-            scorers=scoring.get(_BASE_MODEL, [default_metric]),
+            scorers=safe_scoring[_BASE_MODEL],
             model_kind=_BASE_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
