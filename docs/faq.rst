@@ -29,7 +29,8 @@ FAQ
     Double machine learning is an ATE estimation technique, pioneered by
     `Chernozhukov et al. (2016) <https://arxiv.org/abs/1608.00060>`_.
     It is 'double' in the sense that it relies on two preliminary models: one for the probability of
-    receiving treatment given covariates (the propensity score), and one for the outcome given treatment and covariates.
+    receiving treatment given covariates (the propensity score), and one for the outcome covariates and
+    optionally the treatment.
 
     Double ML is also referred to as 'debiased' ML, since the propensity score model is used to 'debias'
     a naive estimator that uses the outcome model to predict the expected outcome under treatment, and under no treatment,
