@@ -2,13 +2,11 @@
 # # SPDX-License-Identifier: BSD-3-Clause
 
 
-from collections.abc import Callable, Mapping
-
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import index_matrix
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -116,7 +114,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
     ) -> dict[str, float]:
         safe_scoring = self._scoring(scoring)
 
