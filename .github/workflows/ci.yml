@@ -34,14 +34,8 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
-      - name: Set up Conda env
-        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
-        with:
-          condarc-file: .github/assets/.condarc
-          environment-file: environment.yml
-          cache-environment: true
-      - name: Set up pixi env
-        uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
           environments: ${{ matrix.env }}
       - name: Install repository
