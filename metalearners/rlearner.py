@@ -1,14 +1,13 @@
 # # Copyright (c) QuantCo 2024-2024
 # # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Callable, Mapping
 
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.metrics import root_mean_squared_error
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
     clip_element_absolute_value_to_epsilon,
     copydoc,
@@ -335,37 +334,33 @@ class RLearner(MetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
     ) -> dict[str, float]:
         """In the RLearner case, the ``"treatment_model"`` is always evaluated with the
         :func:`~metalearners.rlearner.r_loss` and the ``scoring["treatment_model"]``
         parameter is ignored."""
-        if scoring is None:
-            scoring = {}
+        safe_scoring = self._scoring(scoring)
 
         propensity_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[PROPENSITY_MODEL],
             Xs=[X],
             ys=[w],
-            scorers=scoring.get(PROPENSITY_MODEL, ["neg_log_loss"]),
+            scorers=safe_scoring[PROPENSITY_MODEL],
             model_kind=PROPENSITY_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
-            is_treatment=False,
+            is_treatment_model=False,
         )
 
-        default_metric = (
-            "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
-        )
         outcome_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[OUTCOME_MODEL],
             Xs=[X],
             ys=[y],
-            scorers=scoring.get(OUTCOME_MODEL, [default_metric]),
+            scorers=safe_scoring[OUTCOME_MODEL],
             model_kind=OUTCOME_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
-            is_treatment=False,
+            is_treatment_model=False,
         )
 
         # TODO: improve this? generalize it to other metalearners?

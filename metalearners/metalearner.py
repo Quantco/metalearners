@@ -21,11 +21,13 @@ from metalearners._typing import (
     OosMethod,
     Params,
     PredictMethod,
+    Scoring,
     SplitIndices,
     Vector,
     _ScikitModel,
 )
 from metalearners._utils import (
+    default_metric,
     index_matrix,
     validate_model_and_predict_method,
     validate_number_positive,
@@ -142,7 +144,7 @@ def _evaluate_model_kind(
     scorers: Sequence[str | Callable],
     model_kind: str,
     is_oos: bool,
-    is_treatment: bool,
+    is_treatment_model: bool,
     oos_method: OosMethod = OVERALL,
 ) -> dict[str, float]:
     """Helper function to evaluate all the models of the same model kind."""
@@ -156,7 +158,7 @@ def _evaluate_model_kind(
             scorer_name = f"custom_scorer_{idx}"
             scorer_callable = scorer
         for i, cfe in enumerate(cfes):
-            if is_treatment:
+            if is_treatment_model:
                 treatment_variant = i + 1
                 index_str = f"{treatment_variant}_vs_0_"
             else:
@@ -877,7 +879,7 @@ class MetaLearner(ABC):
           for the possible values.
         * ``Callable`` with signature ``scorer(estimator, X, y_true, **kwargs)``. We recommend
           using `sklearn.metrics.make_scorer <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html>`_
-          to create this callables.
+          to create such a ``Callable``.
 
         If some model name is not present in the keys of ``scoring`` then the default used
         metrics will be ``neg_log_loss`` if it is a classifier and ``neg_root_mean_squared_error``
@@ -1024,6 +1026,27 @@ class MetaLearner(ABC):
             shap_explainer_factory=shap_explainer_factory,
             shap_explainer_params=shap_explainer_params,
         )
+
+    def _scoring(self, scoring: Scoring | None) -> Scoring:
+
+        def _default_scoring() -> Scoring:
+            return {
+                nuisance_model: [
+                    default_metric(model_specifications["predict_method"](self))
+                ]
+                for nuisance_model, model_specifications in self.nuisance_model_specifications().items()
+            } | {
+                treatment_model: [
+                    default_metric(model_specifications["predict_method"](self))
+                ]
+                for treatment_model, model_specifications in self.treatment_model_specifications().items()
+            }
+
+        default_scoring = _default_scoring()
+
+        if scoring is None:
+            return default_scoring
+        return dict(default_scoring) | dict(scoring)
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
