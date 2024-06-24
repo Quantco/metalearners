@@ -1032,16 +1032,12 @@ class MetaLearner(ABC):
         def _default_scoring() -> Scoring:
             return {
                 nuisance_model: [
-                    default_metric(
-                        model_specifications["predict_method"](self)
-                    )
+                    default_metric(model_specifications["predict_method"](self))
                 ]
                 for nuisance_model, model_specifications in self.nuisance_model_specifications().items()
             } | {
                 treatment_model: [
-                    default_metric(
-                        model_specifications["predict_method"](self)
-                    )
+                    default_metric(model_specifications["predict_method"](self))
                 ]
                 for treatment_model, model_specifications in self.treatment_model_specifications().items()
             }
