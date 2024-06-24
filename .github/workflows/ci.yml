@@ -54,7 +54,7 @@ jobs:
         run: pixi run mypy .
 
   unit-tests:
-    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest-8core' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
+    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
@@ -81,3 +81,9 @@ jobs:
           custom-pytest: pixi run -e ${{ matrix.env }} coverage
           report-title: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - ${{ matrix.env }}
           custom-arguments: --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes
+      - name: Upload coverage reports to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
