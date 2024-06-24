@@ -1033,12 +1033,10 @@ class MetaLearner(ABC):
             return {
                 nuisance_model: [
                     default_metric(
-                        self.nuisance_model_specifications()[nuisance_model][
-                            "predict_method"
-                        ](self)
+                        model_specifications["predict_method"](self)
                     )
                 ]
-                for nuisance_model in self.nuisance_model_specifications()
+                for nuisance_model, model_specifications in self.nuisance_model_specifications().items()
             } | {
                 treatment_model: [
                     default_metric(
