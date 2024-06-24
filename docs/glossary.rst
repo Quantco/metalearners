@@ -24,7 +24,7 @@ Glossary
     Similar to the R-Learner, the Double Machine Learning blueprint
     relies on estimating two nuisance models in its first stage: a
     propensity model as well as an outcome model. Unlike the
-    R-Learner, the last-stage or treatment effect model might need a
+    R-Learner, the last-stage or treatment effect model might need to be a
     specific type of estimator.
     See `Chernozhukov et al. (2016) <https://arxiv.org/abs/1608.00060>`_.
 
