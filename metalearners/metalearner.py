@@ -158,7 +158,7 @@ def _evaluate_model_kind(
             scorer_name = f"custom_scorer_{idx}"
             scorer_callable = scorer
         for i, cfe in enumerate(cfes):
-            if is_treatment:
+            if is_treatment_model:
                 treatment_variant = i + 1
                 index_str = f"{treatment_variant}_vs_0_"
             else:
