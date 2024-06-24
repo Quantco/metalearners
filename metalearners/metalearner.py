@@ -138,7 +138,7 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
 def _evaluate_model_kind(
     cfes: Sequence[CrossFitEstimator],
     Xs: Sequence[Matrix],
-    y: Sequence[Vector],
+    ys: Sequence[Vector],
     scorers: Sequence[str | Callable],
     model_kind: str,
     is_oos: bool,
