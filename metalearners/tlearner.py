@@ -16,7 +16,7 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
-    _evaluate_model,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -129,10 +129,10 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         masks = []
         for tv in range(self.n_variants):
             masks.append(w == tv)
-        return _evaluate_model(
+        return _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
-            X=[X[w == tv] for tv in range(self.n_variants)],
-            y=[y[w == tv] for tv in range(self.n_variants)],
+            Xs=[X[w == tv] for tv in range(self.n_variants)],
+            ys=[y[w == tv] for tv in range(self.n_variants)],
             scorers=scoring.get(VARIANT_OUTCOME_MODEL, [default_metric]),
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,

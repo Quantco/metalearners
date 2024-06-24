@@ -18,7 +18,7 @@ from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
     NUISANCE,
     MetaLearner,
-    _evaluate_model,
+    _evaluate_model_kind,
     _ModelSpecifications,
 )
 
@@ -168,10 +168,10 @@ class SLearner(MetaLearner):
         X_with_w = _append_treatment_to_covariates(
             X, w, self._supports_categoricals, self.n_variants
         )
-        return _evaluate_model(
+        return _evaluate_model_kind(
             cfes=self._nuisance_models[_BASE_MODEL],
-            X=[X_with_w],
-            y=[y],
+            Xs=[X_with_w],
+            ys=[y],
             scorers=scoring.get(_BASE_MODEL, [default_metric]),
             model_kind=_BASE_MODEL,
             is_oos=is_oos,

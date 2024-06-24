@@ -23,7 +23,7 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
-    _evaluate_model,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -300,10 +300,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         masks = []
         for tv in range(self.n_variants):
             masks.append(w == tv)
-        variant_outcome_evaluation = _evaluate_model(
+        variant_outcome_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
-            X=[X[w == tv] for tv in range(self.n_variants)],
-            y=[y[w == tv] for tv in range(self.n_variants)],
+            Xs=[X[w == tv] for tv in range(self.n_variants)],
+            ys=[y[w == tv] for tv in range(self.n_variants)],
             scorers=scoring.get(VARIANT_OUTCOME_MODEL, [default_metric]),
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,
@@ -311,10 +311,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_treatment=False,
         )
 
-        propensity_evaluation = _evaluate_model(
+        propensity_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[PROPENSITY_MODEL],
-            X=[X],
-            y=[w],
+            Xs=[X],
+            ys=[w],
             scorers=scoring.get(PROPENSITY_MODEL, ["neg_log_loss"]),
             model_kind=PROPENSITY_MODEL,
             is_oos=is_oos,
@@ -331,10 +331,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             imputed_te_control.append(tv_imputed_te_control)
             imputed_te_treatment.append(tv_imputed_te_treatment)
 
-        te_treatment_evaluation = _evaluate_model(
+        te_treatment_evaluation = _evaluate_model_kind(
             self._treatment_models[TREATMENT_EFFECT_MODEL],
-            X=[X[w == tv] for tv in range(1, self.n_variants)],
-            y=imputed_te_treatment,
+            Xs=[X[w == tv] for tv in range(1, self.n_variants)],
+            ys=imputed_te_treatment,
             scorers=scoring.get(
                 TREATMENT_EFFECT_MODEL, ["neg_root_mean_squared_error"]
             ),
@@ -344,10 +344,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_treatment=True,
         )
 
-        te_control_evaluation = _evaluate_model(
+        te_control_evaluation = _evaluate_model_kind(
             self._treatment_models[CONTROL_EFFECT_MODEL],
-            X=[X[w == 0] for _ in range(1, self.n_variants)],
-            y=imputed_te_control,
+            Xs=[X[w == 0] for _ in range(1, self.n_variants)],
+            ys=imputed_te_control,
             scorers=scoring.get(CONTROL_EFFECT_MODEL, ["neg_root_mean_squared_error"]),
             model_kind=CONTROL_EFFECT_MODEL,
             is_oos=is_oos,

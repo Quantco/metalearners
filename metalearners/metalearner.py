@@ -153,8 +153,8 @@ def _evaluate_model_kind(
             scorer_name = scorer
             scorer_callable: Callable = get_scorer(scorer)
         else:
-            scorer_str = f"custom_scorer_{idx}"
-            scorer_call = scorer
+            scorer_name = f"custom_scorer_{idx}"
+            scorer_callable = scorer
         for i, cfe in enumerate(cfes):
             if is_treatment:
                 treatment_variant = i + 1
@@ -164,9 +164,9 @@ def _evaluate_model_kind(
                     index_str = ""
                 else:
                     index_str = f"{i}_"
-            name = f"{prefix}{index_str}{scorer_str}"
+            name = f"{prefix}{index_str}{scorer_name}"
             with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
-                evaluation_metrics[name] = scorer_call(modified_cfe, X[i], y[i])
+                evaluation_metrics[name] = scorer_callable(modified_cfe, Xs[i], ys[i])
     return evaluation_metrics
 
 
