@@ -26,7 +26,7 @@ jobs:
         run: pixi run pre-commit-run --color=always --show-diff-on-failure
 
   unit-tests:
-    name: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
+    name: Unit Tets
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
