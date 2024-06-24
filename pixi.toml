@@ -14,12 +14,6 @@ pip = "*"
 python = ">=3.10"
 setuptools-scm = "*"
 setuptools = ">=61"
-make = "*"
-numpydoc = "*"
-sphinx = "*"
-sphinxcontrib-apidoc = "*"
-sphinx_rtd_theme = "*"
-myst-nb = "*"
 ipykernel = "*"
 ipywidgets = "*"
 lime = "*"
@@ -64,9 +58,11 @@ sphinx = "*"
 sphinx_rtd_theme = "*"
 sphinxcontrib-apidoc = "*"
 sphinx-autodoc-typehints = "*"
+myst-nb = "*"
+
 [feature.docs.tasks]
 docs = "cd docs && make html "
-readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/build/html $READTHEDOCS_OUTPUT/html"
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
 
 [feature.py310.dependencies]
 python = "3.10.*"
@@ -80,5 +76,6 @@ py310 = ["py310"]
 py311 = ["py311"]
 py312 = ["py312"]
 
-docs = ["docs"]
 lint = { features = ["lint"], no-default-feature = true }
+
+docs = ["docs"]
