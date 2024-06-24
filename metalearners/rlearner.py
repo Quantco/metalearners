@@ -349,7 +349,7 @@ class RLearner(MetaLearner):
             model_kind=PROPENSITY_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
-            is_treatment=False,
+            is_treatment_model=False,
         )
 
         outcome_evaluation = _evaluate_model_kind(
@@ -360,7 +360,7 @@ class RLearner(MetaLearner):
             model_kind=OUTCOME_MODEL,
             is_oos=is_oos,
             oos_method=oos_method,
-            is_treatment=False,
+            is_treatment_model=False,
         )
 
         # TODO: improve this? generalize it to other metalearners?
