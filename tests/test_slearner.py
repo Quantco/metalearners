@@ -10,12 +10,21 @@ from sklearn.linear_model import LinearRegression
 from metalearners.slearner import SLearner, _append_treatment_to_covariates
 
 
-def test_feature_set_doesnt_raise():
-    SLearner(
+def test_feature_set_doesnt_raise(rng):
+    slearner = SLearner(
         nuisance_model_factory=LinearRegression,
         is_classification=False,
         n_variants=2,
-        feature_set="",
+        feature_set=[0],
+    )
+
+    X = rng.standard_normal((100, 2))
+    y = rng.standard_normal(100)
+    w = rng.integers(0, 2, 100)
+    slearner.fit(X, y, w)
+    assert (
+        slearner._nuisance_models["base_model"][0]._overall_estimator.n_features_in_  # type: ignore
+        == 3
     )
 
 
