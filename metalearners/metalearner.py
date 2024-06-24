@@ -1040,12 +1040,10 @@ class MetaLearner(ABC):
             } | {
                 treatment_model: [
                     default_metric(
-                        self.treatment_model_specifications()[treatment_model][
-                            "predict_method"
-                        ](self)
+                        model_specifications["predict_method"](self)
                     )
                 ]
-                for treatment_model in self.treatment_model_specifications()
+                for treatment_model, model_specifications in self.treatment_model_specifications().items()
             }
 
         default_scoring = _default_scoring()
