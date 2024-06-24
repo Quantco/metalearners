@@ -151,7 +151,7 @@ def _evaluate_model_kind(
     for idx, scorer in enumerate(scorers):
         if isinstance(scorer, str):
             scorer_str = scorer
-            scorer_call: Callable = get_scorer(scorer)
+            scorer_callable: Callable = get_scorer(scorer)
         else:
             scorer_str = f"custom_scorer_{idx}"
             scorer_call = scorer
