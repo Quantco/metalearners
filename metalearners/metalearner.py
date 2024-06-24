@@ -150,7 +150,7 @@ def _evaluate_model_kind(
     evaluation_metrics: dict[str, float] = {}
     for idx, scorer in enumerate(scorers):
         if isinstance(scorer, str):
-            scorer_str = scorer
+            scorer_name = scorer
             scorer_callable: Callable = get_scorer(scorer)
         else:
             scorer_str = f"custom_scorer_{idx}"
