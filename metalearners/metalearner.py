@@ -95,8 +95,8 @@ def _parse_fit_params(
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
-    if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
-        return argument
+    if isinstance(argument, dict) and set(argument.keys()) >= set(expected_names):
+        return {key: argument[key] for key in expected_names}
     return {name: argument for name in expected_names}
 
 
@@ -236,7 +236,8 @@ class MetaLearner(ABC):
     * contain a single value, such that the value will be used for all relevant models
       of the respective MetaLearner or
     * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
-      respective value
+      respective value; at least all relevant models need to be present, more are allowed
+      and ignored
 
     The possible values for defining ``feature_set`` (either one single value for all
     the models or the values inside the dictionary specifying for each model) can be:
