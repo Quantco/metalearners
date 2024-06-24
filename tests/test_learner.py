@@ -409,7 +409,10 @@ def new_score_2(y, y_pred):
         (
             "T",
             False,
-            {"variant_outcome_model": [new_score, make_scorer(new_score_2)]},
+            {
+                "variant_outcome_model": [new_score, make_scorer(new_score_2)],
+                "to_ignore": [],
+            },
             {
                 "variant_outcome_model_0_custom_scorer_0",
                 "variant_outcome_model_0_custom_scorer_1",
