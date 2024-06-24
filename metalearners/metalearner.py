@@ -144,7 +144,7 @@ def _evaluate_model_kind(
     scorers: Sequence[str | Callable],
     model_kind: str,
     is_oos: bool,
-    is_treatment: bool,
+    is_treatment_model: bool,
     oos_method: OosMethod = OVERALL,
 ) -> dict[str, float]:
     """Helper function to evaluate all the models of the same model kind."""
