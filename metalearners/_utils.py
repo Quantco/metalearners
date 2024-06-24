@@ -468,7 +468,7 @@ def simplify_output_2d(tensor: np.ndarray) -> np.ndarray:
 # Taken from https://stackoverflow.com/questions/13741998/is-there-a-way-to-let-classes-inherit-the-documentation-of-their-superclass-with
 def copydoc(fromfunc, sep="\n"):
     """
-    Decorator: Copy the docstring of `fromfunc`
+    Decorator: Copy the docstring of ``fromfunc``
     """
 
     def _decorator(func):
