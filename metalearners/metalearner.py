@@ -879,7 +879,7 @@ class MetaLearner(ABC):
           for the possible values.
         * ``Callable`` with signature ``scorer(estimator, X, y_true, **kwargs)``. We recommend
           using `sklearn.metrics.make_scorer <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html>`_
-          to create this callables.
+          to create such a ``Callable``.
 
         If some model name is not present in the keys of ``scoring`` then the default used
         metrics will be ``neg_log_loss`` if it is a classifier and ``neg_root_mean_squared_error``
