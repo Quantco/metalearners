@@ -95,8 +95,8 @@ def _parse_fit_params(
 
 
 def _initialize_model_dict(argument, expected_names: Collection[str]) -> dict:
-    if isinstance(argument, dict) and set(argument.keys()) == set(expected_names):
-        return argument
+    if isinstance(argument, dict) and set(argument.keys()) >= set(expected_names):
+        return {key: argument[key] for key in expected_names}
     return {name: argument for name in expected_names}
 
 
@@ -135,10 +135,10 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
         raise ValueError("Need at least two folds to use synchronization.")
 
 
-def _evaluate_model(
+def _evaluate_model_kind(
     cfes: Sequence[CrossFitEstimator],
-    X: Sequence[Matrix],
-    y: Sequence[Vector],
+    Xs: Sequence[Matrix],
+    ys: Sequence[Vector],
     scorers: Sequence[str | Callable],
     model_kind: str,
     is_oos: bool,
@@ -150,11 +150,11 @@ def _evaluate_model(
     evaluation_metrics: dict[str, float] = {}
     for idx, scorer in enumerate(scorers):
         if isinstance(scorer, str):
-            scorer_str = scorer
-            scorer_call: Callable = get_scorer(scorer)
+            scorer_name = scorer
+            scorer_callable: Callable = get_scorer(scorer)
         else:
-            scorer_str = f"custom_scorer_{idx}"
-            scorer_call = scorer
+            scorer_name = f"custom_scorer_{idx}"
+            scorer_callable = scorer
         for i, cfe in enumerate(cfes):
             if is_treatment:
                 treatment_variant = i + 1
@@ -164,9 +164,9 @@ def _evaluate_model(
                     index_str = ""
                 else:
                     index_str = f"{i}_"
-            name = f"{prefix}{index_str}{scorer_str}"
+            name = f"{prefix}{index_str}{scorer_name}"
             with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
-                evaluation_metrics[name] = scorer_call(modified_cfe, X[i], y[i])
+                evaluation_metrics[name] = scorer_callable(modified_cfe, Xs[i], ys[i])
     return evaluation_metrics
 
 
@@ -236,7 +236,8 @@ class MetaLearner(ABC):
     * contain a single value, such that the value will be used for all relevant models
       of the respective MetaLearner or
     * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
-      respective value
+      respective value; at least all relevant models need to be present, more are allowed
+      and ignored
 
     The possible values for defining ``feature_set`` (either one single value for all
     the models or the values inside the dictionary specifying for each model) can be:
@@ -346,16 +347,6 @@ class MetaLearner(ABC):
             ](self)
             validate_model_and_predict_method(
                 factory, predict_method, name=f"treatment model {model_kind}"
-            )
-
-    @classmethod
-    def _validate_scoring(cls, scoring: Mapping[str, list[str | Callable]]):
-        if not set(scoring.keys()) <= (
-            set(cls.nuisance_model_specifications().keys())
-            | set(cls.treatment_model_specifications().keys())
-        ):
-            raise ValueError(
-                "scoring dict keys need to be a subset of the model names in the MetaLearner"
             )
 
     def _qualified_fit_params(
@@ -873,11 +864,12 @@ class MetaLearner(ABC):
         oos_method: OosMethod = OVERALL,
         scoring: Mapping[str, list[str | Callable]] | None = None,
     ) -> dict[str, float]:
-        r"""Evaluate the models models contained in the MetaLearner.
+        r"""Evaluate the MetaLearner.
 
-        ``scoring`` keys must be a subset of the names of the models contained in the
-        MetaLearner, for information about this names check :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications`
-        and :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
+        The keys in ``scoring`` which are not a name of a model contained in the MetaLearner
+        will be ignored, for information about this names check
+        :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
+        :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
         The values must be a list of:
 
         * ``string`` representing a ``sklearn`` scoring method. Check

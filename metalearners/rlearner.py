@@ -27,7 +27,7 @@ from metalearners.metalearner import (
     TREATMENT,
     TREATMENT_MODEL,
     MetaLearner,
-    _evaluate_model,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -342,12 +342,11 @@ class RLearner(MetaLearner):
         parameter is ignored."""
         if scoring is None:
             scoring = {}
-        self._validate_scoring(scoring=scoring)
 
-        propensity_evaluation = _evaluate_model(
+        propensity_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[PROPENSITY_MODEL],
-            X=[X],
-            y=[w],
+            Xs=[X],
+            ys=[w],
             scorers=scoring.get(PROPENSITY_MODEL, ["neg_log_loss"]),
             model_kind=PROPENSITY_MODEL,
             is_oos=is_oos,
@@ -358,10 +357,10 @@ class RLearner(MetaLearner):
         default_metric = (
             "neg_log_loss" if self.is_classification else "neg_root_mean_squared_error"
         )
-        outcome_evaluation = _evaluate_model(
+        outcome_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[OUTCOME_MODEL],
-            X=[X],
-            y=[y],
+            Xs=[X],
+            ys=[y],
             scorers=scoring.get(OUTCOME_MODEL, [default_metric]),
             model_kind=OUTCOME_MODEL,
             is_oos=is_oos,
