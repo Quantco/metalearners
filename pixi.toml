@@ -52,6 +52,10 @@ pyupgrade = "*"
 docformatter = "*"
 pre-commit-hooks = "*"
 
+[feature.lint.tasks]
+pre-commit-install = "pre-commit install"
+pre-commit-run = "pre-commit run -a"
+
 [feature.py310.dependencies]
 python = "3.10.*"
 [feature.py311.dependencies]
