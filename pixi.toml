@@ -43,11 +43,14 @@ joblib = ">=1.2.0"
 [feature.lint.dependencies]
 pre-commit = "*"
 black = "*"
-flake8 = "*"
-isort = "*"
+ruff = "*"
+prettier = "*"
+insert-license-header = "*"
 taplo = "*"
 typos = "*"
 pyupgrade = "*"
+docformatter = "*"
+pre-commit-hooks = "*"
 
 [feature.py310.dependencies]
 python = "3.10.*"
