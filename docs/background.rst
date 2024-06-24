@@ -358,15 +358,15 @@ It is an extension of the T-Learner and consists of three stages:
         \widetilde{D}_1^i &:= Y^i_1 - \hat{\mu}_0(X^i_1) \\
         \widetilde{D}_0^i &:= \hat{\mu}_1(X^i_0) - Y^i_0
 
-    Then estimate :math:`\tau_1(x) := \mathbb{E}[\widetilde{D}^i_1 | X]` and
-    :math:`\tau_0(x) := \mathbb{E}[\widetilde{D}^i_0 | X]` using the observations in the
+    Then estimate :math:`\tau_1(x) := \mathbb{E}[\widetilde{D}^i_1 | X=x]` and
+    :math:`\tau_0(x) := \mathbb{E}[\widetilde{D}^i_0 | X=x]` using the observations in the
     treatment group and the ones in the control group respectively.
 #.  Define the CATE estimate by a weighted average of the two estimates in stage 2:
 
     .. math::
         \hat{\tau}^X(x) := g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)
 
-    where :math:`g(x) \in [0,1]`. We take :math:`g(x) := \mathbb{E}[W = 1 | X]` to be
+    where :math:`g(x) \in [0,1]`. We take :math:`g(x) := \mathbb{E}[W = 1 | X=x]` to be
     the propensity score.
 
 More than binary treatment
@@ -388,8 +388,8 @@ In the case of multiple discrete treatments the stages are similar to the binary
         \widetilde{D}_k^i &:= Y^i_k - \hat{\mu}_0(X^i_k) \\
         \widetilde{D}_{0,k}^i &:= \hat{\mu}_k(X^i_0) - Y^i_0
 
-    Then :math:`\tau_k(x) := \mathbb{E}[\widetilde{D}^i_k | X]` is estimated using the
-    observations which received treatment :math:`k` and :math:`\tau_{0,k}(x) := \mathbb{E}[\widetilde{D}^i_{0,k} | X]`
+    Then :math:`\tau_k(x) := \mathbb{E}[\widetilde{D}^i_k | X=x]` is estimated using the
+    observations which received treatment :math:`k` and :math:`\tau_{0,k}(x) := \mathbb{E}[\widetilde{D}^i_{0,k} | X=x]`
     using the observations in the control group.
 
 #.  Finally the CATE for each variant is estimated as a weighted average:
@@ -419,9 +419,15 @@ It consists of two stages:
 
     .. math::
         \DeclareMathOperator*{\argmin}{arg\,min}
-        \hat{\tau}^R (x) &:= \argmin_{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
+        \hat{\tau}^R (\cdot) &:= \argmin_{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
         &=\argmin_{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
         &= \argmin_{\tau}\left\{\mathbb{E}\left[{\tilde{W}^i}^2\bigg(\frac{\tilde{Y}^i}{\tilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
+
+    Where
+
+    .. math::
+      \tilde{W}^i &= W^i - \hat{e}(X^i) \\
+      \tilde{Y}^i &= Y^i - \hat{m}(X^i)
 
     And therefore any ML model which supports weighting each observation differently can be used for the final model.
 
@@ -484,7 +490,7 @@ It consists of two stages:
 #.  Estimate the CATE by regressing :math:`\varphi` on :math:`X`:
 
     .. math::
-        \hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i]
+        \hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i=x]
 
 More than binary treatment
 **************************
@@ -508,4 +514,4 @@ In the case of multiple discrete treatments the stages are similar to the binary
     treatment variant, :math:`\forall k \in \{1,\dots, K-1\}`:
 
     .. math::
-        \hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i]
+        \hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i=x]
