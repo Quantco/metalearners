@@ -118,9 +118,6 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     ) -> dict[str, float]:
         safe_scoring = self._scoring(scoring)
 
-        masks = []
-        for tv in range(self.n_variants):
-            masks.append(w == tv)
 
         return _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
