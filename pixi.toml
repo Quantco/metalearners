@@ -57,6 +57,17 @@ mypy = "*"
 pre-commit-install = "pre-commit install"
 pre-commit-run = "pre-commit run -a"
 
+[feature.docs.dependencies]
+make = "*"
+numpydoc = "*"
+sphinx = "*"
+sphinx_rtd_theme = "*"
+sphinxcontrib-apidoc = "*"
+sphinx-autodoc-typehints = "*"
+[feature.docs.tasks]
+docs = "cd docs && make html "
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/build/html $READTHEDOCS_OUTPUT/html"
+
 [feature.py310.dependencies]
 python = "3.10.*"
 [feature.py311.dependencies]
@@ -69,4 +80,5 @@ py310 = ["py310"]
 py311 = ["py311"]
 py312 = ["py312"]
 
+docs = ["docs"]
 lint = { features = ["lint"], no-default-feature = true }
