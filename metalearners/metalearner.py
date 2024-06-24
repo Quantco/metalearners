@@ -873,7 +873,7 @@ class MetaLearner(ABC):
         oos_method: OosMethod = OVERALL,
         scoring: Mapping[str, list[str | Callable]] | None = None,
     ) -> dict[str, float]:
-        r"""Evaluate the the MetaLearner.
+        r"""Evaluate the MetaLearner.
 
         ``scoring`` keys must be a subset of the names of the models contained in the
         MetaLearner, for information about this names check :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications`
