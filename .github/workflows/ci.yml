@@ -25,25 +25,6 @@ jobs:
       - name: pre-commit
         run: pixi run pre-commit-run --color=always --show-diff-on-failure
 
-  mypy-type-checks:
-    name: Mypy Type Checks
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: [py312]
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v4
-      - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          environments: ${{ matrix.env }}
-      - name: Install repository
-        run: |
-          pixi run -e ${{ matrix.env }} postinstall
-      - name: Run mypy
-        run: pixi run mypy .
-
   unit-tests:
     name: Unit Tests - ${{ matrix.os == 'ubuntu-latest' && 'Linux' || 'Windows' }} - Python ${{ matrix.python-version }}
     timeout-minutes: 30
