@@ -42,7 +42,7 @@ repos:
         types: [python]
       - id: mypy
         name: mypy
-        entry: pixi run -e lint mypy
+        entry: pixi run -e default mypy
         language: system
         types: [python]
         args: ["--ignore-missing-imports", "--scripts-are-modules"]
