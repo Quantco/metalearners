@@ -227,8 +227,6 @@ class MetaLearner(ABC):
         """Return the specifications of all second-stage models."""
         ...
 
-    def _validate_params(self): ...
-
     @classmethod
     @abstractmethod
     def _supports_multi_treatment(cls) -> bool: ...
@@ -496,7 +494,6 @@ class MetaLearner(ABC):
         }
 
         self._validate_models()
-        self._validate_params()
 
     def _nuisance_tensors(self, n_obs: int) -> dict[str, list[np.ndarray]]:
         def dimension(n_obs, model_kind, model_ord, predict_method):
