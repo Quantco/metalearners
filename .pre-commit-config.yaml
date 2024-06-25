@@ -18,7 +18,7 @@ repos:
         language: system
         args:
           - --license-base64
-          - IyBDb3B5cmlnaHQgKGMpIFF1YW50Q28gMjAyNC0yMDI0CiMgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEJTRC0zLUNsYXVzZQo=
+          - Q29weXJpZ2h0IChjKSBRdWFudENvIDIwMjQtMjAyNApTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogQlNELTMtQ2xhdXNl
           - --dynamic-years
           - --comment-style
           - "#"
