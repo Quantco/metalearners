@@ -36,9 +36,9 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
       - name: Run mypy
         run: |
-          jupyter nbconvert --to script docs/examples/*.ipynb
+          pixi run jupyter nbconvert --to script docs/examples/*.ipynb
           for file in docs/examples/*.txt; do mv -- "$file" "${file%.txt}.py"; done
-          mypy docs/examples/*.py
+          pixi run mypy docs/examples/*.py
 
   unit-tests:
     name: Unit Tests
