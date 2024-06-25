@@ -8,7 +8,7 @@ The ``metalearners`` repository can be cloned as follows
   git clone https://github.com/Quantco/metalearners.git
 
 The dependencies are managed via
-`pixi <https://pixi.sh/latest/>`_. Please make sure to install `pixi` on
+`pixi <https://pixi.sh/latest/>`_. Please make sure to install ``pixi`` on
 your system. Once pixi is installed, you can install and run the
 pre-commit hooks as follows:
 
