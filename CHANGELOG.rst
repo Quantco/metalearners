@@ -7,6 +7,15 @@
 Changelog
 =========
 
+0.6.0 (2024-06-**)
+------------------
+
+* Implemented :class:`metalearners.metalearner_grid_search_cv.MetaLearnerGridSearchCV`.
+
+* Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
+  implemented the abstract method for the :class:`metalearners.XLearner` and
+  :class:`metalearners.DRLearner`.
+
 0.5.0 (2024-06-18)
 ------------------
 
@@ -29,12 +38,6 @@ Changelog
 
 0.4.0 (2024-06-18)
 ------------------
-
-* Implemented :class:`metalearners.metalearner_grid_search_cv.MetaLearnerGridSearchCV`.
-
-* Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
-  implemented the abstract method for the :class:`metalearners.XLearner` and
-  :class:`metalearners.DRLearner`.
 
 * Implemented :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.clone`.
 

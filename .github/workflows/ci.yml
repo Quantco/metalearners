@@ -25,6 +25,21 @@ jobs:
       - name: pre-commit
         run: pixi run pre-commit-run --color=always --show-diff-on-failure
 
+  mypy-example-nbs:
+    name: Check notebooks mypy
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+      - name: Run mypy
+        run: |
+          pixi run jupyter nbconvert --to script docs/examples/*.ipynb
+          for file in docs/examples/*.txt; do mv -- "$file" "${file%.txt}.py"; done
+          pixi run mypy docs/examples/*.py
+
   unit-tests:
     name: Unit Tests
     timeout-minutes: 30
@@ -41,17 +56,12 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           environments: ${{ matrix.env }}
-      - name: Install repository
+      - name: Install repository and generate code coverage report
         run: |
           pixi run -e ${{ matrix.env }} postinstall
           pixi run -e ${{ matrix.env }} coverage
-      - name: Generate code coverage report
-        if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v3.1.3
-        with:
-          file: ./coverage.xml
       - name: Upload coverage reports to Codecov
-        if: matrix.env == 'py312'
+        if: matrix.env == 'py312' && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v3.1.3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
