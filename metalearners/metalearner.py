@@ -746,7 +746,7 @@ class MetaLearner(ABC):
         pattern, propensity models are considered a nuisance model.
 
         ``synchronize_cross_fitting`` indicates whether the learning of different base models should use exactly
-        the same data splits where possible. Note that if there are several to be synchronize models which are
+        the same data splits where possible. Note that if there are several models to be synchronized which are
         classifiers, these cannot be split via stratification.
         """
         ...
