@@ -10,6 +10,7 @@ Welcome to metalearners's documentation!
    Glossary <glossary.rst>
    What about parallelism? <parallelism.rst>
    Examples <examples/index.rst>
+   Development <development.rst>
    FAQ <faq.rst>
    API Reference <api/modules>
    Change Log <changelog.rst>
