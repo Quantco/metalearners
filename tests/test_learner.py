@@ -372,6 +372,10 @@ def test_learner_evaluate(
         assert (
             {f"r_loss_{i}_vs_0" for i in range(1, n_variants)}
             | {"propensity_model_neg_log_loss"}
+            | {
+                f"treatment_model_{i}_vs_0_neg_root_mean_squared_error"
+                for i in range(1, n_variants)
+            }
         ) <= set(evaluation.keys())
     elif metalearner == "X":
         assert "propensity_model_neg_log_loss" in evaluation
@@ -446,11 +450,14 @@ def new_score_2(y, y_pred):
             {
                 "outcome_model": [make_scorer(new_score_2)],
                 "propensity_model": [],
+                "treatment_model": ["neg_mean_absolute_error"],
             },
             {
                 "outcome_model_custom_scorer_0",
                 "r_loss_1_vs_0",
                 "r_loss_2_vs_0",
+                "treatment_model_1_vs_0_neg_mean_absolute_error",
+                "treatment_model_2_vs_0_neg_mean_absolute_error",
             },
         ),
         (

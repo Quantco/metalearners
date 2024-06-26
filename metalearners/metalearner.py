@@ -146,6 +146,7 @@ def _evaluate_model_kind(
     is_oos: bool,
     is_treatment_model: bool,
     oos_method: OosMethod = OVERALL,
+    sample_weights: Sequence[Vector] | None = None,
 ) -> dict[str, float]:
     """Helper function to evaluate all the models of the same model kind."""
     prefix = f"{model_kind}_"
@@ -168,7 +169,14 @@ def _evaluate_model_kind(
                     index_str = f"{i}_"
             name = f"{prefix}{index_str}{scorer_name}"
             with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
-                evaluation_metrics[name] = scorer_callable(modified_cfe, Xs[i], ys[i])
+                if sample_weights:
+                    evaluation_metrics[name] = scorer_callable(
+                        modified_cfe, Xs[i], ys[i], sample_weight=sample_weights[i]
+                    )
+                else:
+                    evaluation_metrics[name] = scorer_callable(
+                        modified_cfe, Xs[i], ys[i]
+                    )
     return evaluation_metrics
 
 
