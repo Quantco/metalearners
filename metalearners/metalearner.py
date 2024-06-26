@@ -266,8 +266,6 @@ class MetaLearner(ABC):
         """Return the specifications of all second-stage models."""
         ...
 
-    def _validate_params(self, **kwargs): ...
-
     @classmethod
     @abstractmethod
     def _supports_multi_treatment(cls) -> bool: ...
@@ -391,20 +389,6 @@ class MetaLearner(ABC):
         n_folds: int | dict[str, int] = 10,
         random_state: int | None = None,
     ):
-        self._validate_params(
-            nuisance_model_factory=nuisance_model_factory,
-            treatment_model_factory=treatment_model_factory,
-            propensity_model_factory=propensity_model_factory,
-            is_classification=is_classification,
-            n_variants=n_variants,
-            nuisance_model_params=nuisance_model_params,
-            treatment_model_params=treatment_model_params,
-            propensity_model_params=propensity_model_params,
-            feature_set=feature_set,
-            n_folds=n_folds,
-            random_state=random_state,
-        )
-
         nuisance_model_specifications = self.nuisance_model_specifications()
         treatment_model_specifications = self.treatment_model_specifications()
 

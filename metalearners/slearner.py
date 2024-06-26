@@ -7,13 +7,22 @@ import numpy as np
 import pandas as pd
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import (
+    Features,
+    Matrix,
+    ModelFactory,
+    OosMethod,
+    Params,
+    Scoring,
+    Vector,
+    _ScikitModel,
+)
 from metalearners._utils import (
     convert_treatment,
     get_one,
     supports_categoricals,
 )
-from metalearners.cross_fit_estimator import OVERALL
+from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
 from metalearners.metalearner import (
     NUISANCE,
     MetaLearner,
@@ -92,7 +101,22 @@ class SLearner(MetaLearner):
     def _supports_multi_class(cls) -> bool:
         return True
 
-    def _validate_params(self, feature_set, **kwargs):
+    def __init__(
+        self,
+        is_classification: bool,
+        n_variants: int,
+        nuisance_model_factory: ModelFactory | None = None,
+        treatment_model_factory: ModelFactory | None = None,
+        propensity_model_factory: type[_ScikitModel] | None = None,
+        nuisance_model_params: Params | dict[str, Params] | None = None,
+        treatment_model_params: Params | dict[str, Params] | None = None,
+        propensity_model_params: Params | None = None,
+        fitted_nuisance_models: dict[str, list[CrossFitEstimator]] | None = None,
+        fitted_propensity_model: CrossFitEstimator | None = None,
+        feature_set: Features | dict[str, Features] | None = None,
+        n_folds: int | dict[str, int] = 10,
+        random_state: int | None = None,
+    ):
         if feature_set is not None:
             # For SLearner it does not make sense to allow feature set as we only have one model
             # and having it would bring problems when using fit_nuisance and predict_nuisance
@@ -101,6 +125,21 @@ class SLearner(MetaLearner):
                 "Base-model specific feature_sets were provided to S-Learner. "
                 "These will be ignored and all available features will be used instead."
             )
+        super().__init__(
+            is_classification=is_classification,
+            n_variants=n_variants,
+            nuisance_model_factory=nuisance_model_factory,
+            treatment_model_factory=treatment_model_factory,
+            propensity_model_factory=propensity_model_factory,
+            nuisance_model_params=nuisance_model_params,
+            treatment_model_params=treatment_model_params,
+            propensity_model_params=propensity_model_params,
+            fitted_nuisance_models=fitted_nuisance_models,
+            fitted_propensity_model=fitted_propensity_model,
+            feature_set=None,
+            n_folds=n_folds,
+            random_state=random_state,
+        )
 
     def fit(
         self,
