@@ -230,6 +230,7 @@ class RLearner(MetaLearner):
                 treatment_variant=treatment_variant,
                 mask=mask,
                 epsilon=epsilon,
+                is_oos=False,
             )
 
             X_filtered = index_matrix(X, mask)
@@ -337,8 +338,9 @@ class RLearner(MetaLearner):
         scoring: Scoring | None = None,
     ) -> dict[str, float]:
         """In the RLearner case, the ``"treatment_model"`` is always evaluated with the
-        :func:`~metalearners.rlearner.r_loss` and the ``scoring["treatment_model"]``
-        parameter is ignored."""
+        :func:`~metalearners.rlearner.r_loss` besides the scorers in
+        ``scoring["treatment_model"]``, which should support passing the
+        ``sample_weight`` keyword argument."""
         safe_scoring = self._scoring(scoring)
 
         propensity_evaluation = _evaluate_model_kind(
@@ -382,7 +384,39 @@ class RLearner(MetaLearner):
         if self.is_classification:
             y_hat = y_hat[:, 1]
 
-        treatment_evaluation = {}
+        pseudo_outcome: list[np.ndarray] = []
+        sample_weights: list[np.ndarray] = []
+        masks: list[Vector] = []
+        is_control = w == 0
+        for treatment_variant in range(1, self.n_variants):
+            is_treatment = w == treatment_variant
+            mask = is_treatment | is_control
+            tv_pseudo_outcome, tv_sample_weights = self._pseudo_outcome_and_weights(
+                X=X,
+                y=y,
+                w=w,
+                treatment_variant=treatment_variant,
+                is_oos=is_oos,
+                oos_method=oos_method,
+                mask=mask,
+            )
+            pseudo_outcome.append(tv_pseudo_outcome)
+            sample_weights.append(tv_sample_weights)
+            masks.append(mask)
+
+        treatment_evaluation = _evaluate_model_kind(
+            self._treatment_models[TREATMENT_MODEL],
+            Xs=[X[masks[tv - 1]] for tv in range(1, self.n_variants)],
+            ys=pseudo_outcome,
+            scorers=safe_scoring[TREATMENT_MODEL],
+            model_kind=TREATMENT_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=True,
+            sample_weights=sample_weights,
+        )
+
+        rloss_evaluation = {}
         tau_hat = self.predict(X=X, is_oos=is_oos, oos_method=oos_method)
         is_control = w == 0
         for treatment_variant in range(1, self.n_variants):
@@ -397,15 +431,19 @@ class RLearner(MetaLearner):
                 if self.is_classification
                 else tau_hat[:, treatment_variant - 1, 0]
             )
-            treatment_evaluation[f"r_loss_{treatment_variant}_vs_0"] = r_loss(
+            rloss_evaluation[f"r_loss_{treatment_variant}_vs_0"] = r_loss(
                 cate_estimates=cate_estimates[mask],
                 outcome_estimates=y_hat[mask],
                 propensity_scores=propensity_estimates[mask],
                 outcomes=y[mask],
                 treatments=w[mask] == treatment_variant,
             )
-
-        return propensity_evaluation | outcome_evaluation | treatment_evaluation
+        return (
+            propensity_evaluation
+            | outcome_evaluation
+            | rloss_evaluation
+            | treatment_evaluation
+        )
 
     def _pseudo_outcome_and_weights(
         self,
@@ -413,14 +451,12 @@ class RLearner(MetaLearner):
         y: Vector,
         w: Vector,
         treatment_variant: int,
+        is_oos: bool,
+        oos_method: OosMethod = OVERALL,
         mask: Vector | None = None,
         epsilon: float = _EPSILON,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the R-Learner pseudo outcome and corresponding weights.
-
-        Importantly, this method assumes to be applied on in-sample data.
-        In other words, ``is_oos`` will always be set to ``False`` when calling
-        ``predict_nuisance``.
 
         If ``mask`` is provided, the retuned pseudo outcomes and weights are only
         with respect the observations that the mask selects.
@@ -437,12 +473,17 @@ class RLearner(MetaLearner):
         # be able to match original observations with their corresponding folds.
         y_estimates = self.predict_nuisance(
             X=X,
-            is_oos=False,
+            is_oos=is_oos,
             model_kind=OUTCOME_MODEL,
             model_ord=0,
+            oos_method=oos_method,
         )[mask]
         w_estimates = self.predict_nuisance(
-            X=X, is_oos=False, model_kind=PROPENSITY_MODEL, model_ord=0
+            X=X,
+            is_oos=is_oos,
+            model_kind=PROPENSITY_MODEL,
+            model_ord=0,
+            oos_method=oos_method,
         )[mask]
         w_estimates_binarized = w_estimates[:, treatment_variant] / (
             w_estimates[:, 0] + w_estimates[:, treatment_variant]
