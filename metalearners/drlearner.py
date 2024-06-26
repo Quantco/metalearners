@@ -1,11 +1,12 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
     clip_element_absolute_value_to_epsilon,
     get_one,
@@ -23,6 +24,7 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -148,6 +150,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 w=w,
                 y=y,
                 treatment_variant=treatment_variant,
+                is_oos=False,
             )
 
             treatment_jobs.append(
@@ -205,10 +208,56 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        raise NotImplementedError(
-            "This feature is not yet implemented for the DR-Learner."
+        scoring: Scoring | None = None,
+    ) -> dict[str, float]:
+        safe_scoring = self._scoring(scoring)
+
+        variant_outcome_evaluation = _evaluate_model_kind(
+            cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
+            Xs=[X[w == tv] for tv in range(self.n_variants)],
+            ys=[y[w == tv] for tv in range(self.n_variants)],
+            scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
+            model_kind=VARIANT_OUTCOME_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
         )
+
+        propensity_evaluation = _evaluate_model_kind(
+            cfes=self._nuisance_models[PROPENSITY_MODEL],
+            Xs=[X],
+            ys=[w],
+            scorers=safe_scoring[PROPENSITY_MODEL],
+            model_kind=PROPENSITY_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
+        )
+
+        pseudo_outcome: list[np.ndarray] = []
+        for treatment_variant in range(1, self.n_variants):
+            tv_pseudo_outcome = self._pseudo_outcome(
+                X=X,
+                y=y,
+                w=w,
+                treatment_variant=treatment_variant,
+                is_oos=is_oos,
+                oos_method=oos_method,
+            )
+            pseudo_outcome.append(tv_pseudo_outcome)
+
+        treatment_evaluation = _evaluate_model_kind(
+            self._treatment_models[TREATMENT_MODEL],
+            Xs=[X for _ in range(1, self.n_variants)],
+            ys=pseudo_outcome,
+            scorers=safe_scoring[TREATMENT_MODEL],
+            model_kind=TREATMENT_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=True,
+        )
+
+        return variant_outcome_evaluation | propensity_evaluation | treatment_evaluation
 
     def _pseudo_outcome(
         self,
@@ -216,26 +265,25 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         y: Vector,
         w: Vector,
         treatment_variant: int,
+        is_oos: bool,
+        oos_method: OosMethod = OVERALL,
         epsilon: float = _EPSILON,
     ) -> np.ndarray:
-        """Compute the DR-Learner pseudo outcome.
-
-        Importantly, this method assumes to be applied on in-sample data.
-        In other words, ``is_oos`` will always be set to ``False`` when calling
-        ``predict_nuisance``.
-        """
+        """Compute the DR-Learner pseudo outcome."""
         validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
 
         conditional_average_outcome_estimates = (
             self.predict_conditional_average_outcomes(
                 X=X,
-                is_oos=False,
+                is_oos=is_oos,
+                oos_method=oos_method,
             )
         )
 
         propensity_estimates = self.predict_nuisance(
             X=X,
-            is_oos=False,
+            is_oos=is_oos,
+            oos_method=oos_method,
             model_kind=PROPENSITY_MODEL,
             model_ord=0,
         )

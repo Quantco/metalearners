@@ -464,3 +464,26 @@ def simplify_output_2d(tensor: np.ndarray) -> np.ndarray:
             "This function requires a regression or a classification with binary outcome "
             "task."
         )
+
+
+# Taken from https://stackoverflow.com/questions/13741998/is-there-a-way-to-let-classes-inherit-the-documentation-of-their-superclass-with
+def copydoc(fromfunc, sep="\n"):
+    """
+    Decorator: Copy the docstring of ``fromfunc``
+    """
+
+    def _decorator(func):
+        sourcedoc = fromfunc.__doc__
+        if func.__doc__ is None:
+            func.__doc__ = sourcedoc
+        else:
+            func.__doc__ = sep.join([sourcedoc, func.__doc__])
+        return func
+
+    return _decorator
+
+
+def default_metric(predict_method: PredictMethod) -> str:
+    if predict_method == _PREDICT_PROBA:
+        return "neg_log_loss"
+    return "neg_root_mean_squared_error"

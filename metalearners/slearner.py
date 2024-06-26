@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
 from metalearners._typing import (
@@ -14,6 +13,7 @@ from metalearners._typing import (
     ModelFactory,
     OosMethod,
     Params,
+    Scoring,
     Vector,
     _ScikitModel,
 )
@@ -23,7 +23,12 @@ from metalearners._utils import (
     supports_categoricals,
 )
 from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
-from metalearners.metalearner import NUISANCE, MetaLearner, _ModelSpecifications
+from metalearners.metalearner import (
+    NUISANCE,
+    MetaLearner,
+    _evaluate_model_kind,
+    _ModelSpecifications,
+)
 
 _BASE_MODEL = "base_model"
 
@@ -191,17 +196,23 @@ class SLearner(MetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        # TODO: Parameterize evaluation approaches.
+        scoring: Scoring | None = None,
+    ) -> dict[str, float]:
+        safe_scoring = self._scoring(scoring)
+
         X_with_w = _append_treatment_to_covariates(
             X, w, self._supports_categoricals, self.n_variants
         )
-        y_pred = self.predict_nuisance(
-            X=X_with_w, model_kind=_BASE_MODEL, model_ord=0, is_oos=is_oos
+        return _evaluate_model_kind(
+            cfes=self._nuisance_models[_BASE_MODEL],
+            Xs=[X_with_w],
+            ys=[y],
+            scorers=safe_scoring[_BASE_MODEL],
+            model_kind=_BASE_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
         )
-        if self.is_classification:
-            return {"cross_entropy": log_loss(y, y_pred)}
-        return {"rmse": root_mean_squared_error(y, y_pred)}
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL

@@ -3,10 +3,9 @@
 
 import numpy as np
 from joblib import Parallel, delayed
-from sklearn.metrics import log_loss, root_mean_squared_error
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import index_matrix
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -14,6 +13,7 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -113,21 +113,17 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        # TODO: Parametrize evaluation approaches.
-        conditional_average_outcomes = self.predict_conditional_average_outcomes(
-            X=X, is_oos=is_oos, oos_method=oos_method
+        scoring: Scoring | None = None,
+    ) -> dict[str, float]:
+        safe_scoring = self._scoring(scoring)
+
+        return _evaluate_model_kind(
+            cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
+            Xs=[X[w == tv] for tv in range(self.n_variants)],
+            ys=[y[w == tv] for tv in range(self.n_variants)],
+            scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
+            model_kind=VARIANT_OUTCOME_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
         )
-        evaluation_metrics = {}
-        for treatment_variant in range(self.n_variants):
-            prefix = f"variant_{treatment_variant}"
-            variant_outcomes = conditional_average_outcomes[:, treatment_variant]
-            if self.is_classification:
-                evaluation_metrics[f"{prefix}_cross_entropy"] = log_loss(
-                    y[w == treatment_variant], variant_outcomes[w == treatment_variant]
-                )
-            else:
-                evaluation_metrics[f"{prefix}_rmse"] = root_mean_squared_error(
-                    y[w == treatment_variant], variant_outcomes[w == treatment_variant]
-                )
-        return evaluation_metrics

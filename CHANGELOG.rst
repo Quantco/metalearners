@@ -7,6 +7,13 @@
 Changelog
 =========
 
+0.6.0 (2024-06-**)
+------------------
+
+* Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
+  implemented the abstract method for the :class:`metalearners.XLearner` and
+  :class:`metalearners.DRLearner`.
+
 0.5.0 (2024-06-18)
 ------------------
 
