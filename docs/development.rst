@@ -30,7 +30,8 @@ You can build the documentation locally by running
 
 .. code-block:: console
 
-  pixi run docs
+  pixi run -e docs postinstall
+  pixi run -e docs docs
 
 You can then inspect the locally built docs by opening ``docs/_build/index.html``.
 
