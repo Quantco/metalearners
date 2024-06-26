@@ -234,9 +234,10 @@ def convert_treatment(treatment: Vector) -> np.ndarray:
         new_treatment = treatment.to_numpy()
     if new_treatment.dtype == bool:
         return new_treatment.astype(int)
-    elif new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
+    if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
         return new_treatment.astype(int)
-    elif new_treatment.dtype != int:
+
+    if not pd.api.types.is_integer_dtype(new_treatment):
         raise TypeError(
             "Treatment must be boolean, integer or float with integer values."
         )
