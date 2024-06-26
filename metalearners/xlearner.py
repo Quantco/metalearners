@@ -1,11 +1,12 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
     get_one,
     get_predict,
@@ -21,6 +22,7 @@ from metalearners.metalearner import (
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     _ConditionalAverageOutcomeMetaLearner,
+    _evaluate_model_kind,
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
@@ -285,9 +287,68 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-    ) -> dict[str, float | int]:
-        raise NotImplementedError(
-            "This feature is not yet implemented for the X-Learner."
+        scoring: Scoring | None = None,
+    ) -> dict[str, float]:
+        safe_scoring = self._scoring(scoring)
+
+        variant_outcome_evaluation = _evaluate_model_kind(
+            cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
+            Xs=[X[w == tv] for tv in range(self.n_variants)],
+            ys=[y[w == tv] for tv in range(self.n_variants)],
+            scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
+            model_kind=VARIANT_OUTCOME_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
+        )
+
+        propensity_evaluation = _evaluate_model_kind(
+            cfes=self._nuisance_models[PROPENSITY_MODEL],
+            Xs=[X],
+            ys=[w],
+            scorers=safe_scoring[PROPENSITY_MODEL],
+            model_kind=PROPENSITY_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=False,
+        )
+
+        imputed_te_control: list[np.ndarray] = []
+        imputed_te_treatment: list[np.ndarray] = []
+        for treatment_variant in range(1, self.n_variants):
+            tv_imputed_te_control, tv_imputed_te_treatment = self._pseudo_outcome(
+                X, y, w, treatment_variant
+            )
+            imputed_te_control.append(tv_imputed_te_control)
+            imputed_te_treatment.append(tv_imputed_te_treatment)
+
+        te_treatment_evaluation = _evaluate_model_kind(
+            self._treatment_models[TREATMENT_EFFECT_MODEL],
+            Xs=[X[w == tv] for tv in range(1, self.n_variants)],
+            ys=imputed_te_treatment,
+            scorers=safe_scoring[TREATMENT_EFFECT_MODEL],
+            model_kind=TREATMENT_EFFECT_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=True,
+        )
+
+        te_control_evaluation = _evaluate_model_kind(
+            self._treatment_models[CONTROL_EFFECT_MODEL],
+            Xs=[X[w == 0] for _ in range(1, self.n_variants)],
+            ys=imputed_te_control,
+            scorers=safe_scoring[CONTROL_EFFECT_MODEL],
+            model_kind=CONTROL_EFFECT_MODEL,
+            is_oos=is_oos,
+            oos_method=oos_method,
+            is_treatment_model=True,
+        )
+
+        return (
+            variant_outcome_evaluation
+            | propensity_evaluation
+            | te_treatment_evaluation
+            | te_control_evaluation
         )
 
     def _pseudo_outcome(

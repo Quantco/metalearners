@@ -362,12 +362,17 @@ class _PredictContext:
         self.original_predict_proba = model.predict_proba
 
     def __enter__(self):
-        self.model.predict = partial(  # type: ignore
+        new_predict = partial(
             self.model.predict, is_oos=self.is_oos, oos_method=self.oos_method
         )
-        self.model.predict_proba = partial(  # type: ignore
+        new_predict.__name__ = "predict"  # type: ignore
+        self.model.predict = new_predict  # type: ignore
+
+        new_predict_proba = partial(
             self.model.predict_proba, is_oos=self.is_oos, oos_method=self.oos_method
         )
+        new_predict_proba.__name__ = "predict_proba"  # type: ignore
+        self.model.predict_proba = new_predict_proba  # type: ignore
         return self.model
 
     def __exit__(self, *args):
