@@ -7,6 +7,14 @@
 Changelog
 =========
 
+0.6.0 (2024-06-xx)
+------------------
+
+**Other changes**
+
+* Increase lower bound on ``scikit-learn`` from 1.3 to 1.4.
+
+
 0.5.0 (2024-06-18)
 ------------------
 
