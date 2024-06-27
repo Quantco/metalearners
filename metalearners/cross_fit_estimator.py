@@ -220,7 +220,7 @@ class CrossFitEstimator:
         )
         for i, estimator in enumerate(self._estimators):
             predictions[:, :, i] = np.reshape(
-                getattr(estimator, method)(X), (-1, n_outputs)
+                getattr(estimator, method)(X), (len(X), n_outputs)
             )
         if n_outputs == 1:
             return predictions[:, 0, :]
@@ -255,7 +255,8 @@ class CrossFitEstimator:
         )
         for estimator, indices in zip(self._estimators, self._test_indices):
             fold_predictions = np.reshape(
-                getattr(estimator, method)(index_matrix(X, indices)), (-1, n_outputs, 1)
+                getattr(estimator, method)(index_matrix(X, indices)),
+                (len(indices), n_outputs, 1),
             )
             predictions[indices] = fold_predictions
         if n_outputs == 1:
