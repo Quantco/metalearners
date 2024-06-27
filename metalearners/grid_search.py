@@ -153,10 +153,9 @@ class MetaLearnerGridSearchCV:
     For how to define ``scoring`` check :meth:`~metalearners.metalearner.MetaLearner.evaluate`.
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
-
     """
-    
-# TODO: Add a reference to a docs example once it is written.
+
+    # TODO: Add a reference to a docs example once it is written.
 
     def __init__(
         self,

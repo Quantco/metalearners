@@ -45,6 +45,7 @@ tests:
         - metalearners.rlearner
         - metalearners.drlearner
         - metalearners.explainer
+        - metalearners.grid_search
       pip_check: true
 
 about:

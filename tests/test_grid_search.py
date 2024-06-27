@@ -7,7 +7,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from metalearners.drlearner import DRLearner
-from metalearners.metalearner_grid_search_cv import MetaLearnerGridSearchCV
+from metalearners.grid_search import MetaLearnerGridSearchCV
 from metalearners.rlearner import RLearner
 from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
