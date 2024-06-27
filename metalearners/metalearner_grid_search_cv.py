@@ -154,8 +154,9 @@ class MetaLearnerGridSearchCV:
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
 
-    Check TODO to see an example of the usage of this class.
     """
+    
+# TODO: Add a reference to a docs example once it is written.
 
     def __init__(
         self,
