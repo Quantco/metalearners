@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from functools import reduce
 from operator import add
@@ -11,7 +11,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import KFold, ParameterGrid
 
-from metalearners._typing import Matrix, OosMethod, Vector, _ScikitModel
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import index_matrix, index_vector
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner
@@ -27,7 +27,7 @@ class _FitAndScoreJob:
     y_test: Vector
     w_test: Vector
     oos_method: OosMethod
-    scoring: Mapping[str, list[str | Callable]] | None
+    scoring: Scoring | None
     kwargs: dict
     cv_index: int
 
@@ -163,7 +163,7 @@ class MetaLearnerGridSearchCV:
         metalearner_params: Mapping,
         base_learner_grid: Mapping[str, Sequence[type[_ScikitModel]]],
         param_grid: Mapping[str, Mapping[str, Sequence]],
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
         cv: int = 5,
         n_jobs: int | None = None,
         random_state: int | None = None,
