@@ -121,7 +121,7 @@ class MetaLearnerGridSearchCV:
     Importantly, ``random_state`` must be passed through the ``random_state`` parameter
     and not through ``metalearner_params``.
 
-    ``base_learner_grid`` keys should be the names of all the models contained in the MetaLearner
+    ``base_learner_grid`` keys should be the names of all the base models contained in the :class:`~metalearners.metalearners.MetaLearner`
     defined by ``metalearner_factory``, for information about this names check
     :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
     :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`. The
