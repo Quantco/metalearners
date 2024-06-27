@@ -75,7 +75,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> _CVResult:
     )
 
 
-def _format_results(results: Sequence[_CVResult]):
+def _format_results(results: Sequence[_CVResult]) -> pd.DataFrame:
     rows = []
     for result in results:
         row: dict[str, str | int | float] = {}
