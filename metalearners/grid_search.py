@@ -4,8 +4,7 @@
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from functools import reduce
-from operator import add
+from typing import Any
 
 import pandas as pd
 from joblib import Parallel, delayed
@@ -141,10 +140,14 @@ class MetaLearnerGridSearchCV:
         }
 
         param_grid = {
-            "LGBMRegressor": {"n_estimators": [1, 2], "verbose": [-1]},
-            "LGBMClassifier": {
-                "n_estimators": [1, 2, 3],
-                "verbose": [-1],
+            "propensity_model": {
+                "LGBMClassifier": {"n_estimators": [1, 2, 3], "verbose": [-1]}
+            },
+            "variant_outcome_model": {
+                "LGBMRegressor": {"n_estimators": [1, 2], "verbose": [-1]},
+            },
+            "treatment_model": {
+                "LGBMRegressor": {"n_estimators": [5, 10], "verbose": [-1]},
             },
         }
 
@@ -160,9 +163,9 @@ class MetaLearnerGridSearchCV:
     def __init__(
         self,
         metalearner_factory: type[MetaLearner],
-        metalearner_params: Mapping,
+        metalearner_params: Mapping[str, Any],
         base_learner_grid: Mapping[str, Sequence[type[_ScikitModel]]],
-        param_grid: Mapping[str, Mapping[str, Sequence]],
+        param_grid: Mapping[str, Mapping[str, Mapping[str, Sequence]]],
         scoring: Scoring | None = None,
         cv: int = 5,
         n_jobs: int | None = None,
@@ -185,21 +188,10 @@ class MetaLearnerGridSearchCV:
         ) | set(metalearner_factory.treatment_model_specifications().keys())
 
         if set(base_learner_grid.keys()) != expected_base_models:
-            raise ValueError
-
-        all_base_learners = set(reduce(add, base_learner_grid.values()))
-        param_grid_empty: Mapping[str, Mapping[str, Sequence]] = {
-            k.__name__: {} for k in all_base_learners if k.__name__ not in param_grid
-        }
+            raise ValueError("base_learner_grid keys don't match the model names.")
         self.base_learner_grid = list(ParameterGrid(base_learner_grid))
 
-        # Mapping does not have union "|" operator, see
-        # https://peps.python.org/pep-0584/#what-about-mapping-and-mutablemapping
-        full_param_grid = {**param_grid_empty, **param_grid}
-        self.base_learner_param_grids = {
-            base_learner: list(ParameterGrid(base_learner_param_grid))
-            for base_learner, base_learner_param_grid in full_param_grid.items()
-        }
+        self.param_grid = param_grid
 
     def fit(
         self,
@@ -245,14 +237,17 @@ class MetaLearnerGridSearchCV:
                     for model_kind in treatment_models
                 }
                 propensity_model_factory = base_learners.get(PROPENSITY_MODEL, None)
-
-                param_grid = {
-                    model_kind: self.base_learner_param_grids[
-                        base_learners[model_kind].__name__
-                    ]
+                base_learner_param_grids = {
+                    model_kind: list(
+                        ParameterGrid(
+                            self.param_grid.get(model_kind, {}).get(
+                                base_learners[model_kind].__name__, {}
+                            )
+                        )
+                    )
                     for model_kind in all_models
                 }
-                for params in ParameterGrid(param_grid):
+                for params in ParameterGrid(base_learner_param_grids):
                     nuisance_model_params = {
                         model_kind: params[model_kind]
                         for model_kind in nuisance_models_no_propensity
