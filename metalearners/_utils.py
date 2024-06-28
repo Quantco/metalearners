@@ -32,6 +32,15 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     return matrix[rows, :]
 
 
+def index_vector(vector: Vector, rows: Vector) -> Vector:
+    """Subselect certain rows from a vector."""
+    if isinstance(rows, pd.Series):
+        rows = rows.to_numpy()
+    if isinstance(vector, pd.Series):
+        return vector.iloc[rows]
+    return vector[rows]
+
+
 def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:
     if len(args) < 2:
         return True
