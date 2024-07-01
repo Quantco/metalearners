@@ -1,12 +1,19 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector
-from metalearners._utils import index_matrix
+from metalearners._utils import (
+    check_onnx_installed,
+    check_spox_installed,
+    index_matrix,
+    infer_dtype_and_shape_onnx,
+)
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
     NUISANCE,
@@ -127,3 +134,56 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             oos_method=oos_method,
             is_treatment_model=False,
         )
+
+    # TODO: Fix typing without importing onnx
+    def build_onnx(self, models: Mapping[str, Sequence]):
+        check_onnx_installed()
+        check_spox_installed()
+        import spox.opset.ai.onnx.v21 as op
+        from onnx.checker import check_model
+        from spox import Tensor, argument, build, inline
+
+        self._validate_onnx_models(models)
+
+        input_dtype, input_shape = infer_dtype_and_shape_onnx(
+            models[VARIANT_OUTCOME_MODEL][0].graph.input[0]
+        )
+
+        if not self.is_classification:
+            output_index = 0
+            output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
+        else:
+            output_name = "probabilities"
+            for i, output in enumerate(models[VARIANT_OUTCOME_MODEL][0].graph.output):
+                if output.name == "probabilities":
+                    output_index = i
+
+        output_dtype, output_shape = infer_dtype_and_shape_onnx(
+            models[VARIANT_OUTCOME_MODEL][0].graph.output[output_index]
+        )
+
+        input_tensor = argument(Tensor(input_dtype, input_shape))
+
+        a = argument(Tensor(output_dtype, output_shape))
+        b = argument(Tensor(output_dtype, output_shape))
+        subtraction = op.sub(a, b)
+        sub_model = build({"a": a, "b": b}, {"subtraction": subtraction})
+
+        output_0 = inline(models[VARIANT_OUTCOME_MODEL][0])(input_tensor)
+
+        variant_cates = []
+        for m in models[VARIANT_OUTCOME_MODEL][1:]:
+            variant_output = inline(m)(input_tensor)
+            variant_cates.append(
+                op.unsqueeze(
+                    inline(sub_model)(
+                        variant_output[output_name],
+                        output_0[output_name],
+                    )["subtraction"],
+                    axes=op.constant(value_int=1),
+                )
+            )
+        cate = op.concat(variant_cates, axis=1)
+        final_model = build({"input": input_tensor}, {"tau": cate})
+        check_model(final_model, full_check=True)
+        return final_model

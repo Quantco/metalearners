@@ -1040,6 +1040,43 @@ class MetaLearner(ABC):
             return default_scoring
         return dict(default_scoring) | dict(scoring)
 
+    def _validate_onnx_models(self, models: Mapping[str, Sequence]):
+        if set(models.keys()) != set(self.nuisance_model_specifications().keys()) | set(
+            self.treatment_model_specifications().keys()
+        ):
+            raise ValueError(
+                "All and only base model names should be present in models keys."
+            )
+        for model_kind, model_specs in (
+            self.nuisance_model_specifications() | self.treatment_model_specifications()
+        ).items():
+            if len(models[model_kind]) != model_specs["cardinality"](self):
+                raise ValueError(
+                    f"{model_kind} cardinality does not match the expected cardinality."
+                )
+            predict_method = model_specs["predict_method"](self)
+            for i, m in enumerate(models[model_kind]):
+                if len(m.graph.input) != 1:
+                    raise ValueError(
+                        f"ONNX {model_kind} with index {i} has {len(m.graph.input)} "
+                        "inputs and should have only one."
+                    )
+                if predict_method == "predict" and len(m.graph.output) != 1:
+                    raise ValueError(
+                        f"ONNX {model_kind} with index {i} has {len(m.graph.output)} "
+                        "outputs and should have only one."
+                    )
+                elif predict_method == "predict_proba":
+                    found_probabilities = False
+                    for output in m.graph.output:
+                        if output.name == "probabilities":
+                            found_probabilities = True
+                    if not found_probabilities:
+                        raise ValueError(
+                            f"ONNX {model_kind} with index {i} needs to have an output "
+                            "with name 'probabilities'."
+                        )
+
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
 

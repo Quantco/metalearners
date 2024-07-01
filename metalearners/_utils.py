@@ -487,3 +487,35 @@ def default_metric(predict_method: PredictMethod) -> str:
     if predict_method == _PREDICT_PROBA:
         return "neg_log_loss"
     return "neg_root_mean_squared_error"
+
+
+def check_onnx_installed():
+    """Checks that *onnx* is available."""
+    try:
+        import onnx  # noqa F401
+    except ImportError:
+        raise RuntimeError(
+            "onnx is not installed. Please install onnx to use this feature."
+        )
+
+
+def check_spox_installed():
+    """Checks that *spox* is available."""
+    try:
+        import spox  # noqa F401
+    except ImportError:
+        raise RuntimeError(
+            "spox is not installed. Please install spox to use this feature."
+        )
+
+
+def infer_dtype_and_shape_onnx(tensor):
+    check_onnx_installed()
+    import onnx
+
+    dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.type.tensor_type.elem_type)
+    shape = tuple(
+        d.dim_value if d.HasField("dim_value") else None
+        for d in tensor.type.tensor_type.shape.dim
+    )
+    return dtype, shape
