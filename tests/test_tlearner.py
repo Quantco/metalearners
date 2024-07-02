@@ -261,8 +261,8 @@ def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification
     else:
         onnx_X = X.astype(np.float32)
 
-    pred_onx = sess.run(
+    pred_onnx = sess.run(
         ["tau"],
         {"input": onnx_X},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onx[0], atol=1e-4)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=1e-4)
