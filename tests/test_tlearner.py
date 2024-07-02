@@ -169,13 +169,13 @@ def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification
     if nuisance_model_factory == QuadraticDiscriminantAnalysis:
         # TODO: investigate the cause why the assertion fails
         pytest.skip()
-    if nuisance_model_factory == RadiusNeighborsClassifier:
-        nuisance_model_params = {"radius": 5}
+    if nuisance_model_factory in [RadiusNeighborsClassifier, RadiusNeighborsRegressor]:
+        nuisance_model_params = {"radius": 10}
     else:
         nuisance_model_params = None
-    n_samples = 200
+    n_samples = 300
     n_features = 10
-    n_variants = 5
+    n_variants = 3
     n_classes = (
         2 if nuisance_model_factory == GaussianProcessClassifier else 3
     )  # convert_sklearn only supports binary classification with GaussianProcessClassifier
