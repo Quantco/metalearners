@@ -153,10 +153,10 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             output_index = 0
             output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
         else:
-            output_name = "probabilities"
             for i, output in enumerate(models[VARIANT_OUTCOME_MODEL][0].graph.output):
-                if output.name == "probabilities":
+                if output.name in ["probabilities", "output_probability"]:
                     output_index = i
+                    output_name = output.name
 
         output_dtype, output_shape = infer_dtype_and_shape_onnx(
             models[VARIANT_OUTCOME_MODEL][0].graph.output[output_index]

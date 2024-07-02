@@ -1069,12 +1069,12 @@ class MetaLearner(ABC):
                 elif predict_method == "predict_proba":
                     found_probabilities = False
                     for output in m.graph.output:
-                        if output.name == "probabilities":
+                        if output.name in ["probabilities", "output_probability"]:
                             found_probabilities = True
                     if not found_probabilities:
                         raise ValueError(
                             f"ONNX {model_kind} with index {i} needs to have an output "
-                            "with name 'probabilities'."
+                            "with name 'probabilities' or 'output_probability'."
                         )
 
 
