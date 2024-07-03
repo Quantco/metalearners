@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence, Set
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TypedDict
@@ -1040,16 +1040,16 @@ class MetaLearner(ABC):
             return default_scoring
         return dict(default_scoring) | dict(scoring)
 
-    def _validate_onnx_models(self, models: Mapping[str, Sequence]):
-        if set(models.keys()) != set(self.nuisance_model_specifications().keys()) | set(
-            self.treatment_model_specifications().keys()
-        ):
-            raise ValueError(
-                "All and only base model names should be present in models keys."
-            )
-        for model_kind, model_specs in (
+    def _validate_onnx_models(
+        self, models: Mapping[str, Sequence], necessary_models: Set[str]
+    ):
+        if set(models.keys()) != necessary_models:
+            raise ValueError(f"{necessary_models} should be present in models keys.")
+        specs_look_up = (
             self.nuisance_model_specifications() | self.treatment_model_specifications()
-        ).items():
+        )
+        for model_kind in necessary_models:
+            model_specs = specs_look_up[model_kind]
             if len(models[model_kind]) != model_specs["cardinality"](self):
                 raise ValueError(
                     f"{model_kind} cardinality does not match the expected cardinality."

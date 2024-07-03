@@ -519,3 +519,10 @@ def infer_dtype_and_shape_onnx(tensor):
         for d in tensor.type.tensor_type.shape.dim
     )
     return dtype, shape
+
+
+def infer_probabilities_output(model):
+    check_onnx_installed()
+    for i, output in enumerate(model.graph.output):
+        if output.name in ["probabilities", "output_probability"]:
+            return i, output.name

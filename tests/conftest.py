@@ -4,6 +4,67 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    BaggingClassifier,
+    BaggingRegressor,
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    ElasticNet,
+    ElasticNetCV,
+    HuberRegressor,
+    Lars,
+    LarsCV,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    LinearRegression,
+    LogisticRegression,
+    LogisticRegressionCV,
+    OrthogonalMatchingPursuit,
+    OrthogonalMatchingPursuitCV,
+    PassiveAggressiveRegressor,
+    QuantileRegressor,
+    RANSACRegressor,
+    Ridge,
+    RidgeCV,
+    SGDRegressor,
+    TheilSenRegressor,
+    TweedieRegressor,
+)
+from sklearn.neighbors import (
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.svm import SVR, LinearSVR, NuSVR
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
 
 from metalearners._utils import get_linear_dimension, load_mindset_data, load_twins_data
 from metalearners.data_generation import (
@@ -18,6 +79,68 @@ from metalearners.outcome_functions import (
 
 _SEED = 1337
 _SIGMA_TAU = 0.5
+
+all_sklearn_classifiers = [
+    AdaBoostClassifier,
+    BaggingClassifier,
+    CalibratedClassifierCV,
+    DecisionTreeClassifier,
+    ExtraTreeClassifier,
+    ExtraTreesClassifier,
+    # GaussianProcessClassifier, # This raises an error com.microsoft:Solve(-1) is not a registered function/op when inference on onnx. TODO: investigate it further
+    GradientBoostingClassifier,
+    HistGradientBoostingClassifier,
+    KNeighborsClassifier,
+    LinearDiscriminantAnalysis,
+    LogisticRegression,
+    LogisticRegressionCV,
+    MLPClassifier,
+    QuadraticDiscriminantAnalysis,
+    RadiusNeighborsClassifier,
+    RandomForestClassifier,
+]  # extracted from all_estimators("classifier"), models which have predict_proba and convert_sklearn supports them
+
+all_sklearn_regressors = [
+    ARDRegression,
+    AdaBoostRegressor,
+    BaggingRegressor,
+    BayesianRidge,
+    DecisionTreeRegressor,
+    ElasticNet,
+    ElasticNetCV,
+    ExtraTreeRegressor,
+    ExtraTreesRegressor,
+    GaussianProcessRegressor,
+    GradientBoostingRegressor,
+    HistGradientBoostingRegressor,
+    HuberRegressor,
+    KNeighborsRegressor,
+    Lars,
+    LarsCV,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    LinearRegression,
+    LinearSVR,
+    MLPRegressor,
+    NuSVR,
+    OrthogonalMatchingPursuit,
+    OrthogonalMatchingPursuitCV,
+    # PLSRegression, # The output shape of the onnx converted model is wrong
+    PassiveAggressiveRegressor,
+    QuantileRegressor,
+    RANSACRegressor,
+    RadiusNeighborsRegressor,
+    RandomForestRegressor,
+    Ridge,
+    RidgeCV,
+    SGDRegressor,
+    SVR,
+    TheilSenRegressor,
+    TweedieRegressor,
+]  # regressors which are supported by convert_sklearn and support regression in the reals
 
 
 def _generate_rct_experiment_data(

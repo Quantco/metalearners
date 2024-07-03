@@ -13,6 +13,7 @@ from metalearners._utils import (
     check_spox_installed,
     index_matrix,
     infer_dtype_and_shape_onnx,
+    infer_probabilities_output,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -143,7 +144,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         from onnx.checker import check_model
         from spox import Tensor, argument, build, inline
 
-        self._validate_onnx_models(models)
+        self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
 
         input_dtype, input_shape = infer_dtype_and_shape_onnx(
             models[VARIANT_OUTCOME_MODEL][0].graph.input[0]
@@ -153,10 +154,9 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             output_index = 0
             output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
         else:
-            for i, output in enumerate(models[VARIANT_OUTCOME_MODEL][0].graph.output):
-                if output.name in ["probabilities", "output_probability"]:
-                    output_index = i
-                    output_name = output.name
+            output_index, output_name = infer_probabilities_output(
+                models[VARIANT_OUTCOME_MODEL][0]
+            )
 
         output_dtype, output_shape = infer_dtype_and_shape_onnx(
             models[VARIANT_OUTCOME_MODEL][0].graph.output[output_index]

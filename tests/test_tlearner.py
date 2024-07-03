@@ -11,66 +11,15 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx.convert import convert_sklearn
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis,
-    QuadraticDiscriminantAnalysis,
-)
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import (
-    AdaBoostClassifier,
-    AdaBoostRegressor,
-    BaggingClassifier,
-    BaggingRegressor,
-    ExtraTreesClassifier,
-    ExtraTreesRegressor,
-    GradientBoostingClassifier,
-    GradientBoostingRegressor,
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
-    RandomForestClassifier,
-    RandomForestRegressor,
 )
-from sklearn.gaussian_process import GaussianProcessClassifier, GaussianProcessRegressor
-from sklearn.linear_model import (
-    ARDRegression,
-    BayesianRidge,
-    ElasticNet,
-    ElasticNetCV,
-    HuberRegressor,
-    Lars,
-    LarsCV,
-    Lasso,
-    LassoCV,
-    LassoLars,
-    LassoLarsCV,
-    LassoLarsIC,
-    LinearRegression,
-    LogisticRegression,
-    LogisticRegressionCV,
-    OrthogonalMatchingPursuit,
-    OrthogonalMatchingPursuitCV,
-    PassiveAggressiveRegressor,
-    QuantileRegressor,
-    RANSACRegressor,
-    Ridge,
-    RidgeCV,
-    SGDRegressor,
-    TheilSenRegressor,
-    TweedieRegressor,
-)
+from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.neighbors import (
-    KNeighborsClassifier,
-    KNeighborsRegressor,
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
-)
-from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.svm import SVR, LinearSVR, NuSVR
-from sklearn.tree import (
-    DecisionTreeClassifier,
-    DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
 )
 from xgboost import XGBClassifier, XGBRegressor
 
@@ -78,67 +27,7 @@ from metalearners import TLearner
 from metalearners._typing import Params
 from metalearners.metalearner import VARIANT_OUTCOME_MODEL
 
-all_sklearn_classifiers = [
-    AdaBoostClassifier,
-    BaggingClassifier,
-    CalibratedClassifierCV,
-    DecisionTreeClassifier,
-    ExtraTreeClassifier,
-    ExtraTreesClassifier,
-    # GaussianProcessClassifier, # This raises an error com.microsoft:Solve(-1) is not a registered function/op when inference on onnx. TODO: investigate it further
-    GradientBoostingClassifier,
-    HistGradientBoostingClassifier,
-    KNeighborsClassifier,
-    LinearDiscriminantAnalysis,
-    LogisticRegression,
-    LogisticRegressionCV,
-    MLPClassifier,
-    QuadraticDiscriminantAnalysis,
-    RadiusNeighborsClassifier,
-    RandomForestClassifier,
-]  # extracted from all_estimators("classifier"), models which have predict_proba and convert_sklearn supports them
-
-all_sklearn_regressors = [
-    ARDRegression,
-    AdaBoostRegressor,
-    BaggingRegressor,
-    BayesianRidge,
-    DecisionTreeRegressor,
-    ElasticNet,
-    ElasticNetCV,
-    ExtraTreeRegressor,
-    ExtraTreesRegressor,
-    GaussianProcessRegressor,
-    GradientBoostingRegressor,
-    HistGradientBoostingRegressor,
-    HuberRegressor,
-    KNeighborsRegressor,
-    Lars,
-    LarsCV,
-    Lasso,
-    LassoCV,
-    LassoLars,
-    LassoLarsCV,
-    LassoLarsIC,
-    LinearRegression,
-    LinearSVR,
-    MLPRegressor,
-    NuSVR,
-    OrthogonalMatchingPursuit,
-    OrthogonalMatchingPursuitCV,
-    # PLSRegression, # The output shape of the onnx converted model is wrong
-    PassiveAggressiveRegressor,
-    QuantileRegressor,
-    RANSACRegressor,
-    RadiusNeighborsRegressor,
-    RandomForestRegressor,
-    Ridge,
-    RidgeCV,
-    SGDRegressor,
-    SVR,
-    TheilSenRegressor,
-    TweedieRegressor,
-]  # regressors which are supported by convert_sklearn and support regression in the reals
+from .conftest import all_sklearn_classifiers, all_sklearn_regressors
 
 
 @pytest.mark.parametrize(
