@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 from joblib import Parallel, delayed
-from spox import Var
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector
@@ -417,7 +416,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
         from onnx.checker import check_model
-        from spox import Tensor, argument, build, inline
+        from spox import Tensor, Var, argument, build, inline
 
         self._validate_onnx_models(
             models, {PROPENSITY_MODEL, CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
