@@ -1077,6 +1077,14 @@ class MetaLearner(ABC):
                             "with name 'probabilities' or 'output_probability'."
                         )
 
+    def _validate_feature_set_all(self):
+        for feature_set in self.feature_set.values():
+            if feature_set is not None:
+                raise ValueError(
+                    "ONNX conversion can only be used if all base models use all the "
+                    "features."
+                )
+
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
 

@@ -137,7 +137,12 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         )
 
     # TODO: Fix typing without importing onnx
-    def build_onnx(self, models: Mapping[str, Sequence]):
+    def build_onnx(
+        self,
+        models: Mapping[str, Sequence],
+        input_name: str = "input",
+        output_name: str = "tau",
+    ):
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
@@ -145,45 +150,36 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         from spox import Tensor, argument, build, inline
 
         self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
+        self._validate_feature_set_all()
 
         input_dtype, input_shape = infer_dtype_and_shape_onnx(
             models[VARIANT_OUTCOME_MODEL][0].graph.input[0]
         )
 
         if not self.is_classification:
-            output_index = 0
-            output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
+            model_output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
         else:
-            output_index, output_name = infer_probabilities_output(
+            _, model_output_name = infer_probabilities_output(
                 models[VARIANT_OUTCOME_MODEL][0]
             )
 
-        output_dtype, output_shape = infer_dtype_and_shape_onnx(
-            models[VARIANT_OUTCOME_MODEL][0].graph.output[output_index]
-        )
-
         input_tensor = argument(Tensor(input_dtype, input_shape))
 
-        a = argument(Tensor(output_dtype, output_shape))
-        b = argument(Tensor(output_dtype, output_shape))
-        subtraction = op.sub(a, b)
-        sub_model = build({"a": a, "b": b}, {"subtraction": subtraction})
-
-        output_0 = inline(models[VARIANT_OUTCOME_MODEL][0])(input_tensor)
+        output_0 = inline(models[VARIANT_OUTCOME_MODEL][0])(input_tensor)[
+            model_output_name
+        ]
 
         variant_cates = []
         for m in models[VARIANT_OUTCOME_MODEL][1:]:
-            variant_output = inline(m)(input_tensor)
+            variant_output = inline(m)(input_tensor)[model_output_name]
+            variant_cate = op.sub(variant_output, output_0)
             variant_cates.append(
                 op.unsqueeze(
-                    inline(sub_model)(
-                        variant_output[output_name],
-                        output_0[output_name],
-                    )["subtraction"],
+                    variant_cate,
                     axes=op.constant(value_int=1),
                 )
             )
         cate = op.concat(variant_cates, axis=1)
-        final_model = build({"input": input_tensor}, {"tau": cate})
+        final_model = build({input_name: input_tensor}, {output_name: cate})
         check_model(final_model, full_check=True)
         return final_model

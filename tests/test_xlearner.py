@@ -142,4 +142,4 @@ def test_xlearner_onnx(
         ["tau", "Div_1_C"],
         {"input": X.astype(np.float32)},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=1e-6)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=1e-5)

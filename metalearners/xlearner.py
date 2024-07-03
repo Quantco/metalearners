@@ -407,7 +407,12 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return imputed_te_control, imputed_te_treatment
 
-    def build_onnx(self, models: Mapping[str, Sequence]):
+    def build_onnx(
+        self,
+        models: Mapping[str, Sequence],
+        input_name: str = "input",
+        output_name: str = "tau",
+    ):
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
@@ -417,14 +422,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_onnx_models(
             models, {PROPENSITY_MODEL, CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
         )
-
-        # TODO: move this validation to metalearner level as it will be common for all
-        for model_kind, feature_set in self.feature_set.items():
-            if feature_set is not None:
-                raise ValueError(
-                    "ONNX conversion can only be used if all base models use all the "
-                    "features."
-                )
+        self._validate_feature_set_all()
 
         # All models should have the same input dtype and shape
         input_dtype, input_shape = infer_dtype_and_shape_onnx(
@@ -432,16 +430,16 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         )
         input_tensor = argument(Tensor(input_dtype, input_shape))
 
-        output_name = models[CONTROL_EFFECT_MODEL][0].graph.output[0].name
+        treatment_output_name = models[CONTROL_EFFECT_MODEL][0].graph.output[0].name
 
         tau_hat_control: list[Var] = []
         for m in models[CONTROL_EFFECT_MODEL]:
-            tau_hat_control.append(inline(m)(input_tensor)[output_name])
+            tau_hat_control.append(inline(m)(input_tensor)[treatment_output_name])
         tau_hat_effect: list[Var] = []
         for m in models[TREATMENT_EFFECT_MODEL]:
-            tau_hat_effect.append(inline(m)(input_tensor)[output_name])
+            tau_hat_effect.append(inline(m)(input_tensor)[treatment_output_name])
 
-        propensity_output_index, propensity_output_name = infer_probabilities_output(
+        _, propensity_output_name = infer_probabilities_output(
             models[PROPENSITY_MODEL][0]
         )
 
@@ -479,6 +477,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             tau_hat.append(tau_hat_tv)
 
         cate = op.concat(tau_hat, axis=1)
-        final_model = build({"input": input_tensor}, {"tau": cate})
+        final_model = build({input_name: input_tensor}, {output_name: cate})
         check_model(final_model, full_check=True)
         return final_model
