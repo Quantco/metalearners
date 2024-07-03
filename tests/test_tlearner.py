@@ -11,7 +11,6 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx.convert import convert_sklearn
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
@@ -57,10 +56,6 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
     ),
 )
 def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification, rng):
-    if nuisance_model_factory == QuadraticDiscriminantAnalysis:
-        # TODO: investigate the cause why the assertion fails
-        pytest.skip()
-
     supports_categoricals = nuisance_model_factory in [
         LGBMClassifier,
         LGBMRegressor,
