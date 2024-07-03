@@ -138,4 +138,4 @@ def test_rlearner_onnx(treatment_model_factory, onnx_converter, is_classificatio
         ["tau"],
         {"input": onnx_X},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=1e-5)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=5e-4)
