@@ -504,7 +504,7 @@ def check_spox_installed():
     try:
         import spox  # noqa F401
     except ImportError:
-        raise RuntimeError(
+        raise ImportError(
             "spox is not installed. Please install spox to use this feature."
         )
 
