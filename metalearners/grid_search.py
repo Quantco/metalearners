@@ -129,7 +129,7 @@ class MetaLearnerGridSearch:
     values should be sequences of model factories.
 
     If base models are meant to be reused, they should be passed through ``metalearner_params`` and the corresponding keys
-    should not be in ``base_learner_grid``.
+    should not be passed to ``base_learner_grid``.
 
     ``param_grid`` should contain the parameters grid for each type of model used by the
     base learners defined in ``base_learner_grid``. The keys should be strings with the
