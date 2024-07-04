@@ -13,7 +13,7 @@ The library focuses on providing
 - Methodologically sound cross-fitting
 - Convenient access to and reuse of base models
 - Consistent APIs across Metalearners
-- Support for multi-class classification and more than binary treatment variants
+- Support for more than binary treatment variants
 - Integrations with `pandas`, `shap`, `lime`, `optuna` and soon `onnx`
 
 ## Example
