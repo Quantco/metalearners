@@ -226,11 +226,10 @@ class MetaLearnerGridSearch:
         ``kwargs`` will be passed through to the :meth:`~metalearners.metalearner.MetaLearner.fit`
         call of each individual MetaLearner.
         """
-        nuisance_models_wo_propensity = set.intersection(
+        nuisance_models_wo_propensity = (
             set(self.metalearner_factory.nuisance_model_specifications().keys())
-            - {PROPENSITY_MODEL},
-            self.models_to_fit,
-        )
+            - {PROPENSITY_MODEL}
+        ) & self.models_to_fit
 
         # We don't need to intersect as treatment models can't be reused
         treatment_models = set(
