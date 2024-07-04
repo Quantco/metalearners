@@ -10,9 +10,11 @@ from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.neighbors import RadiusNeighborsRegressor
 from xgboost import XGBRegressor
 
 from metalearners import DRLearner
+from metalearners._typing import Params
 from metalearners.metalearner import TREATMENT_MODEL
 
 from .conftest import all_sklearn_regressors
@@ -34,7 +36,9 @@ from .conftest import all_sklearn_regressors
     ),
 )
 @pytest.mark.parametrize("is_classification", [True, False])
-def test_rlearner_onnx(treatment_model_factory, onnx_converter, is_classification, rng):
+def test_drlearner_onnx(
+    treatment_model_factory, onnx_converter, is_classification, rng
+):
     supports_categoricals = treatment_model_factory in [
         LGBMRegressor,
         # convert_sklearn does not support categoricals https://github.com/onnx/sklearn-onnx/issues/1051
@@ -42,6 +46,9 @@ def test_rlearner_onnx(treatment_model_factory, onnx_converter, is_classificatio
         # convert_xgboost does not support categoricals https://github.com/onnx/onnxmltools/issues/469#issuecomment-1993880910
         # XGBRegressor,
     ]
+    treatment_model_params: Params | None = None
+    if treatment_model_factory == RadiusNeighborsRegressor:
+        treatment_model_params = {"radius": 10}
 
     # TODO: move this generation to a fixture
     n_samples = 300
@@ -77,6 +84,7 @@ def test_rlearner_onnx(treatment_model_factory, onnx_converter, is_classificatio
         propensity_model_factory=LGBMClassifier,
         treatment_model_factory=treatment_model_factory,
         propensity_model_params={"n_estimators": 1},
+        treatment_model_params=treatment_model_params,
         n_folds=2,
     )
     ml.fit(X, y, w)
