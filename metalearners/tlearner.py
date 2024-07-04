@@ -12,7 +12,7 @@ from metalearners._utils import (
     check_onnx_installed,
     check_spox_installed,
     index_matrix,
-    infer_dtype_and_shape_onnx,
+    infer_input_dict,
     infer_probabilities_output,
 )
 from metalearners.cross_fit_estimator import OVERALL
@@ -140,21 +140,18 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def build_onnx(
         self,
         models: Mapping[str, Sequence],
-        input_name: str = "input",
         output_name: str = "tau",
     ):
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
         from onnx.checker import check_model
-        from spox import Tensor, argument, build, inline
+        from spox import build, inline
 
-        self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
         self._validate_feature_set_all()
+        self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
 
-        input_dtype, input_shape = infer_dtype_and_shape_onnx(
-            models[VARIANT_OUTCOME_MODEL][0].graph.input[0]
-        )
+        input_dict = infer_input_dict(models[VARIANT_OUTCOME_MODEL][0])
 
         if not self.is_classification:
             model_output_name = models[VARIANT_OUTCOME_MODEL][0].graph.output[0].name
@@ -163,15 +160,13 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
                 models[VARIANT_OUTCOME_MODEL][0]
             )
 
-        input_tensor = argument(Tensor(input_dtype, input_shape))
-
-        output_0 = inline(models[VARIANT_OUTCOME_MODEL][0])(input_tensor)[
+        output_0 = inline(models[VARIANT_OUTCOME_MODEL][0])(**input_dict)[
             model_output_name
         ]
 
         variant_cates = []
         for m in models[VARIANT_OUTCOME_MODEL][1:]:
-            variant_output = inline(m)(input_tensor)[model_output_name]
+            variant_output = inline(m)(**input_dict)[model_output_name]
             variant_cate = op.sub(variant_output, output_0)
             variant_cates.append(
                 op.unsqueeze(
@@ -180,6 +175,6 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
                 )
             )
         cate = op.concat(variant_cates, axis=1)
-        final_model = build({input_name: input_tensor}, {output_name: cate})
+        final_model = build(input_dict, {output_name: cate})
         check_model(final_model, full_check=True)
         return final_model

@@ -136,6 +136,6 @@ def test_xlearner_onnx(
 
     pred_onnx = sess.run(
         ["tau"],
-        {"input": X.astype(np.float32)},
+        {"X": X.astype(np.float32)},
     )
     np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=5e-4)

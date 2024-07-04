@@ -521,8 +521,22 @@ def infer_dtype_and_shape_onnx(tensor):
     return dtype, shape
 
 
-def infer_probabilities_output(model):
+def infer_probabilities_output(model) -> tuple[int, str]:
     check_onnx_installed()
     for i, output in enumerate(model.graph.output):
         if output.name in ["probabilities", "output_probability"]:
             return i, output.name
+    raise ValueError("No probabilities output was found.")
+
+
+def infer_input_dict(model) -> dict:
+    check_onnx_installed()
+    check_spox_installed()
+    from spox import Tensor, Var, argument
+
+    input_dict: dict[str, Var] = {}
+    for input_tensor in model.graph.input:
+        input_dtype, input_shape = infer_dtype_and_shape_onnx(input_tensor)
+        input_dict[input_tensor.name] = argument(Tensor(input_dtype, input_shape))
+
+    return input_dict

@@ -1048,6 +1048,7 @@ class MetaLearner(ABC):
         specs_look_up = (
             self.nuisance_model_specifications() | self.treatment_model_specifications()
         )
+        input_format = None
         for model_kind in necessary_models:
             model_specs = specs_look_up[model_kind]
             if len(models[model_kind]) != model_specs["cardinality"](self):
@@ -1056,10 +1057,12 @@ class MetaLearner(ABC):
                 )
             predict_method = model_specs["predict_method"](self)
             for i, m in enumerate(models[model_kind]):
-                if len(m.graph.input) != 1:
+                if input_format is None:
+                    input_format = m.graph.input
+                elif input_format != m.graph.input:
                     raise ValueError(
-                        f"ONNX {model_kind} with index {i} has {len(m.graph.input)} "
-                        "inputs and should have only one."
+                        "Some ONNX model has a different input, check that all models have "
+                        "the same input format."
                     )
                 if predict_method == "predict" and len(m.graph.output) != 1:
                     raise ValueError(
