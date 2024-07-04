@@ -26,7 +26,9 @@ class _FitAndScoreJob:
     w_test: Vector | None
     oos_method: OosMethod
     scoring: Scoring | None
-    kwargs: dict
+    # These are the params which are passed through kwargs in MetaLearnerGridSearch.fit
+    # which should be unpacked and passed to MetaLearner.fit
+    metalerner_fit_params: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -42,7 +44,9 @@ class _GSResult:
 
 def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
     start_time = time.time()
-    job.metalearner.fit(job.X_train, job.y_train, job.w_train, **job.kwargs)
+    job.metalearner.fit(
+        job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params
+    )
     fit_time = time.time() - start_time
 
     train_scores = job.metalearner.evaluate(
@@ -298,7 +302,7 @@ class MetaLearnerGridSearch:
                         w_test=w_test,
                         oos_method=oos_method,
                         scoring=self.scoring,
-                        kwargs=kwargs,
+                        metalerner_fit_params=kwargs,
                     )
                 )
 
