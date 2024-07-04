@@ -84,3 +84,5 @@ py312 = ["py312"]
 lint = { features = ["lint"], no-default-feature = true }
 
 docs = ["docs"]
+
+build = ["build"]
