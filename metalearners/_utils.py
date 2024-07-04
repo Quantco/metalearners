@@ -489,7 +489,7 @@ def default_metric(predict_method: PredictMethod) -> str:
     return "neg_root_mean_squared_error"
 
 
-def check_onnx_installed():
+def check_onnx_installed() -> None:
     """Ensure that ``onnx`` is available."""
     try:
         import onnx  # noqa F401
