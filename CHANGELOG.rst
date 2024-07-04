@@ -12,7 +12,7 @@ Changelog
 
 **New features**
 
-* Implemented :class:`metalearners.grid_search.MetaLearnerGridSearchCV`.
+* Implemented :class:`metalearners.grid_search.MetaLearnerGridSearch`.
 
 * Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
   implemented the abstract method for the :class:`metalearners.XLearner` and
