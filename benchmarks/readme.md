@@ -6,10 +6,8 @@ In order to recreate the benchmarks you can run the following:
 ```
 $ git clone https://github.com/Quantco/metalearners.git
 $ cd metalearners
-$ micromamba env create -f benchmarks/environment.yml
-$ micromamba activate benchmarks
-$ pip install -e .
-$ python benchmarks/benchmark.py
+$ pixi run -e benchmark postinstall
+$ pixi run benchmark
 ```
 
 After this, you can investigate `comparison.json`, e.g. by running
