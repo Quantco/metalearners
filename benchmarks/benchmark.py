@@ -115,7 +115,7 @@ def _twins_data(rng, use_numpy=False, test_fraction=0.2):
         feature_columns,
         categorical_feature_columns,
         true_cate_column,
-    ) = load_twins_data(rng)
+    ) = load_twins_data(Path(git_root()) / "data" / "twins.zip", rng)
 
     covariates = chosen_df[feature_columns]
     observed_outcomes = chosen_df[outcome_column]

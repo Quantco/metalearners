@@ -26,7 +26,6 @@ dependencies = [
     "pandas",
     "numpy",
     "typing-extensions",
-    "git_root",
     "shap",
     "joblib>=1.2.0"
 ]
