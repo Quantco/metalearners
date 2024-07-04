@@ -12,7 +12,7 @@ MetaLearners for CATE estimation
 
 `metalearners` can either be installed via PyPI with
 
-```console
+```bash
 $ pip install metalearners
 ```
 
@@ -47,7 +47,7 @@ $ pixi run pytest tests
 
 You can build the documentation locally by running
 
-```console
+```bash
 $ pixi run -e docs postinstall
 $ pixi run -e docs docs
 ```
