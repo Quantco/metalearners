@@ -2,17 +2,22 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
+    check_onnx_installed,
+    check_spox_installed,
     clip_element_absolute_value_to_epsilon,
     get_one,
     get_predict,
     get_predict_proba,
     index_matrix,
+    infer_input_dict,
     validate_valid_treatment_variant_not_control,
 )
 from metalearners.cross_fit_estimator import OVERALL
@@ -318,3 +323,34 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         )
 
         return pseudo_outcome
+
+    def build_onnx(
+        self,
+        models: Mapping[str, Sequence],
+        output_name: str = "tau",
+    ):
+        check_onnx_installed()
+        check_spox_installed()
+        import spox.opset.ai.onnx.v21 as op
+        from onnx.checker import check_model
+        from spox import Var, build, inline
+
+        self._validate_feature_set_all()
+        self._validate_onnx_models(models, {TREATMENT_MODEL})
+
+        input_dict = infer_input_dict(models[TREATMENT_MODEL][0])
+
+        treatment_output_name = models[TREATMENT_MODEL][0].graph.output[0].name
+
+        tau_hat: list[Var] = []
+        for m in models[TREATMENT_MODEL]:
+            tau_hat_tv = inline(m)(**input_dict)[treatment_output_name]
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            if self.is_classification:
+                tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
+            tau_hat.append(tau_hat_tv)
+
+        cate = op.concat(tau_hat, axis=1)
+        final_model = build(input_dict, {output_name: cate})
+        check_model(final_model, full_check=True)
+        return final_model
