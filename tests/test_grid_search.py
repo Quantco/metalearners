@@ -7,7 +7,8 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from metalearners.drlearner import DRLearner
-from metalearners.grid_search import MetaLearnerGridSearchCV
+from metalearners.grid_search import MetaLearnerGridSearch
+from metalearners.metalearner import VARIANT_OUTCOME_MODEL
 from metalearners.rlearner import RLearner
 from metalearners.slearner import SLearner
 from metalearners.tlearner import TLearner
@@ -84,14 +85,12 @@ from metalearners.xlearner import XLearner
     ],
 )
 @pytest.mark.parametrize("n_variants", [2, 5])
-@pytest.mark.parametrize("cv", [2, 3])
-def test_metalearnergridsearchcv_smoke(
+def test_metalearnergridsearch_smoke(
     metalearner_factory,
     is_classification,
     n_variants,
     base_learner_grid,
     param_grid,
-    cv,
     rng,
     expected_n_configs,
 ):
@@ -100,21 +99,92 @@ def test_metalearnergridsearchcv_smoke(
         "n_variants": n_variants,
         "n_folds": 2,
     }
-    gs = MetaLearnerGridSearchCV(
+    gs = MetaLearnerGridSearch(
         metalearner_factory=metalearner_factory,
         metalearner_params=metalearner_params,
         base_learner_grid=base_learner_grid,
         param_grid=param_grid,
-        cv=cv,
     )
     n_samples = 250
+    n_test_samples = 100
     X = rng.standard_normal((n_samples, 3))
+    X_test = rng.standard_normal((n_test_samples, 3))
     if is_classification:
         y = rng.integers(0, 2, n_samples)
+        y_test = rng.integers(0, 2, n_test_samples)
     else:
         y = rng.standard_normal(n_samples)
+        y_test = rng.standard_normal(n_test_samples)
     w = rng.integers(0, n_variants, n_samples)
+    w_test = rng.integers(0, n_variants, n_test_samples)
 
-    gs.fit(X, y, w)
-    assert gs.cv_results_ is not None
-    assert gs.cv_results_.shape[0] == expected_n_configs * cv
+    gs.fit(X, y, w, X_test, y_test, w_test)
+    assert gs.results_ is not None
+    assert gs.results_.shape[0] == expected_n_configs
+
+    train_scores_cols = set(
+        c[6:] for c in list(gs.results_.columns) if c.startswith("train_")
+    )
+    test_scores_cols = set(
+        c[5:] for c in list(gs.results_.columns) if c.startswith("test_")
+    )
+    assert train_scores_cols == test_scores_cols
+
+
+def test_metalearnergridsearch_reuse_smoke(rng):
+    n_variants = 3
+    n_samples = 250
+    n_test_samples = 100
+
+    X = rng.standard_normal((n_samples, 3))
+    X_test = rng.standard_normal((n_test_samples, 3))
+    y = rng.standard_normal(n_samples)
+    y_test = rng.standard_normal(n_test_samples)
+    w = rng.integers(0, n_variants, n_samples)
+    w_test = rng.integers(0, n_variants, n_test_samples)
+
+    tl = TLearner(
+        False,
+        n_variants,
+        LGBMRegressor,
+        nuisance_model_params={"verbose": -1, "n_estimators": 1},
+        n_folds=2,
+    )
+    tl.fit(X, y, w)
+
+    gs = MetaLearnerGridSearch(
+        DRLearner,
+        {
+            "is_classification": False,
+            "n_variants": n_variants,
+            "n_folds": 5,  # To test with different n_folds than the pretrained
+            "fitted_nuisance_models": {
+                VARIANT_OUTCOME_MODEL: tl._nuisance_models[VARIANT_OUTCOME_MODEL]
+            },
+        },
+        {
+            "propensity_model": [LGBMClassifier, LogisticRegression],
+            "treatment_model": [LGBMRegressor],
+        },
+        {
+            "treatment_model": {
+                "LGBMRegressor": {"n_estimators": [1, 2], "verbose": [-1]}
+            },
+            "propensity_model": {
+                "LGBMClassifier": {
+                    "n_estimators": [1, 2, 3],
+                    "verbose": [-1],
+                }
+            },
+        },
+        verbose=3,
+        random_state=1,
+    )
+    gs.fit(X, y, w, X_test, y_test, w_test)
+    assert gs.raw_results_ is not None
+    for raw_result in gs.raw_results_:
+        assert raw_result.metalearner._prefitted_nuisance_models == {
+            VARIANT_OUTCOME_MODEL
+        }
+    assert gs.results_ is not None
+    assert gs.results_.shape[0] == 8
