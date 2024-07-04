@@ -21,3 +21,7 @@ or via conda-forge with
 ```bash
 $ conda install metalearners -c conda-forge
 ```
+
+## Development
+
+Development instructions can be found [here](https://metalearners.readthedocs.io/en/latest/development.html).
