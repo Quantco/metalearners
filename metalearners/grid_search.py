@@ -161,6 +161,8 @@ class MetaLearnerGridSearch:
     For information on how to define ``scoring`` see :meth:`~metalearners.metalearner.MetaLearner.evaluate`.
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
+
+    After fitting a dataframe with the results will be available in `results_`.
     """
 
     # TODO: Add a reference to a docs example once it is written.
