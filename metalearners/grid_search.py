@@ -128,7 +128,7 @@ class MetaLearnerGridSearch:
     :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`. The
     values should be sequences of model factories.
 
-    If models are reused, they should be passed through ``metalearner_params`` and they
+    If base models are meant to be reused, they should be passed through ``metalearner_params`` and the corresponding keys
     should not be in ``base_learner_grid``.
 
     ``param_grid`` should contain the parameters grid for each type of model used by the
