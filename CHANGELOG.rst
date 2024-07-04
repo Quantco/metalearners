@@ -20,7 +20,7 @@ Changelog
 
 * Increase lower bound on ``scikit-learn`` from 1.3 to 1.4.
 
-* Drop the run-dependency on ``git_root``.
+* Drop the run dependency on ``git_root``.
 
 
 0.5.0 (2024-06-18)
