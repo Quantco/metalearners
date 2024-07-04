@@ -31,7 +31,7 @@ class _FitAndScoreJob:
 
 @dataclass(frozen=True)
 class _GSResult:
-    r"""Cross Validation Result."""
+    r"""Result from a single grid search evaluation."""
 
     metalearner: MetaLearner
     train_scores: dict
