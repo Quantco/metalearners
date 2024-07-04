@@ -490,7 +490,7 @@ def default_metric(predict_method: PredictMethod) -> str:
 
 
 def check_onnx_installed() -> None:
-    """Ensure that ``onnx`` is available."""
+    """Ensures that ``onnx`` is available."""
     try:
         import onnx  # noqa F401
     except ImportError:
