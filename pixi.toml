@@ -69,6 +69,8 @@ build = "*"
 [feature.build.tasks]
 build = "python -m build"
 
+[feature.benchmark]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
 [feature.benchmark.dependencies]
 git_root = "*"
 python = "3.10"
