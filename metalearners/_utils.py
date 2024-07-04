@@ -494,7 +494,7 @@ def check_onnx_installed():
     try:
         import onnx  # noqa F401
     except ImportError:
-        raise RuntimeError(
+        raise ImportError(
             "onnx is not installed. Please install onnx to use this feature."
         )
 
