@@ -110,6 +110,14 @@ def _format_results(results: Sequence[_GSResult]) -> pd.DataFrame:
                 row[f"test_{name}"] = value
         rows.append(row)
     df = pd.DataFrame(rows)
+    index_columns = [
+        c
+        for c in df.columns
+        if not c.endswith("_time")
+        and not c.startswith("train_")
+        and not c.startswith("test_")
+    ]
+    df = df.set_index(index_columns)
     return df
 
 
