@@ -203,8 +203,7 @@ class MetaLearnerGridSearch:
                 "base_learner_grid keys don't match the expected model names. base_learner_grid "
                 f"keys were expected to be {self.models_to_fit}."
             )
-        self.base_learner_grid = list(ParameterGrid(base_learner_grid))
-
+        self.base_learner_grid = base_learner_grid
         self.param_grid = param_grid
 
     def fit(
@@ -238,7 +237,7 @@ class MetaLearnerGridSearch:
 
         jobs: list[_FitAndScoreJob] = []
 
-        for base_learners in self.base_learner_grid:
+        for base_learners in ParameterGrid(self.base_learner_grid):
             nuisance_model_factory = {
                 model_kind: base_learners[model_kind]
                 for model_kind in nuisance_models_wo_propensity
