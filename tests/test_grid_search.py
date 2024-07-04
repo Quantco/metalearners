@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+import numpy as np
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -84,16 +85,22 @@ from metalearners.xlearner import XLearner
         ),
     ],
 )
-@pytest.mark.parametrize("n_variants", [2, 5])
 def test_metalearnergridsearch_smoke(
     metalearner_factory,
     is_classification,
-    n_variants,
     base_learner_grid,
     param_grid,
-    rng,
     expected_n_configs,
+    grid_search_data,
 ):
+    X, y_class, y_reg, w, X_test, y_test_class, y_test_reg, w_test = grid_search_data
+    if is_classification:
+        y = y_class
+        y_test = y_test_class
+    else:
+        y = y_reg
+        y_test = y_test_reg
+    n_variants = len(np.unique(w))
     metalearner_params = {
         "is_classification": is_classification,
         "n_variants": n_variants,
@@ -105,18 +112,6 @@ def test_metalearnergridsearch_smoke(
         base_learner_grid=base_learner_grid,
         param_grid=param_grid,
     )
-    n_samples = 250
-    n_test_samples = 100
-    X = rng.standard_normal((n_samples, 3))
-    X_test = rng.standard_normal((n_test_samples, 3))
-    if is_classification:
-        y = rng.integers(0, 2, n_samples)
-        y_test = rng.integers(0, 2, n_test_samples)
-    else:
-        y = rng.standard_normal(n_samples)
-        y_test = rng.standard_normal(n_test_samples)
-    w = rng.integers(0, n_variants, n_samples)
-    w_test = rng.integers(0, n_variants, n_test_samples)
 
     gs.fit(X, y, w, X_test, y_test, w_test)
     assert gs.results_ is not None
@@ -131,17 +126,9 @@ def test_metalearnergridsearch_smoke(
     assert train_scores_cols == test_scores_cols
 
 
-def test_metalearnergridsearch_reuse_nuisance_smoke(rng):
-    n_variants = 3
-    n_samples = 250
-    n_test_samples = 100
-
-    X = rng.standard_normal((n_samples, 3))
-    X_test = rng.standard_normal((n_test_samples, 3))
-    y = rng.standard_normal(n_samples)
-    y_test = rng.standard_normal(n_test_samples)
-    w = rng.integers(0, n_variants, n_samples)
-    w_test = rng.integers(0, n_variants, n_test_samples)
+def test_metalearnergridsearch_reuse_nuisance_smoke(grid_search_data):
+    X, _, y, w, X_test, _, y_test, w_test = grid_search_data
+    n_variants = len(np.unique(w))
 
     tl = TLearner(
         False,
@@ -190,17 +177,9 @@ def test_metalearnergridsearch_reuse_nuisance_smoke(rng):
     assert gs.results_.shape[0] == 8
 
 
-def test_metalearnergridsearch_reuse_propensity_smoke(rng):
-    n_variants = 3
-    n_samples = 250
-    n_test_samples = 100
-
-    X = rng.standard_normal((n_samples, 3))
-    X_test = rng.standard_normal((n_test_samples, 3))
-    y = rng.standard_normal(n_samples)
-    y_test = rng.standard_normal(n_test_samples)
-    w = rng.integers(0, n_variants, n_samples)
-    w_test = rng.integers(0, n_variants, n_test_samples)
+def test_metalearnergridsearch_reuse_propensity_smoke(grid_search_data):
+    X, _, y, w, X_test, _, y_test, w_test = grid_search_data
+    n_variants = len(np.unique(w))
 
     rl = RLearner(
         False,
