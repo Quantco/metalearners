@@ -242,7 +242,7 @@ class MetaLearnerGridSearch:
         for base_learners in self.base_learner_grid:
             nuisance_model_factory = {
                 model_kind: base_learners[model_kind]
-                for model_kind in nuisance_models_no_propensity
+                for model_kind in nuisance_models_wo_propensity
             }
             treatment_model_factory = {
                 model_kind: base_learners[model_kind] for model_kind in treatment_models
@@ -261,7 +261,7 @@ class MetaLearnerGridSearch:
             for params in ParameterGrid(base_learner_param_grids):
                 nuisance_model_params = {
                     model_kind: params[model_kind]
-                    for model_kind in nuisance_models_no_propensity
+                    for model_kind in nuisance_models_wo_propensity
                 }
                 treatment_model_params = {
                     model_kind: params[model_kind] for model_kind in treatment_models
