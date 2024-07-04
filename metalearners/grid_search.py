@@ -158,7 +158,7 @@ class MetaLearnerGridSearch:
 
     If some model is not present in ``param_grid``, the default parameters will be used.
 
-    For how to define ``scoring`` check :meth:`~metalearners.metalearner.MetaLearner.evaluate`.
+    For information on how to define ``scoring`` see :meth:`~metalearners.metalearner.MetaLearner.evaluate`.
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
     """
