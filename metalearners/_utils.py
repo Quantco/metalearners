@@ -509,7 +509,7 @@ def check_spox_installed() -> None:
         )
 
 
-def infer_dtype_and_shape_onnx(tensor):
+def infer_dtype_and_shape_onnx(tensor) -> tuple[np.dtype, tuple]:
     check_onnx_installed()
     import onnx
 
