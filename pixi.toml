@@ -12,8 +12,6 @@ pre-commit = "*"
 git_root = "*"
 pip = "*"
 python = ">=3.10"
-setuptools-scm = "*"
-setuptools = ">=61"
 ipykernel = "*"
 ipywidgets = "*"
 lime = "*"
@@ -62,6 +60,14 @@ myst-nb = "*"
 [feature.docs.tasks]
 docs = "cd docs && make html "
 readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
+
+[feature.build.dependencies]
+build = "*"
+setuptools-scm = "*"
+setuptools = ">=61"
+
+[feature.build.tasks]
+build = "python -m build"
 
 [feature.py310.dependencies]
 python = "3.10.*"
