@@ -499,7 +499,7 @@ def check_onnx_installed():
         )
 
 
-def check_spox_installed():
+def check_spox_installed() -> None:
     """Ensures that ``spox`` is available."""
     try:
         import spox  # noqa F401
