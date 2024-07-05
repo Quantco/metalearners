@@ -135,14 +135,15 @@ class MetaLearnerGridSearch:
     Importantly, ``random_state`` must be passed through the ``random_state`` parameter
     and not through ``metalearner_params``.
 
-    ``base_learner_grid`` keys should be the names of the needed base models contained in the :class:`~metalearners.metalearners.MetaLearner`
-    defined by ``metalearner_factory``, for information about this names check
+    ``base_learner_grid`` keys should be the names of the needed base models contained in the
+    :class:`~metalearners.metalearners.MetaLearner` defined by ``metalearner_factory``, for
+    information about this names check
     :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
     :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`. The
     values should be sequences of model factories.
 
-    If base models are meant to be reused, they should be passed through ``metalearner_params`` and the corresponding keys
-    should not be passed to ``base_learner_grid``.
+    If base models are meant to be reused, they should be passed through ``metalearner_params``
+    and the corresponding keys should not be passed to ``base_learner_grid``.
 
     ``param_grid`` should contain the parameters grid for each type of model used by the
     base learners defined in ``base_learner_grid``. The keys should be strings with the
