@@ -129,8 +129,9 @@ class MetaLearnerGridSearch:
     """Exhaustive search over specified parameter values for a MetaLearner.
 
     ``metalearner_params`` should contain the necessary params for the MetaLearner initialization
-    such as ``n_variants`` and ``is_classification``. It can also contain optional parameters
-    that all MetaLearners should be initialized with such as ``n_folds`` or ``feature_set``.
+    such as ``n_variants`` and ``is_classification``. If one wants to pass optional parameters
+    to the ``MetaLearner`` initialization, such as ``n_folds`` or ``feature_set``, this should
+    be done by this way, too.
     Importantly, ``random_state`` must be passed through the ``random_state`` parameter
     and not through ``metalearner_params``.
 
