@@ -856,7 +856,7 @@ class MetaLearner(ABC):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
     ) -> dict[str, float]:
         r"""Evaluate the MetaLearner.
 

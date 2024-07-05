@@ -347,3 +347,25 @@ def feature_importance_dataset():
     w = pd.Series(w)
 
     return X, y, w
+
+
+@pytest.fixture(scope="session")
+def grid_search_data():
+    rng = np.random.default_rng(_SEED)
+    n_samples = 250
+    n_test_samples = 100
+    n_features = 3
+    n_variants = 4
+    X = rng.standard_normal((n_samples, n_features))
+    X_test = rng.standard_normal((n_test_samples, n_features))
+
+    y_class = rng.integers(0, 2, n_samples)
+    y_test_class = rng.integers(0, 2, n_test_samples)
+
+    y_reg = rng.standard_normal(n_samples)
+    y_test_reg = rng.standard_normal(n_test_samples)
+
+    w = rng.integers(0, n_variants, n_samples)
+    w_test = rng.integers(0, n_variants, n_test_samples)
+
+    return X, y_class, y_reg, w, X_test, y_test_class, y_test_reg, w_test

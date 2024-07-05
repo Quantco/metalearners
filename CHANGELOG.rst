@@ -12,6 +12,8 @@ Changelog
 
 **New features**
 
+* Implement :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
 * Add ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
   implement the abstract method for the :class:`metalearners.XLearner` and
   :class:`metalearners.DRLearner`.
