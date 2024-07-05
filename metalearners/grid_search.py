@@ -48,6 +48,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
         job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params
     )
     fit_time = time.time() - start_time
+    start_time = time.time()
 
     train_scores = job.metalearner.evaluate(
         X=job.X_train,
@@ -67,7 +68,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
         )
     else:
         test_scores = None
-    score_time = time.time() - fit_time
+    score_time = time.time() - start_time
     return _GSResult(
         metalearner=job.metalearner,
         fit_time=fit_time,
