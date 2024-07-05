@@ -406,11 +406,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return imputed_te_control, imputed_te_treatment
 
-    def build_onnx(
-        self,
-        models: Mapping[str, Sequence],
-        output_name: str = "tau",
-    ):
+    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op

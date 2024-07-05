@@ -1088,6 +1088,9 @@ class MetaLearner(ABC):
                     "features."
                 )
 
+    @abstractmethod
+    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
+
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
 

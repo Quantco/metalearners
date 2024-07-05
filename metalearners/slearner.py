@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -154,6 +155,7 @@ class SLearner(MetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
         self._fitted_treatments = convert_treatment(w)
+        self._n_features = X.shape[1]
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](
             **self.nuisance_model_params[_BASE_MODEL]
@@ -283,4 +285,10 @@ class SLearner(MetaLearner):
 
         return np.stack(conditional_average_outcomes_list, axis=1).reshape(
             n_obs, self.n_variants, -1
+        )
+
+    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        raise ValueError(
+            "The SLearner does not implement this method. Please refer to the tutorial "
+            "on the documentation on how to do this."
         )

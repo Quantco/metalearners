@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections.abc import Mapping, Sequence
 from itertools import chain
 
 import matplotlib.pyplot as plt
@@ -98,6 +99,8 @@ class _TestMetaLearner(MetaLearner):
 
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), 2, 1))
+
+    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
 
 
 @pytest.mark.parametrize("is_classification", [True, False])
