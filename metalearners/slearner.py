@@ -155,7 +155,6 @@ class SLearner(MetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y)
         self._fitted_treatments = convert_treatment(w)
-        self._n_features = X.shape[1]
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](
             **self.nuisance_model_params[_BASE_MODEL]
