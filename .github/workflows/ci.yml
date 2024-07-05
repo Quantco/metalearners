@@ -36,7 +36,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
       - name: Run mypy
         run: |
-          pixi run jupyter nbconvert --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags remove_cell --to script docs/examples/*.ipynb
+          pixi run jupyter nbconvert --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags no-convert --to script docs/examples/*.ipynb
           for file in docs/examples/*.txt; do mv -- "$file" "${file%.txt}.py"; done
           pixi run mypy docs/examples/*.py
 
