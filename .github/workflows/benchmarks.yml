@@ -19,8 +19,8 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
       - name: Install repository
         run: |
-          pixi run -e default postinstall
-          pixi run -e default python benchmarks/benchmark.py
+          pixi run -e benchmark postinstall
+          pixi run benchmark
       - name: Update readme.md
         run: |
           line_number=`grep "| T-learner" benchmarks/readme.md -n | cut -f1 -d:`
