@@ -4,10 +4,10 @@
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from git_root import git_root
 from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -335,10 +335,12 @@ def validate_valid_treatment_variant_not_control(
         )
 
 
-def load_mindset_data() -> tuple[pd.DataFrame, str, str, list[str], list[str]]:
+def load_mindset_data(
+    path: Path,
+) -> tuple[pd.DataFrame, str, str, list[str], list[str]]:
     # TODO: Optionally make this function work with a URL instead of a file system reference.
     # That way, we don't need to package the data for someone to be able to use this function.
-    df = pd.read_csv(git_root("data/learning_mindset.zip"))
+    df = pd.read_csv(path)
     outcome_column = "achievement_score"
     treatment_column = "intervention"
     feature_columns = [
@@ -372,11 +374,12 @@ def load_mindset_data() -> tuple[pd.DataFrame, str, str, list[str], list[str]]:
 
 
 def load_twins_data(
+    path: Path,
     rng: np.random.Generator,
 ) -> tuple[pd.DataFrame, str, str, list[str], list[str], str]:
     # TODO: Optionally make this function work with a URL instead of a file system reference.
     # That way, we don't need to package the data for someone to be able to use this function.
-    df = pd.read_csv(git_root("data/twins.zip"))
+    df = pd.read_csv(path)
     drop_columns = [
         "bord",
         "brstate_reg",

@@ -1,9 +1,12 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
+from git_root import git_root
 
 from metalearners._utils import get_linear_dimension, load_mindset_data, load_twins_data
 from metalearners.data_generation import (
@@ -71,7 +74,7 @@ def rng():
 
 @pytest.fixture(scope="session")
 def mindset_data():
-    return load_mindset_data()
+    return load_mindset_data(Path(git_root()) / "data" / "learning_mindset.zip")
 
 
 @pytest.fixture(scope="session")
@@ -84,7 +87,7 @@ def twins_data():
         feature_columns,
         categorical_feature_columns,
         _,
-    ) = load_twins_data(rng)
+    ) = load_twins_data(Path(git_root()) / "data" / "twins.zip", rng)
     return (
         chosen_df,
         outcome_column,

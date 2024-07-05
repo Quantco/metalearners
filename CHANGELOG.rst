@@ -12,15 +12,18 @@ Changelog
 
 **New features**
 
-* Implemented :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+* Implement :class:`metalearners.grid_search.MetaLearnerGridSearch`.
 
-* Added ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
-  implemented the abstract method for the :class:`metalearners.XLearner` and
+* Add ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
+  implement the abstract method for the :class:`metalearners.XLearner` and
   :class:`metalearners.DRLearner`.
 
 **Other changes**
 
 * Increase lower bound on ``scikit-learn`` from 1.3 to 1.4.
+
+* Drop the run dependency on ``git_root``.
+
 
 0.5.0 (2024-06-18)
 ------------------
