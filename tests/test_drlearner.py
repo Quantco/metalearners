@@ -3,7 +3,6 @@
 
 import numpy as np
 import onnxruntime as rt
-import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnxmltools import convert_lightgbm, convert_xgboost
@@ -37,7 +36,7 @@ from .conftest import all_sklearn_regressors
 )
 @pytest.mark.parametrize("is_classification", [True, False])
 def test_drlearner_onnx(
-    treatment_model_factory, onnx_converter, is_classification, rng
+    treatment_model_factory, onnx_converter, is_classification, onnx_dataset
 ):
     supports_categoricals = treatment_model_factory in [
         LGBMRegressor,
@@ -50,32 +49,22 @@ def test_drlearner_onnx(
     if treatment_model_factory == RadiusNeighborsRegressor:
         treatment_model_params = {"radius": 10}
 
-    # TODO: move this generation to a fixture
-    n_samples = 300
-    n_numerical_features = 5
-    n_variants = 3
+    X_numerical, X_with_categorical, y_class, y_reg, w = onnx_dataset
+    n_numerical_features = X_numerical.shape[1]
 
-    X = rng.standard_normal((n_samples, n_numerical_features))
     if supports_categoricals:
-        n_categorical_features = 2
-        X = pd.DataFrame(X)
-        X[n_numerical_features] = pd.Series(
-            rng.integers(10, 13, n_samples), dtype="category"
-        )  # not start at 0
-        X[n_numerical_features + 1] = pd.Series(
-            rng.choice([-5, 4, -10, -32], size=n_samples), dtype="category"
-        )  # not consecutive
+        X = X_with_categorical
+        n_categorical_features = X.shape[1] - n_numerical_features
     else:
+        X = X_numerical
         n_categorical_features = 0
-
+    n_variants = len(np.unique(w))
     if is_classification:
-        n_classes = 2
-        y = rng.integers(0, n_classes, size=n_samples)
+        y = y_class
         nuisance_model_factory = LogisticRegression
     else:
-        y = rng.standard_normal(n_samples)
+        y = y_reg
         nuisance_model_factory = LinearRegression
-    w = rng.integers(0, n_variants, n_samples)
 
     ml = DRLearner(
         is_classification,

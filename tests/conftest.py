@@ -9,11 +9,9 @@ import pytest
 from git_root import git_root
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis,
     QuadraticDiscriminantAnalysis,
 )
 from sklearn.ensemble import (
-    AdaBoostClassifier,
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
@@ -84,7 +82,7 @@ _SEED = 1337
 _SIGMA_TAU = 0.5
 
 all_sklearn_classifiers = [
-    AdaBoostClassifier,
+    # AdaBoostClassifier, # The output probabilities are wrong when there are only two classes, see https://github.com/onnx/sklearn-onnx/issues/1117
     BaggingClassifier,
     CalibratedClassifierCV,
     DecisionTreeClassifier,
@@ -94,7 +92,7 @@ all_sklearn_classifiers = [
     GradientBoostingClassifier,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
-    LinearDiscriminantAnalysis,
+    # LinearDiscriminantAnalysis, # The output probabilities are wrong when there are only two classes, see https://github.com/onnx/sklearn-onnx/issues/1116
     LogisticRegression,
     LogisticRegressionCV,
     MLPClassifier,
@@ -369,3 +367,27 @@ def grid_search_data():
     w_test = rng.integers(0, n_variants, n_test_samples)
 
     return X, y_class, y_reg, w, X_test, y_test_class, y_test_reg, w_test
+
+
+@pytest.fixture(scope="session")
+def onnx_dataset():
+    rng = np.random.default_rng(_SEED)
+    n_samples = 300
+    n_numerical_features = 5
+
+    X_numerical = rng.standard_normal((n_samples, n_numerical_features))
+
+    X_with_categorical = pd.DataFrame(X_numerical)
+    X_with_categorical[n_numerical_features] = pd.Series(
+        rng.integers(10, 13, n_samples), dtype="category"
+    )  # not start at 0
+    X_with_categorical[n_numerical_features + 1] = pd.Series(
+        rng.choice([-5, 4, -10, -32], size=n_samples), dtype="category"
+    )  # not consecutive
+
+    y_class = rng.integers(0, 2, size=n_samples)
+    y_reg = rng.standard_normal(n_samples)
+
+    w = rng.integers(0, 3, n_samples)
+
+    return X_numerical, X_with_categorical, y_class, y_reg, w

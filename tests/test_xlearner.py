@@ -63,7 +63,7 @@ def test_xlearner_onnx(
     treatment_onnx_converter,
     propensity_onnx_converter,
     is_classification,
-    rng,
+    onnx_dataset,
 ):
     treatment_model_params: Params | None
     if treatment_model_factory == RadiusNeighborsRegressor:
@@ -76,19 +76,17 @@ def test_xlearner_onnx(
     else:
         propensity_model_params = None
 
-    n_samples = 300
-    n_numerical_features = 5
-    n_variants = 3
-    X = rng.standard_normal((n_samples, n_numerical_features))
+    X, _, y_class, y_reg, w = onnx_dataset
+    n_numerical_features = X.shape[1]
+    n_variants = len(np.unique(w))
     if is_classification:
-        n_classes = 2
-        y = rng.integers(0, n_classes, size=n_samples)
+        y = y_class
         nuisance_model_factory = LGBMClassifier
     else:
-        y = rng.standard_normal(n_samples)
+        y = y_reg
         nuisance_model_factory = LGBMRegressor
+
     nuisance_model_params = {"n_estimators": 1}
-    w = rng.integers(0, n_variants, n_samples)
 
     ml = XLearner(
         is_classification,

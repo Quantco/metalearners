@@ -5,7 +5,6 @@ from functools import partial
 
 import numpy as np
 import onnxruntime as rt
-import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnxmltools import convert_lightgbm, convert_xgboost
@@ -15,7 +14,6 @@ from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
 )
-from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
@@ -55,7 +53,9 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
         ]
     ),
 )
-def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification, rng):
+def test_tlearner_onnx(
+    nuisance_model_factory, onnx_converter, is_classification, onnx_dataset
+):
     supports_categoricals = nuisance_model_factory in [
         LGBMClassifier,
         LGBMRegressor,
@@ -81,30 +81,21 @@ def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification
         nuisance_model_params = {"enable_categorical": True}
     else:
         nuisance_model_params = None
-    n_samples = 300
-    n_numerical_features = 5
-    n_variants = 3
-    n_classes = (
-        2 if nuisance_model_factory == GaussianProcessClassifier else 3
-    )  # convert_sklearn only supports binary classification with GaussianProcessClassifier
-    X = rng.standard_normal((n_samples, n_numerical_features))
-    if supports_categoricals:
-        n_categorical_features = 2
-        X = pd.DataFrame(X)
-        X[n_numerical_features] = pd.Series(
-            rng.integers(10, 13, n_samples), dtype="category"
-        )  # not start at 0
-        X[n_numerical_features + 1] = pd.Series(
-            rng.choice([-5, 4, -10, -32], size=n_samples), dtype="category"
-        )  # not consecutive
-    else:
-        n_categorical_features = 0
 
-    if is_classification:
-        y = rng.integers(0, n_classes, size=n_samples)
+    X_numerical, X_with_categorical, y_class, y_reg, w = onnx_dataset
+    n_numerical_features = X_numerical.shape[1]
+
+    if supports_categoricals:
+        X = X_with_categorical
+        n_categorical_features = X.shape[1] - n_numerical_features
     else:
-        y = rng.standard_normal(n_samples)
-    w = rng.integers(0, n_variants, n_samples)
+        X = X_numerical
+        n_categorical_features = 0
+    n_variants = len(np.unique(w))
+    if is_classification:
+        y = y_class
+    else:
+        y = y_reg
 
     ml = TLearner(
         is_classification,
@@ -140,8 +131,8 @@ def test_tlearner_onnx(nuisance_model_factory, onnx_converter, is_classification
         onnx_X = X.to_numpy(np.float32)
         # This is needed for categoricals as LGBM uses the categorical codes, when
         # other implementations support categoricals this may need to be changed
-        onnx_X[:, n_numerical_features] = X[n_numerical_features].cat.codes
-        onnx_X[:, n_numerical_features + 1] = X[n_numerical_features + 1].cat.codes
+        for i in range(n_categorical_features):
+            onnx_X[:, n_numerical_features + i] = X[n_numerical_features + i].cat.codes
     else:
         onnx_X = X.astype(np.float32)
 
