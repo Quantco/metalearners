@@ -473,6 +473,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             )
             tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
             if self.is_classification:
+                if self._supports_multi_class():
+                    raise ValueError(
+                        "ONNX conversion is not implemented for a multi-class output."
+                    )
                 tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
             tau_hat.append(tau_hat_tv)
 
