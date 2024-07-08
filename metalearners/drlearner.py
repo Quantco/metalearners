@@ -13,6 +13,7 @@ from metalearners._utils import (
     check_onnx_installed,
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
+    copydoc,
     get_one,
     get_predict,
     get_predict_proba,
@@ -324,7 +325,9 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return pseudo_outcome
 
+    @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """In the DRLearner case, the necessary models are: ``"treatment_model"``."""
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op

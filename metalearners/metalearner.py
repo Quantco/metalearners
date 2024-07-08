@@ -1043,6 +1043,15 @@ class MetaLearner(ABC):
     def _validate_onnx_models(
         self, models: Mapping[str, Sequence], necessary_models: Set[str]
     ):
+        """Validates that the converted ONNX models are correct.
+
+        Specifically it validates the following:
+        * The ``necessary_models`` are present in the ``models``` dictionary
+        * The number of models for each model matches the cardinality in the MetaLearner
+        * All ONNX have the same input format
+        * The models with ``"predict"`` as ``predict_method`` have only one output
+        * The models with ``"predict_proba"`` as ``predict_method`` have a probabilities output
+        """
         if set(models.keys()) != necessary_models:
             raise ValueError(f"{necessary_models} should be present in models keys.")
         specs_look_up = (
@@ -1089,7 +1098,15 @@ class MetaLearner(ABC):
                 )
 
     @abstractmethod
-    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
+    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """Convert the MetaLearner to an ONNX model.
+
+        ``output_name`` can be used to change the output name of the ONNX model.
+
+        ``models`` should be a dictionary of sequences with the necessary base models converted to
+        ONNX.
+        """
+        ...
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):

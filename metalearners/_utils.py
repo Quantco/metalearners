@@ -522,6 +522,7 @@ def check_spox_installed() -> None:
 
 
 def infer_dtype_and_shape_onnx(tensor) -> tuple[np.dtype, tuple]:
+    """Returns the ``np.dtype`` and shape of an ONNX tensor."""
     check_onnx_installed()
     import onnx
 
@@ -534,6 +535,8 @@ def infer_dtype_and_shape_onnx(tensor) -> tuple[np.dtype, tuple]:
 
 
 def infer_probabilities_output(model) -> tuple[int, str]:
+    """Returns the index and name of the output which contains the probabilities outcome
+    in a ONNX classifier."""
     check_onnx_installed()
     for i, output in enumerate(model.graph.output):
         if output.name in ["probabilities", "output_probability"]:
@@ -542,6 +545,8 @@ def infer_probabilities_output(model) -> tuple[int, str]:
 
 
 def infer_input_dict(model) -> dict:
+    """Returns a dict where the keys are the input names of the model and the values are
+    ``spox.Var`` with the corresponding shape and type."""
     check_onnx_installed()
     check_spox_installed()
     from spox import Tensor, Var, argument

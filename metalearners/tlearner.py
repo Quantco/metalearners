@@ -11,6 +11,7 @@ from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
     check_onnx_installed,
     check_spox_installed,
+    copydoc,
     index_matrix,
     infer_input_dict,
     infer_probabilities_output,
@@ -136,7 +137,12 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             is_treatment_model=False,
         )
 
+    @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """In the TLearner case, the necessary models are:
+
+        ``"variant_outcome_model"``.
+        """
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
