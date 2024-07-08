@@ -1085,7 +1085,7 @@ class MetaLearner(ABC):
                             found_probabilities = True
                     if not found_probabilities:
                         raise ValueError(
-                            f"ONNX {model_kind} with index {i} needs to have an output "
+                            f"ONNX {model_kind} model with index {i} needs to have an output "
                             "with name 'probabilities' or 'output_probability'."
                         )
 
