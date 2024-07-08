@@ -1,6 +1,8 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from itertools import repeat
+
 import numpy as np
 import onnxruntime as rt
 import pytest
@@ -25,7 +27,7 @@ from .conftest import all_sklearn_regressors
         list(
             zip(
                 all_sklearn_regressors,
-                [convert_sklearn] * len(all_sklearn_regressors),
+                repeat(convert_sklearn),
             )
         )
         + [

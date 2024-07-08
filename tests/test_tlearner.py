@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from functools import partial
+from itertools import repeat
 
 import numpy as np
 import onnxruntime as rt
@@ -33,18 +34,11 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
         list(
             zip(
                 all_sklearn_classifiers,
-                [partial(convert_sklearn, options={"zipmap": False})]
-                * len(all_sklearn_classifiers),
-                [True] * len(all_sklearn_classifiers),
+                repeat(partial(convert_sklearn, options={"zipmap": False})),
+                repeat([True]),
             )
         )
-        + list(
-            zip(
-                all_sklearn_regressors,
-                [convert_sklearn] * len(all_sklearn_regressors),
-                [False] * len(all_sklearn_regressors),
-            )
-        )
+        + list(zip(all_sklearn_regressors, repeat(convert_sklearn), repeat(False)))
         + [
             (LGBMClassifier, partial(convert_lightgbm, zipmap=False), True),
             (LGBMRegressor, convert_lightgbm, False),

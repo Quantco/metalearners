@@ -3,6 +3,7 @@
 
 import random
 from functools import partial
+from itertools import repeat
 
 import numpy as np
 import onnx
@@ -29,7 +30,7 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
         list(
             zip(
                 all_sklearn_regressors,
-                [convert_sklearn] * len(all_sklearn_regressors),
+                repeat(convert_sklearn),
             )
         )
         + [
