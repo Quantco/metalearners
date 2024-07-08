@@ -30,6 +30,10 @@ jobs:
     name: Upload to PyPI
     needs: [build]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    environment: pypi
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
