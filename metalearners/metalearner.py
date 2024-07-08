@@ -27,6 +27,7 @@ from metalearners._typing import (
     _ScikitModel,
 )
 from metalearners._utils import (
+    ONNX_PROBABILITIES_OUTPUTS,
     default_metric,
     index_matrix,
     validate_model_and_predict_method,
@@ -1081,12 +1082,12 @@ class MetaLearner(ABC):
                 elif predict_method == "predict_proba":
                     found_probabilities = False
                     for output in model.graph.output:
-                        if output.name in ["probabilities", "output_probability"]:
+                        if output.name in ONNX_PROBABILITIES_OUTPUTS:
                             found_probabilities = True
                     if not found_probabilities:
                         raise ValueError(
                             f"ONNX {model_kind} model with index {model_index} needs to have an output "
-                            "with name 'probabilities' or 'output_probability'."
+                            f"with name in {ONNX_PROBABILITIES_OUTPUTS}."
                         )
 
     def _validate_feature_set_all(self):

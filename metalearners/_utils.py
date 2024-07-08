@@ -18,7 +18,7 @@ from metalearners._typing import Matrix, PredictMethod, Vector, _ScikitModel
 
 _PREDICT = "predict"
 _PREDICT_PROBA = "predict_proba"
-
+ONNX_PROBABILITIES_OUTPUTS = ["probabilities", "output_probability"]
 
 default_rng = np.random.default_rng()
 
@@ -539,7 +539,7 @@ def infer_probabilities_output(model) -> tuple[int, str]:
     in a ONNX classifier."""
     check_onnx_installed()
     for i, output in enumerate(model.graph.output):
-        if output.name in ["probabilities", "output_probability"]:
+        if output.name in ONNX_PROBABILITIES_OUTPUTS:
             return i, output.name
     raise ValueError("No probabilities output was found.")
 
