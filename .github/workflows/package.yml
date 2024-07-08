@@ -1,5 +1,9 @@
 name: Package
-on: [push]
+on:
+  push:
+  release:
+    types:
+      - published
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
