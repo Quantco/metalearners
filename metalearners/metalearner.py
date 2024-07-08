@@ -1059,7 +1059,7 @@ class MetaLearner(ABC):
         )
         input_format = None
         for model_kind in necessary_models:
-            model_specs = specs_look_up[model_kind]
+            model_specification = specifications[model_kind]
             if len(models[model_kind]) != model_specs["cardinality"](self):
                 raise ValueError(
                     f"{model_kind} cardinality does not match the expected cardinality."
