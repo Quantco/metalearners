@@ -510,6 +510,10 @@ class RLearner(MetaLearner):
 
         return pseudo_outcomes, weights
 
+    @classmethod
+    def necessary_onnx_models(cls) -> set[str]:
+        return {TREATMENT_MODEL}
+
     @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the RLearner case, the necessary models are:
@@ -523,7 +527,7 @@ class RLearner(MetaLearner):
         from spox import Var, build, inline
 
         self._validate_feature_set_none()
-        self._validate_onnx_models(models, {TREATMENT_MODEL})
+        self._validate_onnx_models(models, self.necessary_onnx_models())
 
         input_dict = infer_input_dict(models[TREATMENT_MODEL][0])
 

@@ -137,6 +137,10 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             is_treatment_model=False,
         )
 
+    @classmethod
+    def necessary_onnx_models(cls) -> set[str]:
+        return {VARIANT_OUTCOME_MODEL}
+
     @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the TLearner case, the necessary models are:
@@ -150,7 +154,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         from spox import build, inline
 
         self._validate_feature_set_none()
-        self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
+        self._validate_onnx_models(models, self.necessary_onnx_models())
 
         input_dict = infer_input_dict(models[VARIANT_OUTCOME_MODEL][0])
 

@@ -407,6 +407,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return imputed_te_control, imputed_te_treatment
 
+    @classmethod
+    def necessary_onnx_models(cls) -> set[str]:
+        return {PROPENSITY_MODEL, CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
+
     @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the XLearner case, the necessary models are:
@@ -422,9 +426,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         from spox import Var, build, inline
 
         self._validate_feature_set_none()
-        self._validate_onnx_models(
-            models, {PROPENSITY_MODEL, CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
-        )
+        self._validate_onnx_models(models, self.necessary_onnx_models())
 
         input_dict = infer_input_dict(models[PROPENSITY_MODEL][0])
 
