@@ -102,6 +102,10 @@ class _TestMetaLearner(MetaLearner):
 
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
 
+    @classmethod
+    def necessary_onnx_models(cls) -> set[str]:
+        return set()
+
 
 @pytest.mark.parametrize("is_classification", [True, False])
 @pytest.mark.parametrize("nuisance_model_params", [None, {}, {"n_estimators": 5}])
