@@ -141,7 +141,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the TLearner case, the necessary models are:
 
-        ``"variant_outcome_model"``.
+        * ``"variant_outcome_model"``
         """
         check_onnx_installed()
         check_spox_installed()

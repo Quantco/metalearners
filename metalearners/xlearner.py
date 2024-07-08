@@ -409,8 +409,12 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
     @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
-        """In the XLearner case, the necessary models are: ``"propensity_model"``,
-        ``"control_effect_model"`` and ``"treatment_effect_model"``."""
+        """In the XLearner case, the necessary models are:
+
+        * ``"propensity_model"``
+        * ``"control_effect_model"``
+        * ``"treatment_effect_model"``
+        """
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op

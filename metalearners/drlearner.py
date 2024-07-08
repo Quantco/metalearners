@@ -327,7 +327,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
     @copydoc(MetaLearner.build_onnx, sep="")
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
-        """In the DRLearner case, the necessary models are: ``"treatment_model"``."""
+        """In the DRLearner case, the necessary models are:
+
+        * ``"treatment_model"``
+        """
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
