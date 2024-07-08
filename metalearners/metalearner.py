@@ -1054,7 +1054,7 @@ class MetaLearner(ABC):
         """
         if set(models.keys()) != necessary_models:
             raise ValueError(f"{necessary_models} should be present in models keys.")
-        specs_look_up = (
+        specifications = (
             self.nuisance_model_specifications() | self.treatment_model_specifications()
         )
         input_format = None
