@@ -68,6 +68,9 @@ html_static_path = ["_static"]
 numpydoc_show_class_members = False
 
 
+html_css_files = ["custom.css"]
+
+
 # Copied and adapted from
 # https://github.com/pandas-dev/pandas/blob/4a14d064187367cacab3ff4652a12a0e45d0711b/doc/source/conf.py#L613-L659
 # Required configuration function to use sphinx.ext.linkcode
