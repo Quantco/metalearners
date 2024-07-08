@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TypedDict
@@ -856,7 +856,7 @@ class MetaLearner(ABC):
         w: Vector,
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
-        scoring: Mapping[str, list[str | Callable]] | None = None,
+        scoring: Scoring | None = None,
     ) -> dict[str, float]:
         r"""Evaluate the MetaLearner.
 
