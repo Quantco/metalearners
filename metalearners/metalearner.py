@@ -1060,32 +1060,32 @@ class MetaLearner(ABC):
         input_format = None
         for model_kind in necessary_models:
             model_specification = specifications[model_kind]
-            if len(models[model_kind]) != model_specs["cardinality"](self):
+            if len(models[model_kind]) != model_specification["cardinality"](self):
                 raise ValueError(
                     f"{model_kind} cardinality does not match the expected cardinality."
                 )
-            predict_method = model_specs["predict_method"](self)
+            predict_method = model_specification["predict_method"](self)
             for model_index, model in enumerate(models[model_kind]):
                 if input_format is None:
-                    input_format = m.graph.input
-                elif input_format != m.graph.input:
+                    input_format = model.graph.input
+                elif input_format != model.graph.input:
                     raise ValueError(
                         "Some ONNX model has a different input, check that all models have "
                         "the same input format."
                     )
-                if predict_method == "predict" and len(m.graph.output) != 1:
+                if predict_method == "predict" and len(model.graph.output) != 1:
                     raise ValueError(
-                        f"ONNX {model_kind} with index {i} has {len(m.graph.output)} "
+                        f"ONNX {model_kind} with index {model_index} has {len(model.graph.output)} "
                         "outputs and should have only one."
                     )
                 elif predict_method == "predict_proba":
                     found_probabilities = False
-                    for output in m.graph.output:
+                    for output in model.graph.output:
                         if output.name in ["probabilities", "output_probability"]:
                             found_probabilities = True
                     if not found_probabilities:
                         raise ValueError(
-                            f"ONNX {model_kind} model with index {i} needs to have an output "
+                            f"ONNX {model_kind} model with index {model_index} needs to have an output "
                             "with name 'probabilities' or 'output_probability'."
                         )
 
