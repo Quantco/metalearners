@@ -43,9 +43,10 @@ def test_r_loss(use_pandas):
     "treatment_model_factory, onnx_converter",
     (
         list(
+
             zip(
                 all_sklearn_regressors,
-                [convert_sklearn] * len(all_sklearn_regressors),
+                repeat(convert_sklearn),
             )
         )
         + [
