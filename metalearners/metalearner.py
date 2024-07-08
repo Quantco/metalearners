@@ -1065,7 +1065,7 @@ class MetaLearner(ABC):
                     f"{model_kind} cardinality does not match the expected cardinality."
                 )
             predict_method = model_specs["predict_method"](self)
-            for i, m in enumerate(models[model_kind]):
+            for model_index, model in enumerate(models[model_kind]):
                 if input_format is None:
                     input_format = m.graph.input
                 elif input_format != m.graph.input:
