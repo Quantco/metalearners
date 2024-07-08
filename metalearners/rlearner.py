@@ -535,9 +535,9 @@ class RLearner(MetaLearner):
             tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
             if self.is_classification:
                 tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
-            tau_hat.append(tau_hat_tv)
+            tau_hats.append(tau_hat_tv)
 
         tau_hat = op.concat(tau_hats, axis=1)
-        final_model = build(input_dict, {output_name: cate})
+        final_model = build(input_dict, {output_name: tau_hat})
         check_model(final_model, full_check=True)
         return final_model
