@@ -537,7 +537,7 @@ class RLearner(MetaLearner):
                 tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
             tau_hat.append(tau_hat_tv)
 
-        cate = op.concat(tau_hat, axis=1)
+        tau_hat = op.concat(tau_hats, axis=1)
         final_model = build(input_dict, {output_name: cate})
         check_model(final_model, full_check=True)
         return final_model
