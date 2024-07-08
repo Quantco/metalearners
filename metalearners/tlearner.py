@@ -149,7 +149,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         from onnx.checker import check_model
         from spox import build, inline
 
-        self._validate_feature_set_all()
+        self._validate_feature_set_none()
         self._validate_onnx_models(models, {VARIANT_OUTCOME_MODEL})
 
         input_dict = infer_input_dict(models[VARIANT_OUTCOME_MODEL][0])

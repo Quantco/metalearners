@@ -421,7 +421,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         from onnx.checker import check_model
         from spox import Var, build, inline
 
-        self._validate_feature_set_all()
+        self._validate_feature_set_none()
         self._validate_onnx_models(
             models, {PROPENSITY_MODEL, CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL}
         )

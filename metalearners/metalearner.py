@@ -1090,12 +1090,12 @@ class MetaLearner(ABC):
                             f"with name in {ONNX_PROBABILITIES_OUTPUTS}."
                         )
 
-    def _validate_feature_set_all(self):
+    def _validate_feature_set_none(self):
         for feature_set in self.feature_set.values():
             if feature_set is not None:
                 raise ValueError(
-                    "ONNX conversion can only be used if all base models use all the "
-                    "features."
+                    "ONNX conversion can only be used if all base models have ``None`` "
+                    "as feature set (and therefore use all the features)."
                 )
 
     @abstractmethod
