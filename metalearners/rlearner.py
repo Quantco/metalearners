@@ -529,7 +529,7 @@ class RLearner(MetaLearner):
 
         treatment_output_name = models[TREATMENT_MODEL][0].graph.output[0].name
 
-        tau_hat: list[Var] = []
+        tau_hats: list[Var] = []
         for m in models[TREATMENT_MODEL]:
             tau_hat_tv = inline(m)(**input_dict)[treatment_output_name]
             tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
