@@ -7,14 +7,14 @@
 Changelog
 =========
 
-0.6.0 (2024-06-**)
+0.6.0 (2024-07-08)
 ------------------
 
 **New features**
 
 * Implement :class:`metalearners.grid_search.MetaLearnerGridSearch`.
 
-* Add ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
+* Add a ``scoring`` parameter to :meth:`metalearners.metalearner.MetaLearner.evaluate` and
   implement the abstract method for the :class:`metalearners.XLearner` and
   :class:`metalearners.DRLearner`.
 
