@@ -115,13 +115,16 @@ def _format_results(results: Sequence[_GSResult]) -> pd.DataFrame:
                 row[f"test_{name}"] = value
         rows.append(row)
     df = pd.DataFrame(rows)
-    index_columns = [
-        c
-        for c in df.columns
-        if not c.endswith("_time")
-        and not c.startswith("train_")
-        and not c.startswith("test_")
-    ]
+    sorted_cols = sorted(df.columns)
+    index_columns = ["metalearner"]
+    for model_kind in nuisance_models:
+        for c in sorted_cols:
+            if c.startswith(model_kind):
+                index_columns.append(c)
+    for model_kind in treatment_models:
+        for c in sorted_cols:
+            if c.startswith(model_kind):
+                index_columns.append(c)
     df = df.set_index(index_columns)
     return df
 
