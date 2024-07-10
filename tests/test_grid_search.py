@@ -64,7 +64,7 @@ from metalearners.xlearner import XLearner
             6,
             [
                 "metalearner",
-                "variant_outcome_model",
+                "variant_outcome_model",  # The order of the nuisance models depends on the order of nuisance_model_specifications()
                 "propensity_model",
                 "propensity_model_n_estimators",
                 "control_effect_model",
