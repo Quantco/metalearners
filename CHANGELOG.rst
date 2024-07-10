@@ -12,7 +12,7 @@ Changelog
 
 **Other changes**
 
-* Changed the index columns order in `MetaLearnerGridSearch.results_`.
+* Changed the index columns order in ``MetaLearnerGridSearch.results_``.
 
 0.6.0 (2024-07-08)
 ------------------
