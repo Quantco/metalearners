@@ -59,6 +59,9 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
 
+    If ``adaptive_clipping`` is set to ``True``, then the pseudo outcomes are computed using
+    adaptive propensity clipping described in section 4.1, equation *DR-Switch* of
+    `Mahajan et al. (2024) <https://arxiv.org/pdf/2211.01939>`_.
     """
 
     @classmethod
