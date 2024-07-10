@@ -83,12 +83,12 @@ def _format_results(results: Sequence[_GSResult]) -> pd.DataFrame:
     for result in results:
         row: dict[str, str | int | float] = {}
         row["metalearner"] = result.metalearner.__class__.__name__
-        nuisance_models = (
+        nuisance_models = sorted(
             set(result.metalearner.nuisance_model_specifications().keys())
             - result.metalearner._prefitted_nuisance_models
         )
-        treatment_models = set(
-            result.metalearner.treatment_model_specifications().keys()
+        treatment_models = sorted(
+            set(result.metalearner.treatment_model_specifications().keys())
         )
         for model_kind in nuisance_models:
             row[model_kind] = result.metalearner.nuisance_model_factory[

@@ -64,9 +64,9 @@ from metalearners.xlearner import XLearner
             6,
             [
                 "metalearner",
-                "variant_outcome_model",  # The order of the nuisance models depends on the order of nuisance_model_specifications()
                 "propensity_model",
                 "propensity_model_n_estimators",
+                "variant_outcome_model",
                 "control_effect_model",
                 "control_effect_model_n_estimators",
                 "treatment_effect_model",
@@ -90,9 +90,9 @@ from metalearners.xlearner import XLearner
             9,
             [
                 "metalearner",
+                "outcome_model",
                 "propensity_model",
                 "propensity_model_n_estimators",
-                "outcome_model",
                 "treatment_model",
                 "treatment_model_learning_rate",
                 "treatment_model_n_estimators",
