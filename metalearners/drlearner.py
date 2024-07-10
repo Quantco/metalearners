@@ -268,6 +268,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
         epsilon: float = _EPSILON,
+        adaptive_clipping: bool = False,
     ) -> np.ndarray:
         """Compute the DR-Learner pseudo outcome."""
         validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
@@ -316,5 +317,13 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             * (w == 0)
             - y0_estimate
         )
+
+        if adaptive_clipping:
+            t_pseudo_outcome = y1_estimate - y0_estimate
+            pseudo_outcome = np.where(
+                propensity_estimates.min(axis=1) < epsilon,
+                t_pseudo_outcome,
+                pseudo_outcome,
+            )
 
         return pseudo_outcome
