@@ -6,7 +6,16 @@ import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import (
+    Features,
+    Matrix,
+    ModelFactory,
+    OosMethod,
+    Params,
+    Scoring,
+    Vector,
+    _ScikitModel,
+)
 from metalearners._utils import (
     clip_element_absolute_value_to_epsilon,
     get_one,
@@ -15,7 +24,7 @@ from metalearners._utils import (
     index_matrix,
     validate_valid_treatment_variant_not_control,
 )
-from metalearners.cross_fit_estimator import OVERALL
+from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
 from metalearners.metalearner import (
     NUISANCE,
     PROPENSITY_MODEL,
@@ -81,6 +90,40 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
     @classmethod
     def _supports_multi_class(cls) -> bool:
         return False
+
+    def __init__(
+        self,
+        is_classification: bool,
+        n_variants: int,
+        nuisance_model_factory: ModelFactory | None = None,
+        treatment_model_factory: ModelFactory | None = None,
+        propensity_model_factory: type[_ScikitModel] | None = None,
+        nuisance_model_params: Params | dict[str, Params] | None = None,
+        treatment_model_params: Params | dict[str, Params] | None = None,
+        propensity_model_params: Params | None = None,
+        fitted_nuisance_models: dict[str, list[CrossFitEstimator]] | None = None,
+        fitted_propensity_model: CrossFitEstimator | None = None,
+        feature_set: Features | dict[str, Features] | None = None,
+        n_folds: int | dict[str, int] = 10,
+        random_state: int | None = None,
+        adaptive_clipping: bool = False,
+    ):
+        super().__init__(
+            nuisance_model_factory=nuisance_model_factory,
+            is_classification=is_classification,
+            n_variants=n_variants,
+            treatment_model_factory=treatment_model_factory,
+            propensity_model_factory=propensity_model_factory,
+            nuisance_model_params=nuisance_model_params,
+            treatment_model_params=treatment_model_params,
+            propensity_model_params=propensity_model_params,
+            fitted_nuisance_models=fitted_nuisance_models,
+            fitted_propensity_model=fitted_propensity_model,
+            feature_set=feature_set,
+            n_folds=n_folds,
+            random_state=random_state,
+        )
+        self.adaptive_clipping = adaptive_clipping
 
     def fit(
         self,
@@ -268,7 +311,6 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
         epsilon: float = _EPSILON,
-        adaptive_clipping: bool = False,
     ) -> np.ndarray:
         """Compute the DR-Learner pseudo outcome."""
         validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
@@ -318,7 +360,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             - y0_estimate
         )
 
-        if adaptive_clipping:
+        if self.adaptive_clipping:
             t_pseudo_outcome = y1_estimate - y0_estimate
             pseudo_outcome = np.where(
                 propensity_estimates.min(axis=1) < epsilon,
