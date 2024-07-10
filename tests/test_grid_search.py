@@ -25,7 +25,7 @@ from metalearners.xlearner import XLearner
             {"base_model": [LinearRegression, LGBMRegressor]},
             {"base_model": {"LGBMRegressor": {"n_estimators": [1, 2]}}},
             3,
-            3,
+            ["metalearner", "base_model", "base_model_n_estimators"],
         ),
         (
             SLearner,
@@ -33,7 +33,7 @@ from metalearners.xlearner import XLearner
             {"base_model": [LogisticRegression, LGBMClassifier]},
             {"base_model": {"LGBMClassifier": {"n_estimators": [1, 2]}}},
             3,
-            3,
+            ["metalearner", "base_model", "base_model_n_estimators"],
         ),
         (
             TLearner,
@@ -41,7 +41,11 @@ from metalearners.xlearner import XLearner
             {"variant_outcome_model": [LinearRegression, LGBMRegressor]},
             {"variant_outcome_model": {"LGBMRegressor": {"n_estimators": [1, 2, 3]}}},
             4,
-            3,
+            [
+                "metalearner",
+                "variant_outcome_model",
+                "variant_outcome_model_n_estimators",
+            ],
         ),
         (
             XLearner,
@@ -58,7 +62,16 @@ from metalearners.xlearner import XLearner
                 "treatment_effect_model": {"LGBMRegressor": {"n_estimators": [1]}},
             },
             6,
-            8,
+            [
+                "metalearner",
+                "propensity_model",
+                "propensity_model_n_estimators",
+                "variant_outcome_model",
+                "control_effect_model",
+                "control_effect_model_n_estimators",
+                "treatment_effect_model",
+                "treatment_effect_model_n_estimators",
+            ],
         ),
         (
             RLearner,
@@ -75,7 +88,15 @@ from metalearners.xlearner import XLearner
                 },
             },
             9,
-            7,
+            [
+                "metalearner",
+                "outcome_model",
+                "propensity_model",
+                "propensity_model_n_estimators",
+                "treatment_model",
+                "treatment_model_learning_rate",
+                "treatment_model_n_estimators",
+            ],
         ),
         (
             DRLearner,
@@ -89,7 +110,13 @@ from metalearners.xlearner import XLearner
                 "propensity_model": {"LGBMClassifier": {"n_estimators": [1, 2, 3, 4]}},
             },
             4,
-            5,
+            [
+                "metalearner",
+                "propensity_model",
+                "propensity_model_n_estimators",
+                "variant_outcome_model",
+                "treatment_model",
+            ],
         ),
     ],
 )
@@ -125,7 +152,7 @@ def test_metalearnergridsearch_smoke(
     gs.fit(X, y, w, X_test, y_test, w_test)
     assert gs.results_ is not None
     assert gs.results_.shape[0] == expected_n_configs
-    assert len(gs.results_.index.names) == expected_index_cols
+    assert gs.results_.index.names == expected_index_cols
 
     train_scores_cols = set(
         c[6:] for c in list(gs.results_.columns) if c.startswith("train_")
