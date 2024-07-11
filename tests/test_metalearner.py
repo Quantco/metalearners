@@ -1076,7 +1076,8 @@ def test_validate_outcome_one_class(implementation, use_pandas, rng):
         LogisticRegression,
     )
     with pytest.raises(
-        ValueError, match="There is only one class present in the outcome."
+        ValueError,
+        match="There is only one class present in the classification outcome",
     ):
         ml.fit(X, y, w)
 
@@ -1102,5 +1103,7 @@ def test_validate_outcome_different_classes(implementation, use_pandas, rng):
         LinearRegression,
         LogisticRegression,
     )
-    with pytest.raises(ValueError, match="Not all variants have the same classes."):
+    with pytest.raises(
+        ValueError, match="have seen different sets of classification outcomes."
+    ):
         ml.fit(X, y, w)
