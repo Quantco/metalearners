@@ -332,7 +332,7 @@ class MetaLearner(ABC):
             for tv in range(self.n_variants):
                 if set(np.unique(y[w == tv])) != classes_0:
                     raise ValueError(
-                        "Not all variants have the same classes. Please check your data."
+                        f"Variants 0 and {tv} have seen different sets of classification outcomes. Please check your data."
                     )
             if len(classes_0) == 1:
                 raise ValueError(
