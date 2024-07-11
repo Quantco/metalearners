@@ -336,7 +336,7 @@ class MetaLearner(ABC):
                     )
             if len(classes_0) == 1:
                 raise ValueError(
-                    "There is only one class present in the outcome. Please check your data."
+                    f"There is only one class present in the classification outcome: {classes_0}. Please check your data."
                 )
 
     def _validate_models(self) -> None:
