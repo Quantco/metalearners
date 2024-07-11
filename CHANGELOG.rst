@@ -20,8 +20,7 @@ Changelog
 
 * Raise a custom error if only one class is present in a classification outcome.
 
-* Raise a custom error if the outcome classes present in all the treatment variants are
-  not the same so the reason is more understandable.
+* Raise a custom error if there are some treatment variants which have seen classification outcomes which have not appeared for some other treatment variant.
 
 0.6.0 (2024-07-08)
 ------------------
