@@ -10,6 +10,10 @@ Changelog
 0.6.1 (2024-07-xx)
 ------------------
 
+**New features**
+
+* Add optional ``adaptive_clipping`` parameter to :class:`metalearners.DRLearner`.
+
 **Other changes**
 
 * Changed the index columns order in ``MetaLearnerGridSearch.results_``.
