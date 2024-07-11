@@ -18,7 +18,7 @@ Changelog
 
 * Changed the index columns order in ``MetaLearnerGridSearch.results_``.
 
-* Raise a custom error if only one class is present in the outcome so the reason is more understandable.
+* Raise a custom error if only one class is present in a classification outcome.
 
 * Raise a custom error if the outcome classes present in all the treatment variants are
   not the same so the reason is more understandable.
