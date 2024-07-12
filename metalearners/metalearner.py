@@ -317,7 +317,7 @@ class MetaLearner(ABC):
                 f"Yet we found the values {set(np.unique(w))}."
             )
 
-    def _validate_outcome(self, y: Vector) -> None:
+    def _validate_outcome(self, y: Vector, w: Vector) -> None:
         if (
             self.is_classification
             and not self._supports_multi_class()
@@ -327,6 +327,17 @@ class MetaLearner(ABC):
                 f"{self.__class__.__name__} does not support multiclass classification."
                 f" Yet we found {len(np.unique(y))} classes."
             )
+        if self.is_classification:
+            classes_0 = set(np.unique(y[w == 0]))
+            for tv in range(self.n_variants):
+                if set(np.unique(y[w == tv])) != classes_0:
+                    raise ValueError(
+                        f"Variants 0 and {tv} have seen different sets of classification outcomes. Please check your data."
+                    )
+            if len(classes_0) == 1:
+                raise ValueError(
+                    f"There is only one class present in the classification outcome: {classes_0}. Please check your data."
+                )
 
     def _validate_models(self) -> None:
         """Validate that the base models are appropriate.

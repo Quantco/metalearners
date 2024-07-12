@@ -7,7 +7,7 @@
 Changelog
 =========
 
-0.6.1 (2024-07-xx)
+0.7.0 (2024-07-12)
 ------------------
 
 **New features**
@@ -16,7 +16,12 @@ Changelog
 
 **Other changes**
 
-* Changed the index columns order in ``MetaLearnerGridSearch.results_``.
+* Change the index columns order in ``MetaLearnerGridSearch.results_``.
+
+* Raise a custom error if only one class is present in a classification outcome.
+
+* Raise a custom error if there are some treatment variants which have seen classification outcomes which have not appeared for some other treatment variant.
+
 
 0.6.0 (2024-07-08)
 ------------------
