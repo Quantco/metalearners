@@ -706,8 +706,8 @@ def test_validate_treatment_error_different_instantiation(metalearner_prefix):
 )
 def test_validate_outcome_multi_class(metalearner_prefix, success):
     covariates = np.zeros((20, 1))
-    w = np.array([0, 1] * 10)
-    y = np.array([0, 1] * 8 + [2] * 4)
+    w = np.array([0] * 10 + [1] * 10)
+    y = np.array([0, 1, 2, 3, 4] * 4)
 
     factory = metalearner_factory(metalearner_prefix)
     learner = factory(

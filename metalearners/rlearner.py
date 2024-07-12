@@ -169,7 +169,7 @@ class RLearner(MetaLearner):
     ) -> Self:
 
         self._validate_treatment(w)
-        self._validate_outcome(y)
+        self._validate_outcome(y, w)
 
         self._variants_indices = []
 

@@ -59,7 +59,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         n_jobs_base_learners: int | None = None,
     ) -> Self:
         self._validate_treatment(w)
-        self._validate_outcome(y)
+        self._validate_outcome(y, w)
 
         self._treatment_variants_indices = []
 
