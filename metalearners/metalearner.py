@@ -1091,6 +1091,8 @@ class MetaLearner(ABC):
                         )
 
     def _validate_feature_set_none(self):
+        """Validates that the feature set for all the models is None, i.e. all models
+        use all features."""
         for feature_set in self.feature_set.values():
             if feature_set is not None:
                 raise ValueError(
