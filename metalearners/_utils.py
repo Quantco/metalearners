@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
@@ -557,3 +558,10 @@ def infer_input_dict(model) -> dict:
         input_dict[input_tensor.name] = argument(Tensor(input_dtype, input_shape))
 
     return input_dict
+
+
+def warning_experimental_feature(function_name: str):
+    warnings.warn(
+        f"{function_name} is an experimental feature. Use it at your own risk!",
+        stacklevel=2,
+    )

@@ -1110,6 +1110,10 @@ class MetaLearner(ABC):
     def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """Convert the MetaLearner to an ONNX model.
 
+        .. warning::
+            This is a experimental feature which is not subject to deprecation cycles. Use
+            it at your own risk!
+
         ``output_name`` can be used to change the output name of the ONNX model.
 
         ``models`` should be a dictionary of sequences with the necessary base models converted to

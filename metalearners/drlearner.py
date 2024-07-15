@@ -20,6 +20,7 @@ from metalearners._utils import (
     index_matrix,
     infer_input_dict,
     validate_valid_treatment_variant_not_control,
+    warning_experimental_feature,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -335,6 +336,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         * ``"treatment_model"``
         """
+        warning_experimental_feature("build_onnx")
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op

@@ -23,6 +23,7 @@ from metalearners._utils import (
     infer_input_dict,
     validate_all_vectors_same_index,
     validate_valid_treatment_variant_not_control,
+    warning_experimental_feature,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -520,6 +521,7 @@ class RLearner(MetaLearner):
 
         * ``"treatment_model"``
         """
+        warning_experimental_feature("build_onnx")
         check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
