@@ -153,7 +153,7 @@ class SLearner(MetaLearner):
         n_jobs_base_learners: int | None = None,
     ) -> Self:
         self._validate_treatment(w)
-        self._validate_outcome(y)
+        self._validate_outcome(y, w)
         self._fitted_treatments = convert_treatment(w)
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](

@@ -1059,3 +1059,58 @@ def test_n_jobs_base_learners(implementation, rng):
 
     np.testing.assert_allclose(ml.predict(X, False), ml_2.predict(X, False))
     np.testing.assert_allclose(ml.predict(X, True), ml_2.predict(X, True))
+
+
+@pytest.mark.parametrize(
+    "implementation",
+    [TLearner, SLearner, XLearner, RLearner, DRLearner],
+)
+@pytest.mark.parametrize("use_pandas", [False, True])
+def test_validate_outcome_one_class(implementation, use_pandas, rng):
+    X = rng.standard_normal((10, 2))
+    y = np.zeros(10)
+    w = rng.integers(0, 2, 10)
+    if use_pandas:
+        X = pd.DataFrame(X)
+        y = pd.Series(y)
+        w = pd.Series(w)
+
+    ml = implementation(
+        True,
+        2,
+        LogisticRegression,
+        LinearRegression,
+        LogisticRegression,
+    )
+    with pytest.raises(
+        ValueError,
+        match="There is only one class present in the classification outcome",
+    ):
+        ml.fit(X, y, w)
+
+
+@pytest.mark.parametrize(
+    "implementation",
+    [TLearner, SLearner, XLearner, RLearner, DRLearner],
+)
+@pytest.mark.parametrize("use_pandas", [False, True])
+def test_validate_outcome_different_classes(implementation, use_pandas, rng):
+    X = rng.standard_normal((4, 2))
+    y = np.array([0, 1, 0, 0])
+    w = np.array([0, 0, 1, 1])
+    if use_pandas:
+        X = pd.DataFrame(X)
+        y = pd.Series(y)
+        w = pd.Series(w)
+
+    ml = implementation(
+        True,
+        2,
+        LogisticRegression,
+        LinearRegression,
+        LogisticRegression,
+    )
+    with pytest.raises(
+        ValueError, match="have seen different sets of classification outcomes."
+    ):
+        ml.fit(X, y, w)

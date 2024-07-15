@@ -21,6 +21,20 @@ from metalearners.metalearner import TREATMENT_MODEL
 from .conftest import all_sklearn_regressors
 
 
+def test_adaptive_clipping_smoke(dummy_dataset):
+    X, y, w = dummy_dataset
+    ml = DRLearner(
+        False,
+        2,
+        LinearRegression,
+        LinearRegression,
+        LogisticRegression,
+        n_folds=2,
+        adaptive_clipping=True,
+    )
+    ml.fit(X, y, w)
+
+
 @pytest.mark.parametrize(
     "treatment_model_factory, onnx_converter",
     (
