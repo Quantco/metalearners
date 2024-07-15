@@ -8,9 +8,9 @@ import onnxruntime as rt
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx import convert_sklearn
-from skl2onnx.common.data_types import FloatTensorType
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from xgboost import XGBRegressor
 
