@@ -7,6 +7,17 @@
 Changelog
 =========
 
+0.8.0 (2024-07-xx)
+------------------
+
+**New features**
+
+* Add ``build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
+  for :class:`metalearners.TLearner`, :class:`metalearners.XLearner`, :class:`metalearners.RLearner`
+  and :class:`metalearners.DRLearner`.
+
+* Add ``necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
+
 0.7.0 (2024-07-12)
 ------------------
 
