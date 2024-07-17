@@ -16,6 +16,8 @@ Changelog
 
 * Renamed :class:`metalearners.grid_search._GSResult` to :class:`metalearners.grid_search.GSResult`.
 
+* Added ``grid_size_`` attribute to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
 
 0.7.0 (2024-07-12)
 ------------------

@@ -225,11 +225,6 @@ class MetaLearnerGridSearch:
         self.store_raw_results = store_raw_results
         self.store_results = store_results
 
-        self.raw_results_: list[GSResult] | Generator[GSResult, None, None] | None = (
-            None
-        )
-        self.results_: pd.DataFrame | None = None
-
         all_base_models = set(
             metalearner_factory.nuisance_model_specifications().keys()
         ) | set(metalearner_factory.treatment_model_specifications().keys())
@@ -348,14 +343,18 @@ class MetaLearnerGridSearch:
                         metalerner_fit_params=kwargs,
                     )
                 )
+
+        self.grid_size_ = len(jobs)
+        self.raw_results_: list[GSResult] | Generator[GSResult, None, None] | None
+        self.results_: pd.DataFrame | None
+
         return_as = "list" if self.store_raw_results else "generator_unordered"
         parallel = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, return_as=return_as
         )
-        raw_results = parallel(delayed(_fit_and_score)(job) for job in jobs)
-        self.raw_results_ = raw_results
+        self.raw_results = parallel(delayed(_fit_and_score)(job) for job in jobs)
         if self.store_results:
-            self.results_ = _format_results(results=raw_results)
+            self.results_ = _format_results(results=self.raw_results)
             if not self.store_raw_results:
                 # This just checks that the generator is empty
                 try:

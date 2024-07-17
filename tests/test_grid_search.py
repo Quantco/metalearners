@@ -156,6 +156,7 @@ def test_metalearnergridsearch_smoke(
     assert gs.results_ is not None
     assert gs.results_.shape[0] == expected_n_configs
     assert gs.results_.index.names == expected_index_cols
+    assert gs.grid_size_ == expected_n_configs
 
     train_scores_cols = set(
         c[6:] for c in list(gs.results_.columns) if c.startswith("train_")
