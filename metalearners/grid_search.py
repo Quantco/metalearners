@@ -361,3 +361,5 @@ class MetaLearnerGridSearch:
                     next(self.raw_results_)  # type: ignore
                 except StopIteration:
                     self.raw_results_ = None
+        else:
+            self.results_ = None
