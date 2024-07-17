@@ -199,9 +199,9 @@ class MetaLearnerGridSearch:
       will be None. This configuration can be useful in the case the grid search is big
       and you do not want to store all MetaLearners objects rather evaluate them after
       fitting each one and just store one.
-    """
 
-    # TODO: Add a reference to a docs example once it is written.
+    For an illustration see :ref:`our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example-grid-search>`.
+    """
 
     def __init__(
         self,
