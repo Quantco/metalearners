@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -32,7 +32,7 @@ class _FitAndScoreJob:
 
 
 @dataclass(frozen=True)
-class _GSResult:
+class GSResult:
     r"""Result from a single grid search evaluation."""
 
     metalearner: MetaLearner
@@ -42,7 +42,7 @@ class _GSResult:
     score_time: float
 
 
-def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
+def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
     start_time = time.time()
     job.metalearner.fit(
         job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params
@@ -69,7 +69,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
     else:
         test_scores = None
     score_time = time.time() - start_time
-    return _GSResult(
+    return GSResult(
         metalearner=job.metalearner,
         fit_time=fit_time,
         score_time=score_time,
@@ -78,7 +78,9 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
     )
 
 
-def _format_results(results: Sequence[_GSResult]) -> pd.DataFrame:
+def _format_results(
+    results: list[GSResult] | Generator[GSResult, None, None]
+) -> pd.DataFrame:
     rows = []
     for result in results:
         row: dict[str, str | int | float] = {}
@@ -180,7 +182,23 @@ class MetaLearnerGridSearch:
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
 
-    After fitting a dataframe with the results will be available in `results_`.
+    ``store_raw_results`` and ``store_results`` define which and how the results are saved
+    after calling :meth:`~metalearners.grid_search.MetaLearnerGridSearch.fit` depending on
+    their values:
+
+    * Both are ``True`` (default): ``raw_results_`` will be a list of
+      :class:`~metalearners.grid_search.GSResult` with all the results and ``results_``
+      will be a DataFrame with the processed results.
+    * ``store_raw_results=True`` and ``store_results=False``: ``raw_results_`` will be a
+      list of :class:`~metalearners.grid_search.GSResult` with all the results
+      and ``results`` will be ``None``.
+    * ``store_raw_results=False`` and ``store_results=True``: ``raw_results_`` will be
+      ``None`` and ``results_`` will be a DataFrame with the processed results.
+    * Both are ``False``: ``raw_results_`` will be a generator which yields a
+      :class:`~metalearners.grid_search.GSResult` for each configuration and ``results``
+      will be None. This configuration can be useful in the case the grid search is big
+      and you do not want to store all MetaLearners objects rather evaluate them after
+      fitting each one and just store one.
     """
 
     # TODO: Add a reference to a docs example once it is written.
@@ -195,6 +213,8 @@ class MetaLearnerGridSearch:
         n_jobs: int | None = None,
         random_state: int | None = None,
         verbose: int = 0,
+        store_raw_results: bool = True,
+        store_results: bool = True,
     ):
         self.metalearner_factory = metalearner_factory
         self.metalearner_params = metalearner_params
@@ -202,8 +222,12 @@ class MetaLearnerGridSearch:
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+        self.store_raw_results = store_raw_results
+        self.store_results = store_results
 
-        self.raw_results_: Sequence[_GSResult] | None = None
+        self.raw_results_: list[GSResult] | Generator[GSResult, None, None] | None = (
+            None
+        )
         self.results_: pd.DataFrame | None = None
 
         all_base_models = set(
@@ -311,8 +335,19 @@ class MetaLearnerGridSearch:
                         metalerner_fit_params=kwargs,
                     )
                 )
-
-        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)
+        return_as = (
+            "list" if self.store_raw_results else "generator"
+        )  # Can we use generator_unordered?
+        parallel = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, return_as=return_as
+        )
         raw_results = parallel(delayed(_fit_and_score)(job) for job in jobs)
         self.raw_results_ = raw_results
-        self.results_ = _format_results(results=raw_results)
+        if self.store_results:
+            self.results_ = _format_results(results=raw_results)
+            if not self.store_raw_results:
+                # This just checks that the generator is empty
+                try:
+                    next(self.raw_results_)  # type: ignore
+                except StopIteration:
+                    self.raw_results_ = None
