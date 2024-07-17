@@ -348,9 +348,7 @@ class MetaLearnerGridSearch:
                         metalerner_fit_params=kwargs,
                     )
                 )
-        return_as = (
-            "list" if self.store_raw_results else "generator"
-        )  # Can we use generator_unordered?
+        return_as = "list" if self.store_raw_results else "generator_unordered"
         parallel = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, return_as=return_as
         )
