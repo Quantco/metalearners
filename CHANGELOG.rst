@@ -7,6 +7,16 @@
 Changelog
 =========
 
+0.8.0 (2024-07-xx)
+------------------
+
+**New features**
+
+* Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
+* Renamed :class:`metalearners.grid_search._GSResult` to :class:`metalearners.grid_search.GSResult`.
+
+
 0.7.0 (2024-07-12)
 ------------------
 
