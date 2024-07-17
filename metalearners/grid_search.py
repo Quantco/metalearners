@@ -352,9 +352,9 @@ class MetaLearnerGridSearch:
         parallel = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, return_as=return_as
         )
-        self.raw_results = parallel(delayed(_fit_and_score)(job) for job in jobs)
+        self.raw_results_ = parallel(delayed(_fit_and_score)(job) for job in jobs)
         if self.store_results:
-            self.results_ = _format_results(results=self.raw_results)
+            self.results_ = _format_results(results=self.raw_results_)  # type: ignore
             if not self.store_raw_results:
                 # This just checks that the generator is empty
                 try:
