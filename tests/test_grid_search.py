@@ -301,3 +301,26 @@ def test_metalearnergridsearch_store(
     gs.fit(X, y, w, X_test, y_test, w_test)
     assert isinstance(gs.raw_results_, expected_type_raw_results)
     assert isinstance(gs.results_, expected_type_results)
+
+
+def test_metalearnergridsearch_error(grid_search_data):
+    X, _, y, w, X_test, _, y_test, w_test = grid_search_data
+    n_variants = len(np.unique(w))
+
+    metalearner_params = {
+        "is_classification": False,
+        "n_variants": n_variants,
+        "n_folds": 2,
+        "random_state": 1,
+    }
+
+    gs = MetaLearnerGridSearch(
+        metalearner_factory=SLearner,
+        metalearner_params=metalearner_params,
+        base_learner_grid={"base_model": [LinearRegression, LGBMRegressor]},
+        param_grid={"base_model": {"LGBMRegressor": {"n_estimators": [1, 2]}}},
+    )
+    with pytest.raises(
+        ValueError, match="should not be specified in metalearner_params"
+    ):
+        gs.fit(X, y, w, X_test, y_test, w_test)

@@ -17,7 +17,8 @@ from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner
 
 @dataclass(frozen=True)
 class _FitAndScoreJob:
-    metalearner: MetaLearner
+    metalearner_factory: type[MetaLearner]
+    metalearner_params: dict[str, Any]
     X_train: Matrix
     y_train: Vector
     w_train: Vector
@@ -44,13 +45,12 @@ class GSResult:
 
 def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
     start_time = time.time()
-    job.metalearner.fit(
-        job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params
-    )
+    ml = job.metalearner_factory(**job.metalearner_params)
+    ml.fit(job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params)
     fit_time = time.time() - start_time
     start_time = time.time()
 
-    train_scores = job.metalearner.evaluate(
+    train_scores = ml.evaluate(
         X=job.X_train,
         y=job.y_train,
         w=job.w_train,
@@ -58,7 +58,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
         scoring=job.scoring,
     )
     if job.X_test is not None and job.y_test is not None and job.w_test is not None:
-        test_scores = job.metalearner.evaluate(
+        test_scores = ml.evaluate(
             X=job.X_test,
             y=job.y_test,
             w=job.w_test,
@@ -70,7 +70,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
         test_scores = None
     score_time = time.time() - start_time
     return GSResult(
-        metalearner=job.metalearner,
+        metalearner=ml,
         fit_time=fit_time,
         score_time=score_time,
         train_scores=train_scores,
@@ -310,20 +310,33 @@ class MetaLearnerGridSearch:
                 }
                 propensity_model_params = params.get(PROPENSITY_MODEL, None)
 
-                ml = self.metalearner_factory(
-                    **self.metalearner_params,
-                    nuisance_model_factory=nuisance_model_factory,
-                    treatment_model_factory=treatment_model_factory,
-                    propensity_model_factory=propensity_model_factory,
-                    nuisance_model_params=nuisance_model_params,
-                    treatment_model_params=treatment_model_params,
-                    propensity_model_params=propensity_model_params,
-                    random_state=self.random_state,
-                )
+                grid_metalearner_params = {
+                    "nuisance_model_factory": nuisance_model_factory,
+                    "treatment_model_factory": treatment_model_factory,
+                    "propensity_model_factory": propensity_model_factory,
+                    "nuisance_model_params": nuisance_model_params,
+                    "treatment_model_params": treatment_model_params,
+                    "propensity_model_params": propensity_model_params,
+                    "random_state": self.random_state,
+                }
+
+                if (
+                    len(
+                        shared_keys := set(grid_metalearner_params.keys())
+                        & set(self.metalearner_params.keys())
+                    )
+                    > 0
+                ):
+                    raise ValueError(
+                        f"{shared_keys} should not be specified in metalearner_params as "
+                        "they are used internally. Please use the correct parameters."
+                    )
 
                 jobs.append(
                     _FitAndScoreJob(
-                        metalearner=ml,
+                        metalearner_factory=self.metalearner_factory,
+                        metalearner_params=dict(self.metalearner_params)
+                        | grid_metalearner_params,
                         X_train=X,
                         y_train=y,
                         w_train=w,
