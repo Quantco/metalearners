@@ -200,6 +200,8 @@ class MetaLearnerGridSearch:
       and you do not want to store all MetaLearners objects rather evaluate them after
       fitting each one and just store one.
 
+    ``grid_size_`` will contain the number of hyperparameter combinations after fitting.
+
     For an illustration see :ref:`our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example-grid-search>`.
     """
 
