@@ -126,4 +126,5 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[VARIANT_OUTCOME_MODEL],
         )
