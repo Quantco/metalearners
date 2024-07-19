@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -12,13 +13,15 @@ from metalearners.cross_fit_estimator import _OOS_WHITELIST
 from metalearners.drlearner import DRLearner
 from metalearners.metalearner import (
     PROPENSITY_MODEL,
+    TREATMENT_MODEL,
     VARIANT_OUTCOME_MODEL,
     MetaLearner,
     Params,
 )
+from metalearners.rlearner import OUTCOME_MODEL, RLearner
 from metalearners.tlearner import TLearner
 from metalearners.utils import metalearner_factory, simplify_output
-from metalearners.xlearner import XLearner
+from metalearners.xlearner import TREATMENT_EFFECT_MODEL, XLearner
 
 # Chosen arbitrarily.
 _OOS_REFERENCE_VALUE_TOLERANCE = 0.05
@@ -911,3 +914,46 @@ def test_model_reusage(outcome_kind, request):
         xlearner.predict_nuisance(covariates, PROPENSITY_MODEL, 0, False),
         drlearner.predict_nuisance(covariates, PROPENSITY_MODEL, 0, False),
     )
+
+
+@pytest.mark.parametrize(
+    "metalearner_factory, feature_set",
+    [
+        (TLearner, {VARIANT_OUTCOME_MODEL: [0, 1]}),
+        (
+            XLearner,
+            {
+                VARIANT_OUTCOME_MODEL: [0],
+                PROPENSITY_MODEL: [2, 3],
+                TREATMENT_EFFECT_MODEL: [4],
+            },
+        ),
+        (
+            RLearner,
+            {OUTCOME_MODEL: None, PROPENSITY_MODEL: [4], TREATMENT_MODEL: [3]},
+        ),
+        (DRLearner, {VARIANT_OUTCOME_MODEL: [], PROPENSITY_MODEL: None}),
+    ],
+)
+@pytest.mark.parametrize("use_pandas", [False, True])
+def test_evaluate_feature_set(metalearner_factory, feature_set, rng, use_pandas):
+    n_samples = 100
+    X = rng.standard_normal((n_samples, 5))
+    y = rng.standard_normal(n_samples)
+    w = rng.integers(0, 2, n_samples)
+    if use_pandas:
+        X = pd.DataFrame(X)
+        y = pd.Series(y)
+        w = pd.Series(w)
+
+    ml = metalearner_factory(
+        n_variants=2,
+        is_classification=False,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        feature_set=feature_set,
+        n_folds=2,
+    )
+    ml.fit(X, y, w)
+    ml.evaluate(X, y, w, False)
