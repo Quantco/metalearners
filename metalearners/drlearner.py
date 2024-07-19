@@ -13,6 +13,7 @@ from metalearners._typing import (
     OosMethod,
     Params,
     Scoring,
+    SplitIndices,
     Vector,
     _ScikitModel,
 )
@@ -128,7 +129,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         )
         self.adaptive_clipping = adaptive_clipping
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X: Matrix,
         y: Vector,
@@ -148,10 +149,12 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         for treatment_variant in range(self.n_variants):
             self._treatment_variants_indices.append(w == treatment_variant)
 
+        self._cv_split_indices: SplitIndices | None
+
         if synchronize_cross_fitting:
-            cv_split_indices = self._split(X)
+            self._cv_split_indices = self._split(X)
         else:
-            cv_split_indices = None
+            self._cv_split_indices = None
 
         nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
@@ -176,7 +179,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 model_ord=0,
                 n_jobs_cross_fitting=n_jobs_cross_fitting,
                 fit_params=qualified_fit_params[NUISANCE][PROPENSITY_MODEL],
-                cv=cv_split_indices,
+                cv=self._cv_split_indices,
             )
         )
 
@@ -189,6 +192,25 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         self._assign_joblib_nuisance_results(results)
 
+        return self
+
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        if not hasattr(self, "_cv_split_indices"):
+            raise ValueError(
+                "The nuisance models need to be fitted before fitting the treatment models."
+                "In particular, the MetaLearner's attribute _cv_split_indices, "
+                "typically set during nuisance fitting, does not exist."
+            )
+        qualified_fit_params = self._qualified_fit_params(fit_params)
         treatment_jobs: list[_ParallelJoblibSpecification] = []
         for treatment_variant in range(1, self.n_variants):
             pseudo_outcomes = self._pseudo_outcome(
@@ -207,9 +229,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                     model_ord=treatment_variant - 1,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
                     fit_params=qualified_fit_params[TREATMENT][TREATMENT_MODEL],
-                    cv=cv_split_indices,
+                    cv=self._cv_split_indices,
                 )
             )
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
         results = parallel(
             delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
         )
