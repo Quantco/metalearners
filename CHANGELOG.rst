@@ -7,6 +7,14 @@
 Changelog
 =========
 
+0.8.0 (2024-07-xx)
+------------------
+
+**Bug fixes**
+
+* Fixed a bug in :meth:`metalearners.metalearner.MetaLearner.evaluate` where it failed
+  in the case ``feature_set`` was different from ``None``.
+
 0.7.0 (2024-07-12)
 ------------------
 
