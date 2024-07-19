@@ -7,6 +7,7 @@ from functools import partial
 
 import numpy as np
 from sklearn.base import is_classifier
+from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import (
     KFold,
     StratifiedKFold,
@@ -337,8 +338,28 @@ class CrossFitEstimator:
             oos_method=oos_method,
         )
 
-    def score(self, X, y, sample_weight=None, **kwargs):
-        raise NotImplementedError()
+    def score(
+        self,
+        X: Matrix,
+        y: Vector,
+        is_oos: bool,
+        oos_method: OosMethod | None = None,
+        sample_weight: Vector | None = None,
+    ) -> float:
+        """Return the coefficient of determination of the prediction if the estimator is
+        a regressor or the mean accuracy if it is a classifier."""
+        if self._estimator_type == "classifier":
+            return accuracy_score(
+                y, self.predict(X, is_oos, oos_method), sample_weight=sample_weight
+            )
+        elif self._estimator_type == "regressor":
+            return r2_score(
+                y, self.predict(X, is_oos, oos_method), sample_weight=sample_weight
+            )
+        else:
+            raise NotImplementedError(
+                "score is not implemented for this type of estimator."
+            )
 
     def set_params(self, **params):
         raise NotImplementedError()
