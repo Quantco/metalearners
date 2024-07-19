@@ -21,7 +21,7 @@ from metalearners.metalearner import (
 from metalearners.rlearner import OUTCOME_MODEL, RLearner
 from metalearners.tlearner import TLearner
 from metalearners.utils import metalearner_factory, simplify_output
-from metalearners.xlearner import TREATMENT_EFFECT_MODEL, XLearner
+from metalearners.xlearner import CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL, XLearner
 
 # Chosen arbitrarily.
 _OOS_REFERENCE_VALUE_TOLERANCE = 0.05
@@ -926,13 +926,17 @@ def test_model_reusage(outcome_kind, request):
                 VARIANT_OUTCOME_MODEL: [0],
                 PROPENSITY_MODEL: [2, 3],
                 TREATMENT_EFFECT_MODEL: [4],
+                CONTROL_EFFECT_MODEL: None,
             },
         ),
         (
             RLearner,
             {OUTCOME_MODEL: None, PROPENSITY_MODEL: [4], TREATMENT_MODEL: [3]},
         ),
-        (DRLearner, {VARIANT_OUTCOME_MODEL: [], PROPENSITY_MODEL: None}),
+        (
+            DRLearner,
+            {VARIANT_OUTCOME_MODEL: [], PROPENSITY_MODEL: None, TREATMENT_MODEL: [0]},
+        ),
     ],
 )
 @pytest.mark.parametrize("use_pandas", [False, True])
