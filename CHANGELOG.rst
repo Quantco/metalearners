@@ -7,6 +7,15 @@
 Changelog
 =========
 
+0.8.0 (2024-07-xx)
+------------------
+
+**New features**
+
+* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+  :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
+
+
 0.7.0 (2024-07-12)
 ------------------
 
