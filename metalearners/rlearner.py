@@ -364,6 +364,7 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[PROPENSITY_MODEL],
         )
 
         outcome_evaluation = _evaluate_model_kind(
@@ -375,6 +376,7 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[OUTCOME_MODEL],
         )
 
         # TODO: improve this? generalize it to other metalearners?
@@ -426,6 +428,7 @@ class RLearner(MetaLearner):
             oos_method=oos_method,
             is_treatment_model=True,
             sample_weights=sample_weights,
+            feature_set=self.feature_set[TREATMENT_MODEL],
         )
 
         rloss_evaluation = {}

@@ -224,6 +224,7 @@ class SLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[_BASE_MODEL],
         )
 
     def predict_conditional_average_outcomes(
