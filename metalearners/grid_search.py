@@ -348,7 +348,7 @@ class MetaLearnerGridSearch:
 
         self.grid_size_ = len(jobs)
         self.raw_results_: list[GSResult] | Generator[GSResult, None, None] | None
-        self.results_: pd.DataFrame | None
+        self.results_: pd.DataFrame | None = None
 
         return_as = "list" if self.store_raw_results else "generator_unordered"
         parallel = Parallel(
@@ -360,5 +360,3 @@ class MetaLearnerGridSearch:
             if not self.store_raw_results:
                 # The generator will be empty so we replace it with None
                 self.raw_results_ = None
-        else:
-            self.results_ = None
