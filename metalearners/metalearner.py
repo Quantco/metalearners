@@ -145,6 +145,7 @@ def _evaluate_model_kind(
     model_kind: str,
     is_oos: bool,
     is_treatment_model: bool,
+    feature_set: Features,
     oos_method: OosMethod = OVERALL,
     sample_weights: Sequence[Vector] | None = None,
 ) -> dict[str, float]:
@@ -168,14 +169,15 @@ def _evaluate_model_kind(
                 else:
                     index_str = f"{i}_"
             name = f"{prefix}{index_str}{scorer_name}"
+            X_filtered = _filter_x_columns(Xs[i], feature_set)
             with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
                 if sample_weights:
                     evaluation_metrics[name] = scorer_callable(
-                        modified_cfe, Xs[i], ys[i], sample_weight=sample_weights[i]
+                        modified_cfe, X_filtered, ys[i], sample_weight=sample_weights[i]
                     )
                 else:
                     evaluation_metrics[name] = scorer_callable(
-                        modified_cfe, Xs[i], ys[i]
+                        modified_cfe, X_filtered, ys[i]
                     )
     return evaluation_metrics
 

@@ -17,7 +17,7 @@ PredictMethod = Literal["predict", "predict_proba"]
 OosMethod = Literal["overall", "median", "mean"]
 
 Params = Mapping[str, int | float | str]
-Features = Collection[str] | Collection[int]
+Features = Collection[str] | Collection[int] | None
 
 # ruff is not happy about the usage of Union.
 Vector = Union[pd.Series, np.ndarray]  # noqa

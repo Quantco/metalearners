@@ -20,6 +20,11 @@ Changelog
 
 * Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
 
+**Bug fixes**
+
+* Fixed a bug in :meth:`metalearners.metalearner.MetaLearner.evaluate` where it failed
+  in the case of ``feature_set`` being different from ``None``.
+
 
 0.7.0 (2024-07-12)
 ------------------
