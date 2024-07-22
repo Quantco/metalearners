@@ -7,6 +7,12 @@
 Changelog
 =========
 
+0.8.0 (2024-07-xx)
+------------------
+
+* Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
+
+
 0.7.0 (2024-07-12)
 ------------------
 

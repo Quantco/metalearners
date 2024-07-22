@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from sklearn.base import is_classifier, is_regressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
 from sklearn.model_selection import KFold
@@ -262,3 +263,20 @@ def test_validate_data_match(n_observations, test_indices, success):
             ValueError, match="rely on different numbers of observations"
         ):
             _validate_data_match_prior_split(n_observations, test_indices)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [LGBMClassifier, LGBMRegressor],
+)
+def test_score_smoke(estimator, rng):
+    n_samples = 1000
+    X = rng.standard_normal((n_samples, 3))
+    if is_classifier(estimator):
+        y = rng.integers(0, 4, n_samples)
+    elif is_regressor(estimator):
+        y = rng.standard_normal(n_samples)
+
+    cfe = CrossFitEstimator(5, estimator, {"n_estimators": 3})
+    cfe.fit(X, y)
+    cfe.score(X, y, False)
