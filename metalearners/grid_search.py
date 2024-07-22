@@ -358,10 +358,7 @@ class MetaLearnerGridSearch:
         if self.store_results:
             self.results_ = _format_results(results=self.raw_results_)  # type: ignore
             if not self.store_raw_results:
-                # This just checks that the generator is empty
-                try:
-                    next(self.raw_results_)  # type: ignore
-                except StopIteration:
-                    self.raw_results_ = None
+                # The generator will be empty so we replace it with None
+                self.raw_results_ = None
         else:
             self.results_ = None
