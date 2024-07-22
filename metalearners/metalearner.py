@@ -746,6 +746,41 @@ class MetaLearner(ABC):
             ] = result.cross_fit_estimator
 
     @abstractmethod
+    def fit_all_nuisance(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        """Fit all nuisance models of the MetaLearner.
+
+        If pre-fitted models were passed at instantiation, these are never refitted.
+
+        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        """
+        ...
+
+    @abstractmethod
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        """Fit all treatment models of the MetaLearner.
+
+        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        """
+        ...
+
     def fit(
         self,
         X: Matrix,
@@ -793,7 +828,27 @@ class MetaLearner(ABC):
         the same data splits where possible. Note that if there are several models to be synchronized which are
         classifiers, these cannot be split via stratification.
         """
-        ...
+        self.fit_all_nuisance(
+            X=X,
+            y=y,
+            w=w,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=fit_params,
+            synchronize_cross_fitting=synchronize_cross_fitting,
+            n_jobs_base_learners=n_jobs_base_learners,
+        )
+
+        self.fit_all_treatment(
+            X=X,
+            y=y,
+            w=w,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=fit_params,
+            synchronize_cross_fitting=synchronize_cross_fitting,
+            n_jobs_base_learners=n_jobs_base_learners,
+        )
+
+        return self
 
     def predict_nuisance(
         self,

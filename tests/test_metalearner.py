@@ -68,7 +68,7 @@ class _TestMetaLearner(MetaLearner):
 
     def _validate_models(self) -> None: ...
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X,
         y,
@@ -83,6 +83,18 @@ class _TestMetaLearner(MetaLearner):
                 self.nuisance_model_specifications()[model_kind]["cardinality"](self)
             ):
                 self.fit_nuisance(X, y, model_kind, model_ord)
+        return self
+
+    def fit_all_treatment(
+        self,
+        X,
+        y,
+        w,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ):
         for model_kind in self.__class__.treatment_model_specifications():
             for model_ord in range(
                 self.treatment_model_specifications()[model_kind]["cardinality"](self)

@@ -10,6 +10,11 @@ Changelog
 0.8.0 (2024-07-xx)
 ------------------
 
+**New features**
+
+* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+  :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
+
 * Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
 
 **Bug fixes**
