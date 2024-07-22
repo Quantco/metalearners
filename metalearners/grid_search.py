@@ -201,6 +201,10 @@ class MetaLearnerGridSearch:
       fitting each one and just store one.
 
     ``grid_size_`` will contain the number of hyperparameter combinations after fitting.
+    This attribute may be useful in the case ``store_raw_results = False`` and ``store_results = False``.
+    In that case, the generator object returned in ``raw_results_`` doesn't trigger the fitting
+    of individual metalearners until explicitly requested, e.g. in a loop. This attribute
+    can be use to track the progress, for instance, by creating a progress bar or a similar utility.
 
     For an illustration see :ref:`our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example-grid-search>`.
     """
