@@ -48,7 +48,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
     def _supports_multi_class(cls) -> bool:
         return True
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X: Matrix,
         y: Vector,
@@ -90,6 +90,18 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             if job is not None
         )
         self._assign_joblib_nuisance_results(results)
+        return self
+
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
         return self
 
     def predict(

@@ -74,7 +74,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     def _supports_multi_class(cls) -> bool:
         return False
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X: Matrix,
         y: Vector,
@@ -91,7 +91,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
-        cvs: list = []
+        self._cvs: list = []
 
         for treatment_variant in range(self.n_variants):
             self._treatment_variants_indices.append(w == treatment_variant)
@@ -101,7 +101,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 )
             else:
                 cv_split_indices = None
-            cvs.append(cv_split_indices)
+            self._cvs.append(cv_split_indices)
 
         nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
@@ -115,7 +115,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                     model_ord=treatment_variant,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
                     fit_params=qualified_fit_params[NUISANCE][VARIANT_OUTCOME_MODEL],
-                    cv=cvs[treatment_variant],
+                    cv=self._cvs[treatment_variant],
                 )
             )
 
@@ -138,6 +138,32 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         )
         self._assign_joblib_nuisance_results(results)
 
+        return self
+
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        if self._treatment_variants_indices is None:
+            raise ValueError(
+                "The nuisance models need to be fitted before fitting the treatment models."
+                "In particular, the MetaLearner's attribute _treatment_variant_indices, "
+                "typically set during nuisance fitting, is None."
+            )
+        if not hasattr(self, "_cvs"):
+            raise ValueError(
+                "The nuisance models need to be fitted before fitting the treatment models."
+                "In particular, the MetaLearner's attribute _cvs, "
+                "typically set during nuisance fitting, does not exist."
+            )
+        qualified_fit_params = self._qualified_fit_params(fit_params)
+
         treatment_jobs: list[_ParallelJoblibSpecification] = []
         for treatment_variant in range(1, self.n_variants):
             imputed_te_control, imputed_te_treatment = self._pseudo_outcome(
@@ -153,7 +179,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                     model_ord=treatment_variant - 1,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
                     fit_params=qualified_fit_params[TREATMENT][TREATMENT_EFFECT_MODEL],
-                    cv=cvs[treatment_variant],
+                    cv=self._cvs[treatment_variant],
                 )
             )
 
@@ -165,10 +191,11 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                     model_ord=treatment_variant - 1,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
                     fit_params=qualified_fit_params[TREATMENT][CONTROL_EFFECT_MODEL],
-                    cv=cvs[0],
+                    cv=self._cvs[0],
                 )
             )
 
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
         results = parallel(
             delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
         )
