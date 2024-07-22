@@ -940,7 +940,7 @@ def test_model_reusage(outcome_kind, request):
     ],
 )
 @pytest.mark.parametrize("use_pandas", [False, True])
-def test_evaluate_feature_set(metalearner_factory, feature_set, rng, use_pandas):
+def test_evaluate_feature_set_smoke(metalearner_factory, feature_set, rng, use_pandas):
     n_samples = 100
     X = rng.standard_normal((n_samples, 5))
     y = rng.standard_normal(n_samples)
