@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -17,7 +17,8 @@ from metalearners.metalearner import PROPENSITY_MODEL, MetaLearner
 
 @dataclass(frozen=True)
 class _FitAndScoreJob:
-    metalearner: MetaLearner
+    metalearner_factory: type[MetaLearner]
+    metalearner_params: dict[str, Any]
     X_train: Matrix
     y_train: Vector
     w_train: Vector
@@ -32,7 +33,7 @@ class _FitAndScoreJob:
 
 
 @dataclass(frozen=True)
-class _GSResult:
+class GSResult:
     r"""Result from a single grid search evaluation."""
 
     metalearner: MetaLearner
@@ -42,15 +43,14 @@ class _GSResult:
     score_time: float
 
 
-def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
+def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
     start_time = time.time()
-    job.metalearner.fit(
-        job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params
-    )
+    ml = job.metalearner_factory(**job.metalearner_params)
+    ml.fit(job.X_train, job.y_train, job.w_train, **job.metalerner_fit_params)
     fit_time = time.time() - start_time
     start_time = time.time()
 
-    train_scores = job.metalearner.evaluate(
+    train_scores = ml.evaluate(
         X=job.X_train,
         y=job.y_train,
         w=job.w_train,
@@ -58,7 +58,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
         scoring=job.scoring,
     )
     if job.X_test is not None and job.y_test is not None and job.w_test is not None:
-        test_scores = job.metalearner.evaluate(
+        test_scores = ml.evaluate(
             X=job.X_test,
             y=job.y_test,
             w=job.w_test,
@@ -69,8 +69,8 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
     else:
         test_scores = None
     score_time = time.time() - start_time
-    return _GSResult(
-        metalearner=job.metalearner,
+    return GSResult(
+        metalearner=ml,
         fit_time=fit_time,
         score_time=score_time,
         train_scores=train_scores,
@@ -78,7 +78,9 @@ def _fit_and_score(job: _FitAndScoreJob) -> _GSResult:
     )
 
 
-def _format_results(results: Sequence[_GSResult]) -> pd.DataFrame:
+def _format_results(
+    results: list[GSResult] | Generator[GSResult, None, None]
+) -> pd.DataFrame:
     rows = []
     for result in results:
         row: dict[str, str | int | float] = {}
@@ -180,10 +182,32 @@ class MetaLearnerGridSearch:
 
     ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
 
-    After fitting a dataframe with the results will be available in `results_`.
-    """
+    ``store_raw_results`` and ``store_results`` define which and how the results are saved
+    after calling :meth:`~metalearners.grid_search.MetaLearnerGridSearch.fit` depending on
+    their values:
 
-    # TODO: Add a reference to a docs example once it is written.
+    * Both are ``True`` (default): ``raw_results_`` will be a list of
+      :class:`~metalearners.grid_search.GSResult` with all the results and ``results_``
+      will be a DataFrame with the processed results.
+    * ``store_raw_results=True`` and ``store_results=False``: ``raw_results_`` will be a
+      list of :class:`~metalearners.grid_search.GSResult` with all the results
+      and ``results`` will be ``None``.
+    * ``store_raw_results=False`` and ``store_results=True``: ``raw_results_`` will be
+      ``None`` and ``results_`` will be a DataFrame with the processed results.
+    * Both are ``False``: ``raw_results_`` will be a generator which yields a
+      :class:`~metalearners.grid_search.GSResult` for each configuration and ``results``
+      will be None. This configuration can be useful in the case the grid search is big
+      and you do not want to store all MetaLearners objects rather evaluate them after
+      fitting each one and just store one.
+
+    ``grid_size_`` will contain the number of hyperparameter combinations after fitting.
+    This attribute may be useful in the case ``store_raw_results = False`` and ``store_results = False``.
+    In that case, the generator object returned in ``raw_results_`` doesn't trigger the fitting
+    of individual metalearners until explicitly requested, e.g. in a loop. This attribute
+    can be use to track the progress, for instance, by creating a progress bar or a similar utility.
+
+    For an illustration see :ref:`our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example-grid-search>`.
+    """
 
     def __init__(
         self,
@@ -195,6 +219,8 @@ class MetaLearnerGridSearch:
         n_jobs: int | None = None,
         random_state: int | None = None,
         verbose: int = 0,
+        store_raw_results: bool = True,
+        store_results: bool = True,
     ):
         self.metalearner_factory = metalearner_factory
         self.metalearner_params = metalearner_params
@@ -202,9 +228,8 @@ class MetaLearnerGridSearch:
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
-
-        self.raw_results_: Sequence[_GSResult] | None = None
-        self.results_: pd.DataFrame | None = None
+        self.store_raw_results = store_raw_results
+        self.store_results = store_results
 
         all_base_models = set(
             metalearner_factory.nuisance_model_specifications().keys()
@@ -286,20 +311,33 @@ class MetaLearnerGridSearch:
                 }
                 propensity_model_params = params.get(PROPENSITY_MODEL, None)
 
-                ml = self.metalearner_factory(
-                    **self.metalearner_params,
-                    nuisance_model_factory=nuisance_model_factory,
-                    treatment_model_factory=treatment_model_factory,
-                    propensity_model_factory=propensity_model_factory,
-                    nuisance_model_params=nuisance_model_params,
-                    treatment_model_params=treatment_model_params,
-                    propensity_model_params=propensity_model_params,
-                    random_state=self.random_state,
-                )
+                grid_metalearner_params = {
+                    "nuisance_model_factory": nuisance_model_factory,
+                    "treatment_model_factory": treatment_model_factory,
+                    "propensity_model_factory": propensity_model_factory,
+                    "nuisance_model_params": nuisance_model_params,
+                    "treatment_model_params": treatment_model_params,
+                    "propensity_model_params": propensity_model_params,
+                    "random_state": self.random_state,
+                }
+
+                if (
+                    len(
+                        shared_keys := set(grid_metalearner_params.keys())
+                        & set(self.metalearner_params.keys())
+                    )
+                    > 0
+                ):
+                    raise ValueError(
+                        f"{shared_keys} should not be specified in metalearner_params as "
+                        "they are used internally. Please use the correct parameters."
+                    )
 
                 jobs.append(
                     _FitAndScoreJob(
-                        metalearner=ml,
+                        metalearner_factory=self.metalearner_factory,
+                        metalearner_params=dict(self.metalearner_params)
+                        | grid_metalearner_params,
                         X_train=X,
                         y_train=y,
                         w_train=w,
@@ -312,7 +350,17 @@ class MetaLearnerGridSearch:
                     )
                 )
 
-        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)
-        raw_results = parallel(delayed(_fit_and_score)(job) for job in jobs)
-        self.raw_results_ = raw_results
-        self.results_ = _format_results(results=raw_results)
+        self.grid_size_ = len(jobs)
+        self.raw_results_: list[GSResult] | Generator[GSResult, None, None] | None
+        self.results_: pd.DataFrame | None = None
+
+        return_as = "list" if self.store_raw_results else "generator_unordered"
+        parallel = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, return_as=return_as
+        )
+        self.raw_results_ = parallel(delayed(_fit_and_score)(job) for job in jobs)
+        if self.store_results:
+            self.results_ = _format_results(results=self.raw_results_)  # type: ignore
+            if not self.store_raw_results:
+                # The generator will be empty so we replace it with None
+                self.raw_results_ = None

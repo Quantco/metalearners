@@ -15,6 +15,12 @@ Changelog
 * Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
   :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
 
+* Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
+* Renamed :class:`metalearners.grid_search._GSResult` to :class:`metalearners.grid_search.GSResult`.
+
+* Added ``grid_size_`` attribute to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
 * Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
 
 **Bug fixes**
