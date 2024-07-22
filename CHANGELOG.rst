@@ -13,7 +13,7 @@ Changelog
 **Bug fixes**
 
 * Fixed a bug in :meth:`metalearners.metalearner.MetaLearner.evaluate` where it failed
-  in the case ``feature_set`` was different from ``None``.
+  in the case of ``feature_set`` being different from ``None``.
 
 0.7.0 (2024-07-12)
 ------------------
