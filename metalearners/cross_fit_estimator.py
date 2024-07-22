@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from functools import partial
 
 import numpy as np
-from sklearn.base import is_classifier
+from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import (
     KFold,
@@ -348,11 +348,11 @@ class CrossFitEstimator:
     ) -> float:
         """Return the coefficient of determination of the prediction if the estimator is
         a regressor or the mean accuracy if it is a classifier."""
-        if self._estimator_type == "classifier":
+        if is_classifier(self):
             return accuracy_score(
                 y, self.predict(X, is_oos, oos_method), sample_weight=sample_weight
             )
-        elif self._estimator_type == "regressor":
+        elif is_regressor(self):
             return r2_score(
                 y, self.predict(X, is_oos, oos_method), sample_weight=sample_weight
             )
