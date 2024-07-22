@@ -18,6 +18,8 @@ Changelog
 
 * Added ``grid_size_`` attribute to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
 
+* Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
+
 
 0.7.0 (2024-07-12)
 ------------------
