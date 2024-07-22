@@ -15,6 +15,8 @@ Changelog
 * Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
   :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
 
+* Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
+
 
 0.7.0 (2024-07-12)
 ------------------
