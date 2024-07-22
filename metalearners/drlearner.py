@@ -267,6 +267,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[VARIANT_OUTCOME_MODEL],
         )
 
         propensity_evaluation = _evaluate_model_kind(
@@ -278,6 +279,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[PROPENSITY_MODEL],
         )
 
         pseudo_outcome: list[np.ndarray] = []
@@ -301,6 +303,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=True,
+            feature_set=self.feature_set[TREATMENT_MODEL],
         )
 
         return variant_outcome_evaluation | propensity_evaluation | treatment_evaluation

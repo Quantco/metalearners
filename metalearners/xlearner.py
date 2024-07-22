@@ -300,6 +300,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[VARIANT_OUTCOME_MODEL],
         )
 
         propensity_evaluation = _evaluate_model_kind(
@@ -311,6 +312,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[PROPENSITY_MODEL],
         )
 
         imputed_te_control: list[np.ndarray] = []
@@ -331,6 +333,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=True,
+            feature_set=self.feature_set[TREATMENT_EFFECT_MODEL],
         )
 
         te_control_evaluation = _evaluate_model_kind(
@@ -342,6 +345,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=True,
+            feature_set=self.feature_set[CONTROL_EFFECT_MODEL],
         )
 
         return (
