@@ -162,7 +162,7 @@ class RLearner(MetaLearner):
     def _supports_multi_class(cls) -> bool:
         return False
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X: Matrix,
         y: Vector,
@@ -171,13 +171,9 @@ class RLearner(MetaLearner):
         fit_params: dict | None = None,
         synchronize_cross_fitting: bool = True,
         n_jobs_base_learners: int | None = None,
-        epsilon: float = _EPSILON,
     ) -> Self:
-
         self._validate_treatment(w)
         self._validate_outcome(y, w)
-
-        self._variants_indices = []
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
         self._validate_fit_params(qualified_fit_params)
@@ -220,7 +216,22 @@ class RLearner(MetaLearner):
         )
         self._assign_joblib_nuisance_results(results)
 
+        return self
+
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+        epsilon: float = _EPSILON,
+    ) -> Self:
+        qualified_fit_params = self._qualified_fit_params(fit_params)
         treatment_jobs: list[_ParallelJoblibSpecification] = []
+        self._variants_indices = []
         for treatment_variant in range(1, self.n_variants):
 
             is_treatment = w == treatment_variant
@@ -252,6 +263,7 @@ class RLearner(MetaLearner):
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
                 )
             )
+        parallel = Parallel(n_jobs=n_jobs_base_learners)
         results = parallel(
             delayed(_fit_cross_fit_estimator_joblib)(job) for job in treatment_jobs
         )
@@ -358,6 +370,7 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[PROPENSITY_MODEL],
         )
 
         outcome_evaluation = _evaluate_model_kind(
@@ -369,6 +382,7 @@ class RLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[OUTCOME_MODEL],
         )
 
         # TODO: improve this? generalize it to other metalearners?
@@ -420,6 +434,7 @@ class RLearner(MetaLearner):
             oos_method=oos_method,
             is_treatment_model=True,
             sample_weights=sample_weights,
+            feature_set=self.feature_set[TREATMENT_MODEL],
         )
 
         rloss_evaluation = {}

@@ -146,6 +146,7 @@ def _evaluate_model_kind(
     model_kind: str,
     is_oos: bool,
     is_treatment_model: bool,
+    feature_set: Features,
     oos_method: OosMethod = OVERALL,
     sample_weights: Sequence[Vector] | None = None,
 ) -> dict[str, float]:
@@ -169,14 +170,15 @@ def _evaluate_model_kind(
                 else:
                     index_str = f"{i}_"
             name = f"{prefix}{index_str}{scorer_name}"
+            X_filtered = _filter_x_columns(Xs[i], feature_set)
             with _PredictContext(cfe, is_oos, oos_method) as modified_cfe:
                 if sample_weights:
                     evaluation_metrics[name] = scorer_callable(
-                        modified_cfe, Xs[i], ys[i], sample_weight=sample_weights[i]
+                        modified_cfe, X_filtered, ys[i], sample_weight=sample_weights[i]
                     )
                 else:
                     evaluation_metrics[name] = scorer_callable(
-                        modified_cfe, Xs[i], ys[i]
+                        modified_cfe, X_filtered, ys[i]
                     )
     return evaluation_metrics
 
@@ -745,6 +747,41 @@ class MetaLearner(ABC):
             ] = result.cross_fit_estimator
 
     @abstractmethod
+    def fit_all_nuisance(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        """Fit all nuisance models of the MetaLearner.
+
+        If pre-fitted models were passed at instantiation, these are never refitted.
+
+        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        """
+        ...
+
+    @abstractmethod
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
+        """Fit all treatment models of the MetaLearner.
+
+        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        """
+        ...
+
     def fit(
         self,
         X: Matrix,
@@ -792,7 +829,27 @@ class MetaLearner(ABC):
         the same data splits where possible. Note that if there are several models to be synchronized which are
         classifiers, these cannot be split via stratification.
         """
-        ...
+        self.fit_all_nuisance(
+            X=X,
+            y=y,
+            w=w,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=fit_params,
+            synchronize_cross_fitting=synchronize_cross_fitting,
+            n_jobs_base_learners=n_jobs_base_learners,
+        )
+
+        self.fit_all_treatment(
+            X=X,
+            y=y,
+            w=w,
+            n_jobs_cross_fitting=n_jobs_cross_fitting,
+            fit_params=fit_params,
+            synchronize_cross_fitting=synchronize_cross_fitting,
+            n_jobs_base_learners=n_jobs_base_learners,
+        )
+
+        return self
 
     def predict_nuisance(
         self,

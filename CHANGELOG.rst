@@ -7,7 +7,7 @@
 Changelog
 =========
 
-0.8.0 (2024-07-xx)
+0.9.0 (2024-07-xx)
 ------------------
 
 **New features**
@@ -17,6 +17,28 @@ Changelog
   and :class:`metalearners.DRLearner`.
 
 * Add ``necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
+
+0.8.0 (2024-07-22)
+------------------
+
+**New features**
+
+* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+  :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
+
+* Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
+* Renamed :class:`metalearners.grid_search._GSResult` to :class:`metalearners.grid_search.GSResult`.
+
+* Added ``grid_size_`` attribute to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
+
+* Implement :meth:`metalearners.cross_fit_estimator.CrossFitEstimator.score`.
+
+**Bug fixes**
+
+* Fixed a bug in :meth:`metalearners.metalearner.MetaLearner.evaluate` where it failed
+  in the case of ``feature_set`` being different from ``None``.
+
 
 0.7.0 (2024-07-12)
 ------------------

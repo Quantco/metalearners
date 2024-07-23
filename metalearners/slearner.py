@@ -142,7 +142,7 @@ class SLearner(MetaLearner):
             random_state=random_state,
         )
 
-    def fit(
+    def fit_all_nuisance(
         self,
         X: Matrix,
         y: Vector,
@@ -174,6 +174,18 @@ class SLearner(MetaLearner):
             n_jobs_cross_fitting=n_jobs_cross_fitting,
             fit_params=qualified_fit_params[NUISANCE][_BASE_MODEL],
         )
+        return self
+
+    def fit_all_treatment(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        n_jobs_cross_fitting: int | None = None,
+        fit_params: dict | None = None,
+        synchronize_cross_fitting: bool = True,
+        n_jobs_base_learners: int | None = None,
+    ) -> Self:
         return self
 
     def predict(
@@ -213,6 +225,7 @@ class SLearner(MetaLearner):
             is_oos=is_oos,
             oos_method=oos_method,
             is_treatment_model=False,
+            feature_set=self.feature_set[_BASE_MODEL],
         )
 
     def predict_conditional_average_outcomes(

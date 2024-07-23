@@ -12,4 +12,5 @@ Examples
    Model selection with optuna <example_optuna.ipynb>
    Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example_gridsearch.ipynb>
    Generating data <example_data_generation.ipynb>
+   Estimating CATEs for survival analysis <example_survival.ipynb>
    Converting a MetaLearner to ONNX <example_onnx.ipynb>
