@@ -548,7 +548,6 @@ def infer_probabilities_output(model) -> tuple[int, str]:
 def infer_input_dict(model) -> dict:
     """Returns a dict where the keys are the input names of the model and the values are
     ``spox.Var`` with the corresponding shape and type."""
-    check_onnx_installed()
     check_spox_installed()
     from spox import Tensor, Var, argument
 

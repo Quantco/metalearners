@@ -10,7 +10,6 @@ from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector
 from metalearners._utils import (
-    check_onnx_installed,
     check_spox_installed,
     copydoc,
     get_one,
@@ -452,7 +451,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         * ``"treatment_effect_model"``
         """
         warning_experimental_feature("build_onnx")
-        check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
         from onnx.checker import check_model

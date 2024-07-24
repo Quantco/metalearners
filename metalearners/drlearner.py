@@ -20,7 +20,6 @@ from metalearners._typing import (
     _ScikitModel,
 )
 from metalearners._utils import (
-    check_onnx_installed,
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
     copydoc,
@@ -417,7 +416,6 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         * ``"treatment_model"``
         """
         warning_experimental_feature("build_onnx")
-        check_onnx_installed()
         check_spox_installed()
         import spox.opset.ai.onnx.v21 as op
         from onnx.checker import check_model
