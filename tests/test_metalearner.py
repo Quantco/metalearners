@@ -1119,3 +1119,18 @@ def test_validate_outcome_different_classes(implementation, use_pandas, rng):
         ValueError, match="have seen different sets of classification outcomes."
     ):
         ml.fit(X, y, w)
+
+
+@pytest.mark.parametrize(
+    "implementation",
+    [TLearner, SLearner, XLearner, RLearner, DRLearner],
+)
+def test_init_args_smoke(implementation):
+    ml = implementation(
+        True,
+        2,
+        LogisticRegression,
+        LinearRegression,
+        LogisticRegression,
+    )
+    implementation(**ml.init_args)

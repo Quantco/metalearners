@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -1122,6 +1122,37 @@ class MetaLearner(ABC):
         if scoring is None:
             return default_scoring
         return dict(default_scoring) | dict(scoring)
+
+    @property
+    def init_args(self) -> dict[str, Any]:
+        """Create initiliazation parameters for a new MetaLearner."""
+        if self._prefitted_nuisance_models:
+            raise ValueError(
+                "Cannot recreate MetaLearner if a pre-fitted model was used."
+            )
+        return {
+            "is_classification": self.is_classification,
+            "n_variants": self.n_variants,
+            "nuisance_model_factory": {
+                k: v
+                for k, v in self.nuisance_model_factory.items()
+                if k != PROPENSITY_MODEL
+            },
+            "treatment_model_factory": self.treatment_model_factory,
+            "propensity_model_factory": self.nuisance_model_factory.get(
+                PROPENSITY_MODEL
+            ),
+            "nuisance_model_params": {
+                k: v
+                for k, v in self.nuisance_model_params.items()
+                if k != PROPENSITY_MODEL
+            },
+            "treatment_model_params": self.treatment_model_params,
+            "propensity_model_params": self.nuisance_model_params.get(PROPENSITY_MODEL),
+            "feature_set": self.feature_set,
+            "n_folds": self.n_folds,
+            "random_state": self.random_state,
+        }
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):

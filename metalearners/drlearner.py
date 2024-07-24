@@ -4,7 +4,7 @@
 
 import numpy as np
 from joblib import Parallel, delayed
-from typing_extensions import Self
+from typing_extensions import Any, Self
 
 from metalearners._typing import (
     Features,
@@ -398,3 +398,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             )
 
         return pseudo_outcome
+
+    @property
+    def init_args(self) -> dict[str, Any]:
+        return super().init_args | {"adaptive_clipping": self.adaptive_clipping}
