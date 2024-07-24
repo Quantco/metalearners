@@ -770,7 +770,7 @@ class MetaLearner(ABC):
         This method, combined with :meth:`~metalearners.metalearner.MetaLearner.fit_all_treatment`,
         facilitates the segmentation of the metalearner fitting process into two distinct parts.
         This division allows for interventions between the two stages, such as performing
-        features selection for the treatment models or conducting hyperparameter optimization
+        feature selection for the treatment models or conducting hyperparameter optimization
         within the nuisance models.
         """
         ...
