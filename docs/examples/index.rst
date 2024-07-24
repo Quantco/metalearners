@@ -13,3 +13,4 @@ Examples
    Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example_gridsearch.ipynb>
    Generating data <example_data_generation.ipynb>
    Estimating CATEs for survival analysis <example_survival.ipynb>
+   What if I know the propensity score? <example_propensity.ipynb>
