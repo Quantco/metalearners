@@ -133,8 +133,8 @@ def test_xlearner_onnx(
         final.SerializeToString(), providers=rt.get_available_providers()
     )
 
-    pred_onnx = sess.run(
+    (pred_onnx,) = sess.run(
         ["tau"],
         {"X": X.astype(np.float32)},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=5e-4)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)

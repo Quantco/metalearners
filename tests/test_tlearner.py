@@ -130,8 +130,8 @@ def test_tlearner_onnx(
     else:
         onnx_X = X.astype(np.float32)
 
-    pred_onnx = sess.run(
+    (pred_onnx,) = sess.run(
         ["tau"],
         {"X": onnx_X},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx[0], atol=5e-4)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)
