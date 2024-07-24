@@ -553,7 +553,7 @@ class RLearner(MetaLearner):
         tau_hats: list[Var] = []
         for m in models[TREATMENT_MODEL]:
             tau_hat_tv = inline(m)(**input_dict)[treatment_output_name]
-            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.const(2))
             if self.is_classification:
                 if self._supports_multi_class():
                     raise ValueError(

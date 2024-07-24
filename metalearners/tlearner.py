@@ -191,7 +191,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             variant_cates.append(
                 op.unsqueeze(
                     variant_cate,
-                    axes=op.constant(value_int=1),
+                    axes=op.const(1),
                 )
             )
         cate = op.concat(variant_cates, axis=1)

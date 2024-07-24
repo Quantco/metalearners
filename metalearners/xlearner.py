@@ -482,29 +482,29 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         slice_0 = op.slice(
             propensity_scores,
-            starts=op.constant(value=np.array([0])),
-            ends=op.constant(value=np.array([1])),
-            axes=op.constant(value=np.array([1])),
+            starts=op.const(np.array([0])),
+            ends=op.const(np.array([1])),
+            axes=op.const(np.array([1])),
         )
 
         tau_hat = []
         for tv in range(self.n_variants - 1):
             slice_tv = op.slice(
                 propensity_scores,
-                starts=op.constant(value=np.array([tv + 1])),
-                ends=op.constant(value=np.array([tv + 2])),
-                axes=op.constant(value=np.array([1])),
+                starts=op.const(np.array([tv + 1])),
+                ends=op.const(np.array([tv + 2])),
+                axes=op.const(np.array([1])),
             )
             denominator = op.add(slice_0, slice_tv)
             scaled_propensity = op.div(slice_tv, denominator)
             tau_hat_tv = op.add(
                 op.mul(scaled_propensity, tau_hat_control[tv]),
                 op.mul(
-                    op.sub(op.constant(value_float=1), scaled_propensity),
+                    op.sub(op.const(1), scaled_propensity),
                     tau_hat_effect[tv],
                 ),
             )
-            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.const(2))
             if self.is_classification:
                 if self._supports_multi_class():
                     raise ValueError(
