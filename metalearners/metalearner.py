@@ -1125,7 +1125,11 @@ class MetaLearner(ABC):
 
     @property
     def init_args(self) -> dict[str, Any]:
-        """Create initiliazation parameters for a new MetaLearner."""
+        """Create initiliazation parameters for a new MetaLearner.
+
+        Importantly, this does not copy further internal state, such as the weights or
+        parameters of trained base models.
+        """
         return {
             "is_classification": self.is_classification,
             "n_variants": self.n_variants,
