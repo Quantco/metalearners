@@ -7,6 +7,14 @@
 Changelog
 =========
 
+0.9.0 (2024-07-xx)
+------------------
+
+**New features**
+
+* Added :meth:`metalearners.metalearner.MetaLearner.init_params`.
+
+
 0.8.0 (2024-07-22)
 ------------------
 
