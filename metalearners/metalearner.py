@@ -760,7 +760,18 @@ class MetaLearner(ABC):
 
         If pre-fitted models were passed at instantiation, these are never refitted.
 
-        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        The only difference with :meth:`~metalearners.metalearner.MetaLearner.fit` parameters,
+        is that if ``fit_params`` follows the first usage pattern (explained in
+        :meth:`~metalearners.metalearner.MetaLearner.fit`), then the training parameters
+        will only be used for the nuisance models, and in the case they should also be used
+        by the treatment models, these should also be passed in the following call to
+        :meth:`~metalearners.metalearner.MetaLearner.fit_all_treatment`.
+
+        This method, combined with :meth:`~metalearners.metalearner.MetaLearner.fit_all_treatment`,
+        facilitates the segmentation of the metalearner fitting process into two distinct parts.
+        This division allows for interventions between the two stages, such as performing
+        feature selection for the treatment models or conducting hyperparameter optimization
+        within the nuisance models.
         """
         ...
 
@@ -777,7 +788,11 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit all treatment models of the MetaLearner.
 
-        For the parameters check :meth:`metalearners.metalearner.MetaLearner.fit`.
+        The only difference with :meth:`~metalearners.metalearner.MetaLearner.fit` parameters,
+        is that if ``fit_params`` follows the first usage pattern (explained in
+        :meth:`~metalearners.metalearner.MetaLearner.fit`), then the training parameters
+        will only be used for the treatment models, as the nuisance models should already
+        be fitted.
         """
         ...
 
