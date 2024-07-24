@@ -789,7 +789,7 @@ class MetaLearner(ABC):
         """Fit all treatment models of the MetaLearner.
 
         The only difference with :meth:`~metalearners.metalearner.MetaLearner.fit` parameters,
-        is that in the case ``fit_params`` follows the first usage pattern (explained in
+        is that if ``fit_params`` follows the first usage pattern (explained in
         :meth:`~metalearners.metalearner.MetaLearner.fit`), then the training parameters
         will only be used for the treatment models, as the nuisance models should already
         be fitted.
