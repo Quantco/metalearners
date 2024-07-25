@@ -6,10 +6,10 @@ from functools import partial
 from itertools import repeat
 
 import numpy as np
-import onnx
 import onnxruntime as rt
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from onnx import ModelProto
 from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx import convert_sklearn
@@ -18,7 +18,6 @@ from xgboost import XGBClassifier, XGBRegressor
 
 from metalearners import XLearner
 from metalearners._typing import Params
-from metalearners.metalearner import PROPENSITY_MODEL
 from metalearners.xlearner import CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL
 
 from .conftest import all_sklearn_classifiers, all_sklearn_regressors
@@ -102,30 +101,27 @@ def test_xlearner_onnx(
     )
     ml.fit(X, y, w)
 
-    onnx_models: dict[str, list[onnx.ModelProto]] = {
-        CONTROL_EFFECT_MODEL: [],
-        TREATMENT_EFFECT_MODEL: [],
-        PROPENSITY_MODEL: [],
-    }
-    for tv in range(n_variants - 1):
-        model = ml._treatment_models[CONTROL_EFFECT_MODEL][tv]._overall_estimator
-        onnx_model = treatment_onnx_converter(
-            model, initial_types=[("X", FloatTensorType([None, n_numerical_features]))]
-        )
-        onnx_models[CONTROL_EFFECT_MODEL].append(onnx_model)
+    necessary_models = ml._necessary_onnx_models()
+    onnx_models: dict[str, list[ModelProto]] = {}
 
-        model = ml._treatment_models[TREATMENT_EFFECT_MODEL][tv]._overall_estimator
-        onnx_model = treatment_onnx_converter(
-            model, initial_types=[("X", FloatTensorType([None, n_numerical_features]))]
-        )
-        onnx_models[TREATMENT_EFFECT_MODEL].append(onnx_model)
-
-    model = ml._nuisance_models[PROPENSITY_MODEL][0]._overall_estimator
-    onnx_model = propensity_onnx_converter(
-        model,
-        initial_types=[("X", FloatTensorType([None, n_numerical_features]))],
-    )
-    onnx_models[PROPENSITY_MODEL].append(onnx_model)
+    for model_kind, models in necessary_models.items():
+        onnx_models[model_kind] = []
+        if model_kind in [CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL]:
+            onnx_converter = treatment_onnx_converter
+        else:
+            onnx_converter = propensity_onnx_converter
+        for model in models:
+            onnx_models[model_kind].append(
+                onnx_converter(
+                    model,
+                    initial_types=[
+                        (
+                            "X",
+                            FloatTensorType([None, n_numerical_features]),
+                        )
+                    ],
+                )
+            )
 
     final = ml._build_onnx(onnx_models)
 

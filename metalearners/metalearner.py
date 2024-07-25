@@ -138,6 +138,17 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
         raise ValueError("Need at least two folds to use synchronization.")
 
 
+def get_overall_estimators(cfes: list[CrossFitEstimator]) -> list[_ScikitModel]:
+    overall_estimators = []
+    for cfe in cfes:
+        if cfe._overall_estimator is None:
+            raise ValueError(
+                "To use this functionality the overall models need to be fitted."
+            )
+        overall_estimators.append(cfe._overall_estimator)
+    return overall_estimators
+
+
 def _evaluate_model_kind(
     cfes: Sequence[CrossFitEstimator],
     Xs: Sequence[Matrix],
@@ -1183,10 +1194,15 @@ class MetaLearner(ABC):
                     "as feature set (and therefore use all the features)."
                 )
 
-    @classmethod
     @abstractmethod
-    def _necessary_onnx_models(cls) -> set[str]:
-        """Return a set with the necessary models to convert the MetaLearner to ONNX."""
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        """Return a dictionary with the necessary models to convert the MetaLearner to
+        ONNX.
+
+        The returned dictionary keys will be strings and the values will be list of the
+        overall base models (trained on the complete dataset) which should be converted
+        to onnx.
+        """
         ...
 
     @abstractmethod

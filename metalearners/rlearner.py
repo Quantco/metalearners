@@ -9,7 +9,7 @@ from joblib import Parallel, delayed
 from sklearn.metrics import root_mean_squared_error
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
@@ -35,6 +35,7 @@ from metalearners.metalearner import (
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
+    get_overall_estimators,
 )
 
 OUTCOME_MODEL = "outcome_model"
@@ -525,9 +526,12 @@ class RLearner(MetaLearner):
 
         return pseudo_outcomes, weights
 
-    @classmethod
-    def _necessary_onnx_models(cls) -> set[str]:
-        return {TREATMENT_MODEL}
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        return {
+            TREATMENT_MODEL: get_overall_estimators(
+                self._treatment_models[TREATMENT_MODEL]
+            )
+        }
 
     @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
@@ -542,7 +546,7 @@ class RLearner(MetaLearner):
         from spox import Var, build, inline
 
         self._validate_feature_set_none()
-        self._validate_onnx_models(models, self._necessary_onnx_models())
+        self._validate_onnx_models(models, set(self._necessary_onnx_models().keys()))
 
         input_dict = infer_input_dict(models[TREATMENT_MODEL][0])
 

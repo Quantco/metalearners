@@ -300,7 +300,7 @@ class SLearner(MetaLearner):
         )
 
     @classmethod
-    def _necessary_onnx_models(cls) -> set[str]:
+    def _necessary_onnx_models(cls) -> dict[str, list[_ScikitModel]]:
         raise ValueError(
             "The SLearner does not implement this method. Please refer to comment in the tutorial."
         )

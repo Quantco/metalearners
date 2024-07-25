@@ -7,7 +7,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
     check_spox_installed,
     copydoc,
@@ -26,6 +26,7 @@ from metalearners.metalearner import (
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
+    get_overall_estimators,
 )
 
 
@@ -150,9 +151,12 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             feature_set=self.feature_set[VARIANT_OUTCOME_MODEL],
         )
 
-    @classmethod
-    def _necessary_onnx_models(cls) -> set[str]:
-        return {VARIANT_OUTCOME_MODEL}
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        return {
+            VARIANT_OUTCOME_MODEL: get_overall_estimators(
+                self._nuisance_models[VARIANT_OUTCOME_MODEL]
+            )
+        }
 
     @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
@@ -167,7 +171,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         from spox import build, inline
 
         self._validate_feature_set_none()
-        self._validate_onnx_models(models, self._necessary_onnx_models())
+        self._validate_onnx_models(models, set(self._necessary_onnx_models().keys()))
 
         input_dict = infer_input_dict(models[VARIANT_OUTCOME_MODEL][0])
 

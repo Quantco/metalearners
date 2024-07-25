@@ -8,6 +8,7 @@ import onnxruntime as rt
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from onnx import ModelProto
 from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx import convert_sklearn
@@ -15,7 +16,6 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from xgboost import XGBRegressor
 
 from metalearners._utils import function_has_argument
-from metalearners.metalearner import TREATMENT_MODEL
 from metalearners.rlearner import RLearner, r_loss
 
 from .conftest import all_sklearn_regressors
@@ -99,23 +99,27 @@ def test_rlearner_onnx(
     )
     ml.fit(X, y, w)
 
-    onnx_models = []
-    for tv in range(n_variants - 1):
-        model = ml._treatment_models[TREATMENT_MODEL][tv]._overall_estimator
-        onnx_model = onnx_converter(
-            model,
-            initial_types=[
-                (
-                    "X",
-                    FloatTensorType(
-                        [None, n_numerical_features + n_categorical_features]
-                    ),
-                )
-            ],
-        )
-        onnx_models.append(onnx_model)
+    necessary_models = ml._necessary_onnx_models()
+    onnx_models: dict[str, list[ModelProto]] = {}
 
-    final = ml._build_onnx({TREATMENT_MODEL: onnx_models})
+    for model_kind, models in necessary_models.items():
+        onnx_models[model_kind] = []
+        for model in models:
+            onnx_models[model_kind].append(
+                onnx_converter(
+                    model,
+                    initial_types=[
+                        (
+                            "X",
+                            FloatTensorType(
+                                [None, n_numerical_features + n_categorical_features]
+                            ),
+                        )
+                    ],
+                )
+            )
+
+    final = ml._build_onnx(onnx_models)
     sess = rt.InferenceSession(
         final.SerializeToString(), providers=rt.get_available_providers()
     )

@@ -8,6 +8,7 @@ import numpy as np
 import onnxruntime as rt
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from onnx import ModelProto
 from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx.convert import convert_sklearn
@@ -23,7 +24,6 @@ from xgboost import XGBClassifier, XGBRegressor
 
 from metalearners import TLearner
 from metalearners._typing import Params
-from metalearners.metalearner import VARIANT_OUTCOME_MODEL
 
 from .conftest import all_sklearn_classifiers, all_sklearn_regressors
 
@@ -100,23 +100,27 @@ def test_tlearner_onnx(
     )
     ml.fit(X, y, w)
 
-    onnx_models = []
-    for tv in range(n_variants):
-        model = ml._nuisance_models[VARIANT_OUTCOME_MODEL][tv]._overall_estimator
-        onnx_model = onnx_converter(
-            model,
-            initial_types=[
-                (
-                    "X",
-                    FloatTensorType(
-                        [None, n_numerical_features + n_categorical_features]
-                    ),
-                )
-            ],
-        )
-        onnx_models.append(onnx_model)
+    necessary_models = ml._necessary_onnx_models()
+    onnx_models: dict[str, list[ModelProto]] = {}
 
-    final = ml._build_onnx({VARIANT_OUTCOME_MODEL: onnx_models})
+    for model_kind, models in necessary_models.items():
+        onnx_models[model_kind] = []
+        for model in models:
+            onnx_models[model_kind].append(
+                onnx_converter(
+                    model,
+                    initial_types=[
+                        (
+                            "X",
+                            FloatTensorType(
+                                [None, n_numerical_features + n_categorical_features]
+                            ),
+                        )
+                    ],
+                )
+            )
+
+    final = ml._build_onnx(onnx_models)
     sess = rt.InferenceSession(
         final.SerializeToString(), providers=rt.get_available_providers()
     )
