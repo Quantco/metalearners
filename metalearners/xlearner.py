@@ -498,7 +498,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             tau_hat_tv = op.add(
                 op.mul(scaled_propensity, tau_hat_control[tv]),
                 op.mul(
-                    op.sub(op.const(1), scaled_propensity),
+                    op.sub(op.constant(value_float=1), scaled_propensity),
                     tau_hat_effect[tv],
                 ),
             )
