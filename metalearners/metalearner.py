@@ -1201,7 +1201,11 @@ class MetaLearner(ABC):
 
         ``models`` should be a dictionary of sequences with the necessary base models converted to
         ONNX. The necessary models for the specific MetaLearner can be accessed with
-        :meth:`~metalearners.metalearner.MetaLearner.necessary_onnx_models`.
+        :meth:`~metalearners.metalearner.MetaLearner._necessary_onnx_models`.
+
+        This method combines the the converted ONNX base models into a single ONNX model.
+        This combined model has a single 2D input ``"X"`` and a single output named
+        ``output_name``.
         """
         ...
 
