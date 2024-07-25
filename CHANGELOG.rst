@@ -12,11 +12,13 @@ Changelog
 
 **New features**
 
-* Add ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
+* Added :meth:`metalearners.metalearner.MetaLearner.init_params`.
+
+* Added ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
   for :class:`metalearners.TLearner`, :class:`metalearners.XLearner`, :class:`metalearners.RLearner`
   and :class:`metalearners.DRLearner`.
 
-* Add ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
+* Added ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
 
 0.8.0 (2024-07-22)
 ------------------
