@@ -1185,12 +1185,12 @@ class MetaLearner(ABC):
 
     @classmethod
     @abstractmethod
-    def necessary_onnx_models(cls) -> set[str]:
+    def _necessary_onnx_models(cls) -> set[str]:
         """Return a set with the necessary models to convert the MetaLearner to ONNX."""
         ...
 
     @abstractmethod
-    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """Convert the MetaLearner to an ONNX model.
 
         .. warning::

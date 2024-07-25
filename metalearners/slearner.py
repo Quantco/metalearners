@@ -300,12 +300,12 @@ class SLearner(MetaLearner):
         )
 
     @classmethod
-    def necessary_onnx_models(cls) -> set[str]:
+    def _necessary_onnx_models(cls) -> set[str]:
         raise ValueError(
             "The SLearner does not implement this method. Please refer to comment in the tutorial."
         )
 
-    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         raise ValueError(
             "The SLearner does not implement this method. Please refer to comment in the tutorial."
         )

@@ -127,7 +127,7 @@ def test_xlearner_onnx(
     )
     onnx_models[PROPENSITY_MODEL].append(onnx_model)
 
-    final = ml.build_onnx(onnx_models)
+    final = ml._build_onnx(onnx_models)
 
     sess = rt.InferenceSession(
         final.SerializeToString(), providers=rt.get_available_providers()

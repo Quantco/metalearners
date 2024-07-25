@@ -115,7 +115,7 @@ def test_rlearner_onnx(
         )
         onnx_models.append(onnx_model)
 
-    final = ml.build_onnx({TREATMENT_MODEL: onnx_models})
+    final = ml._build_onnx({TREATMENT_MODEL: onnx_models})
     sess = rt.InferenceSession(
         final.SerializeToString(), providers=rt.get_available_providers()
     )

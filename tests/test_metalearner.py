@@ -112,10 +112,10 @@ class _TestMetaLearner(MetaLearner):
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), 2, 1))
 
-    def build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
 
     @classmethod
-    def necessary_onnx_models(cls) -> set[str]:
+    def _necessary_onnx_models(cls) -> set[str]:
         return set()
 
 
