@@ -1158,7 +1158,7 @@ class MetaLearner(ABC):
                 else None
             ),
             "fitted_nuisance_models": {
-                k: v
+                k: deepcopy(v)
                 for k, v in self._nuisance_models.items()
                 if k in self._prefitted_nuisance_models and k != PROPENSITY_MODEL
             },
