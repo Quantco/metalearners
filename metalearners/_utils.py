@@ -559,7 +559,7 @@ def infer_input_dict(model) -> dict:
     return input_dict
 
 
-def warning_experimental_feature(function_name: str):
+def warning_experimental_feature(function_name: str) -> None:
     warnings.warn(
         f"{function_name} is an experimental feature. Use it at your own risk!",
         stacklevel=2,
