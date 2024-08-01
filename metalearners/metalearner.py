@@ -1190,14 +1190,16 @@ class MetaLearner(ABC):
         """Validates that the converted ONNX models are correct.
 
         Specifically it validates the following:
-        * The ``necessary_models`` are present in the ``models``` dictionary
+        * The ``necessary_models`` are equal to the keys of the ``models``` dictionary
         * The number of models for each model matches the cardinality in the MetaLearner
         * All ONNX have the same input format
         * The models with ``"predict"`` as ``predict_method`` have only one output
         * The models with ``"predict_proba"`` as ``predict_method`` have a probabilities output
         """
         if set(models.keys()) != necessary_models:
-            raise ValueError(f"{necessary_models} should be present in models keys.")
+            raise ValueError(
+                f"necessary_model ({necessary_models}) should equal to keys present in models dictionary."
+            )
         specifications = (
             self.nuisance_model_specifications() | self.treatment_model_specifications()
         )
