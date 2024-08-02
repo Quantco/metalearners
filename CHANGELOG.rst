@@ -12,7 +12,9 @@ Changelog
 
 **New features**
 
-* Added :meth:`metalearners.metalearner.MetaLearner.init_params`.
+* Add :meth:`metalearners.metalearner.MetaLearner.init_params`.
+
+* Add :class:`metalearners.utils.FixedBinaryPropensity`.
 
 * Added ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
   for :class:`metalearners.TLearner`, :class:`metalearners.XLearner`, :class:`metalearners.RLearner`
@@ -25,7 +27,7 @@ Changelog
 
 **New features**
 
-* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+* Add :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
   :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
 
 * Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
