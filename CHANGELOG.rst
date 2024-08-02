@@ -7,6 +7,15 @@
 Changelog
 =========
 
+0.9.1 (2024-07-xx)
+------------------
+
+**New features**
+
+* Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to compute AIPW point estimate and standard error without requiring a full model fit.
+
+
+
 0.9.0 (2024-07-xx)
 ------------------
 
