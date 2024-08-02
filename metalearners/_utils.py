@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from collections.abc import Callable
 from inspect import signature
 from operator import le, lt
@@ -18,7 +19,7 @@ from metalearners._typing import Matrix, PredictMethod, Vector, _ScikitModel
 
 _PREDICT = "predict"
 _PREDICT_PROBA = "predict_proba"
-
+ONNX_PROBABILITIES_OUTPUTS = ["probabilities", "output_probability"]
 
 default_rng = np.random.default_rng()
 
@@ -499,3 +500,67 @@ def default_metric(predict_method: PredictMethod) -> str:
     if predict_method == _PREDICT_PROBA:
         return "neg_log_loss"
     return "neg_root_mean_squared_error"
+
+
+def check_onnx_installed() -> None:
+    """Ensures that ``onnx`` is available."""
+    try:
+        import onnx  # noqa F401
+    except ImportError:
+        raise ImportError(
+            "onnx is not installed. Please install onnx to use this feature."
+        )
+
+
+def check_spox_installed() -> None:
+    """Ensures that ``spox`` is available."""
+    try:
+        import spox  # noqa F401
+    except ImportError:
+        raise ImportError(
+            "spox is not installed. Please install spox to use this feature."
+        )
+
+
+def infer_dtype_and_shape_onnx(tensor) -> tuple[np.dtype, tuple]:
+    """Returns the ``np.dtype`` and shape of an ONNX tensor."""
+    check_onnx_installed()
+    import onnx
+
+    dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.type.tensor_type.elem_type)
+    shape = tuple(
+        d.dim_value if d.HasField("dim_value") else None
+        for d in tensor.type.tensor_type.shape.dim
+    )
+    return dtype, shape
+
+
+def infer_probabilities_output(model) -> tuple[int, str]:
+    """Returns the index and name of the output which contains the probabilities outcome
+    in a ONNX classifier."""
+    check_onnx_installed()
+    for i, output in enumerate(model.graph.output):
+        if output.name in ONNX_PROBABILITIES_OUTPUTS:
+            return i, output.name
+    raise ValueError("No probabilities output was found.")
+
+
+def infer_input_dict(model) -> dict:
+    """Returns a dict where the keys are the input names of the model and the values are
+    ``spox.Var`` with the corresponding shape and type."""
+    check_spox_installed()
+    from spox import Tensor, Var, argument
+
+    input_dict: dict[str, Var] = {}
+    for input_tensor in model.graph.input:
+        input_dtype, input_shape = infer_dtype_and_shape_onnx(input_tensor)
+        input_dict[input_tensor.name] = argument(Tensor(input_dtype, input_shape))
+
+    return input_dict
+
+
+def warning_experimental_feature(function_name: str) -> None:
+    warnings.warn(
+        f"{function_name} is an experimental feature. Use it at your own risk!",
+        stacklevel=2,
+    )

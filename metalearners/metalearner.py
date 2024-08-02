@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence, Set
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypedDict
@@ -27,6 +27,7 @@ from metalearners._typing import (
     _ScikitModel,
 )
 from metalearners._utils import (
+    ONNX_PROBABILITIES_OUTPUTS,
     default_metric,
     index_matrix,
     validate_model_and_predict_method,
@@ -135,6 +136,17 @@ def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
         )
     if min(n_folds.values()) < 2:
         raise ValueError("Need at least two folds to use synchronization.")
+
+
+def get_overall_estimators(cfes: list[CrossFitEstimator]) -> list[_ScikitModel]:
+    overall_estimators = []
+    for cfe in cfes:
+        if cfe._overall_estimator is None:
+            raise ValueError(
+                "To use this functionality the overall models need to be fitted."
+            )
+        overall_estimators.append(cfe._overall_estimator)
+    return overall_estimators
 
 
 def _evaluate_model_kind(
@@ -1171,6 +1183,98 @@ class MetaLearner(ABC):
             "n_folds": self.n_folds,
             "random_state": self.random_state,
         }
+
+    def _validate_onnx_models(
+        self, models: Mapping[str, Sequence], necessary_models: Set[str]
+    ):
+        """Validates that the converted ONNX models are correct.
+
+        Specifically it validates the following:
+        * The ``necessary_models`` are equal to the keys of the ``models``` dictionary
+        * The number of models for each model matches the cardinality in the MetaLearner
+        * All ONNX have the same input format
+        * The models with ``"predict"`` as ``predict_method`` have only one output
+        * The models with ``"predict_proba"`` as ``predict_method`` have a probabilities output
+        """
+        if set(models.keys()) != necessary_models:
+            raise ValueError(
+                f"necessary_model ({necessary_models}) should equal to keys present in models dictionary."
+            )
+        specifications = (
+            self.nuisance_model_specifications() | self.treatment_model_specifications()
+        )
+        input_format = None
+        for model_kind in necessary_models:
+            model_specification = specifications[model_kind]
+            if len(models[model_kind]) != model_specification["cardinality"](self):
+                raise ValueError(
+                    f"{model_kind} cardinality does not match the expected cardinality."
+                )
+            predict_method = model_specification["predict_method"](self)
+            for model_index, model in enumerate(models[model_kind]):
+                if input_format is None:
+                    input_format = model.graph.input
+                elif input_format != model.graph.input:
+                    raise ValueError(
+                        "Some ONNX model has a different input, check that all models have "
+                        "the same input format."
+                    )
+                if predict_method == "predict" and len(model.graph.output) != 1:
+                    raise ValueError(
+                        f"ONNX {model_kind} with index {model_index} has {len(model.graph.output)} "
+                        "outputs and should have only one."
+                    )
+                elif predict_method == "predict_proba":
+                    found_probabilities = False
+                    for output in model.graph.output:
+                        if output.name in ONNX_PROBABILITIES_OUTPUTS:
+                            found_probabilities = True
+                    if not found_probabilities:
+                        raise ValueError(
+                            f"ONNX {model_kind} model with index {model_index} needs to have an output "
+                            f"with name in {ONNX_PROBABILITIES_OUTPUTS}."
+                        )
+
+    def _validate_feature_set_none(self):
+        """Validates that the feature set for all the models is None, i.e. all models
+        use all features."""
+        for feature_set in self.feature_set.values():
+            if feature_set is not None:
+                raise ValueError(
+                    "ONNX conversion can only be used if all base models have ``None`` "
+                    "as feature set (and therefore use all the features)."
+                )
+
+    @abstractmethod
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        """Return a dictionary with the necessary models to convert the MetaLearner to
+        ONNX.
+
+        The returned dictionary keys will be strings and the values will be list of the
+        overall base models (trained on the complete dataset) which should be converted
+        to onnx.
+        """
+        ...
+
+    @abstractmethod
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """Convert the MetaLearner to an ONNX model.
+
+        .. warning::
+            This is a experimental feature which is not subject to deprecation cycles. Use
+            it at your own risk!
+
+        ``output_name`` can be used to change the output name of the ONNX model.
+
+        ``models`` should be a dictionary of sequences with the necessary base models converted to
+        ONNX. The necessary models for the specific MetaLearner can be accessed with
+        :meth:`~metalearners.metalearner.MetaLearner._necessary_onnx_models`.
+
+        This method combines the the converted ONNX base models into a single ONNX model.
+        This combined model has a single 2D input ``"X"`` and a single output named
+        ``output_name``.
+        """
+        ...
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):

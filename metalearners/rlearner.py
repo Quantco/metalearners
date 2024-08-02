@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.metrics import root_mean_squared_error
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
+    check_spox_installed,
     clip_element_absolute_value_to_epsilon,
     copydoc,
     function_has_argument,
@@ -16,8 +19,10 @@ from metalearners._utils import (
     get_predict,
     get_predict_proba,
     index_matrix,
+    infer_input_dict,
     validate_all_vectors_same_index,
     validate_valid_treatment_variant_not_control,
+    warning_experimental_feature,
 )
 from metalearners.cross_fit_estimator import OVERALL
 from metalearners.metalearner import (
@@ -30,6 +35,7 @@ from metalearners.metalearner import (
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
+    get_overall_estimators,
 )
 
 OUTCOME_MODEL = "outcome_model"
@@ -519,3 +525,46 @@ class RLearner(MetaLearner):
         weights = np.square(w_residuals)
 
         return pseudo_outcomes, weights
+
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        return {
+            TREATMENT_MODEL: get_overall_estimators(
+                self._treatment_models[TREATMENT_MODEL]
+            )
+        }
+
+    @copydoc(MetaLearner._build_onnx, sep="")
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """In the RLearner case, the necessary models are:
+
+        * ``"treatment_model"``
+        """
+        warning_experimental_feature("_build_onnx")
+        check_spox_installed()
+        import spox.opset.ai.onnx.v21 as op
+        from onnx.checker import check_model
+        from spox import Var, build, inline
+
+        self._validate_feature_set_none()
+        self._validate_onnx_models(models, set(self._necessary_onnx_models().keys()))
+
+        input_dict = infer_input_dict(models[TREATMENT_MODEL][0])
+
+        treatment_output_name = models[TREATMENT_MODEL][0].graph.output[0].name
+
+        tau_hats: list[Var] = []
+        for m in models[TREATMENT_MODEL]:
+            tau_hat_tv = inline(m)(**input_dict)[treatment_output_name]
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            if self.is_classification:
+                if self._supports_multi_class():
+                    raise ValueError(
+                        "ONNX conversion is not implemented for a multi-class output."
+                    )
+                tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
+            tau_hats.append(tau_hat_tv)
+
+        tau_hat = op.concat(tau_hats, axis=1)
+        final_model = build(input_dict, {output_name: tau_hat})
+        check_model(final_model, full_check=True)
+        return final_model

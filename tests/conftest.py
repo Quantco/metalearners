@@ -7,6 +7,65 @@ import numpy as np
 import pandas as pd
 import pytest
 from git_root import git_root
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.discriminant_analysis import (
+    QuadraticDiscriminantAnalysis,
+)
+from sklearn.ensemble import (
+    AdaBoostRegressor,
+    BaggingClassifier,
+    BaggingRegressor,
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    ElasticNet,
+    ElasticNetCV,
+    HuberRegressor,
+    Lars,
+    LarsCV,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    LinearRegression,
+    LogisticRegression,
+    LogisticRegressionCV,
+    OrthogonalMatchingPursuit,
+    OrthogonalMatchingPursuitCV,
+    PassiveAggressiveRegressor,
+    QuantileRegressor,
+    RANSACRegressor,
+    Ridge,
+    RidgeCV,
+    SGDRegressor,
+    TheilSenRegressor,
+    TweedieRegressor,
+)
+from sklearn.neighbors import (
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.svm import SVR, LinearSVR, NuSVR
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
 
 from metalearners._utils import get_linear_dimension, load_mindset_data, load_twins_data
 from metalearners.data_generation import (
@@ -21,6 +80,68 @@ from metalearners.outcome_functions import (
 
 _SEED = 1337
 _SIGMA_TAU = 0.5
+
+all_sklearn_classifiers = [
+    # AdaBoostClassifier, # The output probabilities are wrong when there are only two classes, see https://github.com/onnx/sklearn-onnx/issues/1117
+    BaggingClassifier,
+    CalibratedClassifierCV,
+    DecisionTreeClassifier,
+    ExtraTreeClassifier,
+    ExtraTreesClassifier,
+    # GaussianProcessClassifier, # This raises an error com.microsoft:Solve(-1) is not a registered function/op when inference on onnx. TODO: investigate it further
+    GradientBoostingClassifier,
+    HistGradientBoostingClassifier,
+    KNeighborsClassifier,
+    # LinearDiscriminantAnalysis, # The output probabilities are wrong when there are only two classes, see https://github.com/onnx/sklearn-onnx/issues/1116
+    LogisticRegression,
+    LogisticRegressionCV,
+    MLPClassifier,
+    QuadraticDiscriminantAnalysis,
+    RadiusNeighborsClassifier,
+    RandomForestClassifier,
+]  # extracted from all_estimators("classifier"), models which have predict_proba and convert_sklearn supports them
+
+all_sklearn_regressors = [
+    ARDRegression,
+    AdaBoostRegressor,
+    BaggingRegressor,
+    BayesianRidge,
+    DecisionTreeRegressor,
+    ElasticNet,
+    ElasticNetCV,
+    ExtraTreeRegressor,
+    ExtraTreesRegressor,
+    GaussianProcessRegressor,
+    GradientBoostingRegressor,
+    HistGradientBoostingRegressor,
+    HuberRegressor,
+    KNeighborsRegressor,
+    Lars,
+    LarsCV,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    LinearRegression,
+    LinearSVR,
+    MLPRegressor,
+    NuSVR,
+    OrthogonalMatchingPursuit,
+    OrthogonalMatchingPursuitCV,
+    # PLSRegression, # The output shape of the onnx converted model is wrong
+    PassiveAggressiveRegressor,
+    QuantileRegressor,
+    RANSACRegressor,
+    RadiusNeighborsRegressor,
+    RandomForestRegressor,
+    Ridge,
+    RidgeCV,
+    SGDRegressor,
+    SVR,
+    TheilSenRegressor,
+    TweedieRegressor,
+]  # regressors which are supported by convert_sklearn and support regression in the reals
 
 
 def _generate_rct_experiment_data(
@@ -246,3 +367,27 @@ def grid_search_data():
     w_test = rng.integers(0, n_variants, n_test_samples)
 
     return X, y_class, y_reg, w, X_test, y_test_class, y_test_reg, w_test
+
+
+@pytest.fixture(scope="session")
+def onnx_dataset():
+    rng = np.random.default_rng(_SEED)
+    n_samples = 300
+    n_numerical_features = 5
+
+    X_numerical = rng.standard_normal((n_samples, n_numerical_features))
+
+    X_with_categorical = pd.DataFrame(X_numerical)
+    X_with_categorical[n_numerical_features] = pd.Series(
+        rng.integers(10, 13, n_samples), dtype="category"
+    )  # not start at 0
+    X_with_categorical[n_numerical_features + 1] = pd.Series(
+        rng.choice([-5, 4, -10, -32], size=n_samples), dtype="category"
+    )  # not consecutive
+
+    y_class = rng.integers(0, 2, size=n_samples)
+    y_reg = rng.standard_normal(n_samples)
+
+    w = rng.integers(0, 3, n_samples)
+
+    return X_numerical, X_with_categorical, y_class, y_reg, w
