@@ -10,6 +10,7 @@ on:
     branches:
       - "main"
     tags:
+      - "*"
 
 # Automatically stop old builds on the same branch/PR
 concurrency:
