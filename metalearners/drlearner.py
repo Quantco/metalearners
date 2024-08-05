@@ -191,7 +191,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         )
 
         self._assign_joblib_nuisance_results(results)
-
+        self._nuisance_models_fit = True
         return self
 
     def fit_all_treatment(
@@ -337,7 +337,11 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         y: Vector,
         w: Vector,
     ) -> np.ndarray:
-        """Compute Average Treatment Effect (ATE) for each treatment variant using the Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-stage treatment model: it uses the pseudo-outcome alone and computes the average and SE. Can be used following the `fit_all_nuisance` method.
+        """Compute Average Treatment Effect (ATE) for each treatment variant using the
+        Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
+        stage treatment model: it uses the pseudo-outcome alone and computes the average
+        and SE. Can be used following the
+        :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
 
         Args:
             X (Matrix): Covariate matrix.
@@ -347,6 +351,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         Returns:
             np.ndarray: Treatment effect and standard error for each treatment variant.
         """
+        if not self._nuisance_models_fit:
+            raise ValueError(
+                "The nuisance models need to be fitted before computing the treatment effect."
+            )
         gamma_matrix = np.zeros((len(X), self.n_variants - 1))
         for treatment_variant in range(1, self.n_variants):
             gamma_matrix[:, treatment_variant - 1] = self._pseudo_outcome(
