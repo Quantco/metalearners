@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import repeat
-from sklearn.linear_model import LinearRegression, LogisticRegression
 
 import numpy as np
 import onnxruntime as rt
