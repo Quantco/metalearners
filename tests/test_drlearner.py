@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import repeat
+from sklearn.linear_model import LinearRegression, LogisticRegression
 
 import numpy as np
 import onnxruntime as rt
@@ -133,3 +134,22 @@ def test_drlearner_onnx(
         {"X": onnx_X},
     )
     np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)
+
+
+def test_treatment_effect(
+    numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
+):
+    X, _, W, Y, _, tau = (
+        numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te
+    )
+    ml = DRLearner(
+        False,
+        2,
+        LinearRegression,
+        LinearRegression,
+        LogisticRegression,
+        n_folds=2,
+    )
+    ml.fit_all_nuisance(X, Y, W)
+    est = ml.treatment_effect(X, Y, W)
+    np.testing.assert_almost_equal(est[:, 0], tau.mean(), decimal=1)

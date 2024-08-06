@@ -6,6 +6,7 @@ Examples
    :maxdepth: 1
 
    Estimating CATEs with MetaLearners <example_basic.ipynb>
+   Estimating ATEs with DRLearner <example_estimating_ates.ipynb>
    Reusing base models <example_reuse.ipynb>
    Explainability: Lime plots of MetaLearners <example_lime.ipynb>
    Explainability: Feature importance and SHAP values <example_feature_importance_shap.ipynb>

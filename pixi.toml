@@ -63,6 +63,9 @@ sphinx_rtd_theme = "*"
 sphinxcontrib-apidoc = "*"
 sphinx-autodoc-typehints = "*"
 myst-nb = "*"
+econml = ">=0.15"
+doubleml = "*"
+statsmodels = "*"
 
 [feature.docs.tasks]
 docs = "cd docs && make html "
