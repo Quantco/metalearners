@@ -1,14 +1,8 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
-from typing import Any
-
 import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, ClassifierMixin
-from typing_extensions import Self
 
-from metalearners._typing import Matrix, Vector
 from metalearners.drlearner import DRLearner
 from metalearners.metalearner import MetaLearner
 from metalearners.rlearner import RLearner
@@ -79,29 +73,3 @@ def simplify_output(tensor: np.ndarray) -> np.ndarray:
     if n_outputs == 2:
         return tensor[:, :, 1].reshape(n_obs, n_variants)
     return tensor
-
-
-class FixedBinaryPropensity(ClassifierMixin, BaseEstimator):
-    """Binary classifier propensity dummy model which outputs a fixed propensity,
-    independently of covariates."""
-
-    def __init__(self, propensity_score: float) -> None:
-        if not 0 <= propensity_score <= 1:
-            raise ValueError(
-                f"Expected a propensity score between 0 and 1 but got {propensity_score}."
-            )
-        self.propensity_score = propensity_score
-
-    def fit(self, X: Matrix, y: Vector) -> Self:
-        self.classes_ = np.unique(y)  # sklearn requires this
-        if (n_classes := len(self.classes_)) > 2:
-            raise ValueError(
-                f"FixedBinaryPropensityModel only supports binary outcomes but {n_classes} were provided ."
-            )
-        return self
-
-    def predict(self, X: Matrix) -> np.ndarray[Any, Any]:
-        return np.argmax(self.predict_proba(X), axis=1)
-
-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray[Any, Any]:
-        return np.full((len(X), 2), [1 - self.propensity_score, self.propensity_score])

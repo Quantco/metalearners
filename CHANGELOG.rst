@@ -12,9 +12,7 @@ Changelog
 
 **New features**
 
-* Add :meth:`metalearners.metalearner.MetaLearner.init_params`.
-
-* Add :class:`metalearners.utils.FixedBinaryPropensity`.
+* Added :meth:`metalearners.metalearner.MetaLearner.init_params`.
 
 * Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to compute AIPW point estimate and standard error for _average treatment effects (ATE)_ without requiring a full model fit (which is required for CATE estimation). A new notebook contains examples.
 
@@ -23,7 +21,7 @@ Changelog
 
 **New features**
 
-* Add :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
   :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
 
 * Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.
