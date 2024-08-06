@@ -12,7 +12,21 @@ Changelog
 
 **New features**
 
-* Added :meth:`metalearners.metalearner.MetaLearner.init_params`.
+* Add :meth:`metalearners.metalearner.MetaLearner.init_params`.
+
+* Add :class:`metalearners.utils.FixedBinaryPropensity`.
+
+* Added ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
+  for :class:`metalearners.TLearner`, :class:`metalearners.XLearner`, :class:`metalearners.RLearner`
+  and :class:`metalearners.DRLearner`.
+
+* Added ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
+
+* Added :meth:`metalearners.metalearner.DRLearner.average_treatment_effect` to
+  compute AIPW point estimate and standard error for _average
+  treatment effects (ATE)_
+  without requiring a full model fit (which is required for CATE
+  estimation). A new notebook contains examples.
 
 * Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to compute AIPW point estimate and standard error for _average treatment effects (ATE)_ without requiring a full model fit (which is required for CATE estimation). A new notebook contains examples.
 
@@ -21,7 +35,7 @@ Changelog
 
 **New features**
 
-* Added :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
+* Add :meth:`metalearners.metalearner.MetaLearner.fit_all_nuisance` and
   :meth:`metalearners.metalearner.MetaLearner.fit_all_treatment`.
 
 * Add optional ``store_raw_results`` and ``store_results`` parameters to :class:`metalearners.grid_search.MetaLearnerGridSearch`.

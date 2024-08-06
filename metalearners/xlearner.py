@@ -2,17 +2,24 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector
+from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
+    check_spox_installed,
+    copydoc,
     get_one,
     get_predict,
     get_predict_proba,
     index_matrix,
+    infer_input_dict,
+    infer_probabilities_output,
     validate_valid_treatment_variant_not_control,
+    warning_experimental_feature,
 )
 from metalearners.cross_fit_estimator import MEDIAN, OVERALL
 from metalearners.metalearner import (
@@ -26,6 +33,7 @@ from metalearners.metalearner import (
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
+    get_overall_estimators,
 )
 
 CONTROL_EFFECT_MODEL = "control_effect_model"
@@ -430,3 +438,90 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         imputed_te_control = treatment_outcome - y_filt[control_indices]
 
         return imputed_te_control, imputed_te_treatment
+
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        return {
+            PROPENSITY_MODEL: get_overall_estimators(
+                self._nuisance_models[PROPENSITY_MODEL]
+            ),
+            CONTROL_EFFECT_MODEL: get_overall_estimators(
+                self._treatment_models[CONTROL_EFFECT_MODEL]
+            ),
+            TREATMENT_EFFECT_MODEL: get_overall_estimators(
+                self._treatment_models[TREATMENT_EFFECT_MODEL]
+            ),
+        }
+
+    @copydoc(MetaLearner._build_onnx, sep="")
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """In the XLearner case, the necessary models are:
+
+        * ``"propensity_model"``
+        * ``"control_effect_model"``
+        * ``"treatment_effect_model"``
+        """
+        warning_experimental_feature("_build_onnx")
+        check_spox_installed()
+        import spox.opset.ai.onnx.v21 as op
+        from onnx.checker import check_model
+        from spox import Var, build, inline
+
+        self._validate_feature_set_none()
+        self._validate_onnx_models(models, set(self._necessary_onnx_models().keys()))
+
+        input_dict = infer_input_dict(models[PROPENSITY_MODEL][0])
+
+        treatment_output_name = models[CONTROL_EFFECT_MODEL][0].graph.output[0].name
+
+        tau_hat_control: list[Var] = []
+        for m in models[CONTROL_EFFECT_MODEL]:
+            tau_hat_control.append(inline(m)(**input_dict)[treatment_output_name])
+        tau_hat_effect: list[Var] = []
+        for m in models[TREATMENT_EFFECT_MODEL]:
+            tau_hat_effect.append(inline(m)(**input_dict)[treatment_output_name])
+
+        _, propensity_output_name = infer_probabilities_output(
+            models[PROPENSITY_MODEL][0]
+        )
+
+        propensity_scores = inline(models[PROPENSITY_MODEL][0])(**input_dict)[
+            propensity_output_name
+        ]
+
+        slice_0 = op.slice(
+            propensity_scores,
+            starts=op.const(np.array([0])),
+            ends=op.const(np.array([1])),
+            axes=op.const(np.array([1])),
+        )
+
+        tau_hat = []
+        for tv in range(self.n_variants - 1):
+            slice_tv = op.slice(
+                propensity_scores,
+                starts=op.const(np.array([tv + 1])),
+                ends=op.const(np.array([tv + 2])),
+                axes=op.const(np.array([1])),
+            )
+            denominator = op.add(slice_0, slice_tv)
+            scaled_propensity = op.div(slice_tv, denominator)
+            tau_hat_tv = op.add(
+                op.mul(scaled_propensity, tau_hat_control[tv]),
+                op.mul(
+                    op.sub(op.constant(value_float=1), scaled_propensity),
+                    tau_hat_effect[tv],
+                ),
+            )
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            if self.is_classification:
+                if self._supports_multi_class():
+                    raise ValueError(
+                        "ONNX conversion is not implemented for a multi-class output."
+                    )
+                tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
+            tau_hat.append(tau_hat_tv)
+
+        cate = op.concat(tau_hat, axis=1)
+        final_model = build(input_dict, {output_name: cate})
+        check_model(final_model, full_check=True)
+        return final_model

@@ -1,75 +1,80 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from functools import partial
 from itertools import repeat
 
 import numpy as np
 import onnxruntime as rt
-import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnx import ModelProto
 from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
-from skl2onnx import convert_sklearn
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from xgboost import XGBRegressor
+from skl2onnx.convert import convert_sklearn
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.neighbors import (
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from xgboost import XGBClassifier, XGBRegressor
 
-from metalearners._utils import function_has_argument
-from metalearners.rlearner import RLearner, r_loss
+from metalearners import TLearner
+from metalearners._typing import Params
 
-from .conftest import all_sklearn_regressors
-
-
-@pytest.mark.parametrize("use_pandas", [True, False])
-def test_r_loss(use_pandas):
-    factory = pd.Series if use_pandas else np.array
-    cate_estimates = factory([2, 2])
-    outcomes = factory([6.1, 6.1])
-    outcome_estimates = factory([3.1, 3.1])
-    treatments = factory([1, 1])
-    propensity_scores = factory([0.5, 0.5])
-    # (6.1 - 3.1) - 2(1 -.5)
-    # = 3 - 1 = 2
-    result = r_loss(
-        cate_estimates=cate_estimates,
-        outcomes=outcomes,
-        outcome_estimates=outcome_estimates,
-        treatments=treatments,
-        propensity_scores=propensity_scores,
-    )
-    assert result == pytest.approx(2, abs=1e-4, rel=1e-4)
+from .conftest import all_sklearn_classifiers, all_sklearn_regressors
 
 
 @pytest.mark.parametrize(
-    "treatment_model_factory, onnx_converter",
+    "nuisance_model_factory, onnx_converter, is_classification",
     (
         list(
             zip(
-                all_sklearn_regressors,
-                repeat(convert_sklearn),
+                all_sklearn_classifiers,
+                repeat(partial(convert_sklearn, options={"zipmap": False})),
+                repeat([True]),
             )
         )
+        + list(zip(all_sklearn_regressors, repeat(convert_sklearn), repeat(False)))
         + [
-            (LGBMRegressor, convert_lightgbm),
-            (XGBRegressor, convert_xgboost),
+            (LGBMClassifier, partial(convert_lightgbm, zipmap=False), True),
+            (LGBMRegressor, convert_lightgbm, False),
+            (XGBClassifier, convert_xgboost, True),
+            (XGBRegressor, convert_xgboost, False),
         ]
     ),
 )
-@pytest.mark.parametrize("is_classification", [True, False])
-def test_rlearner_onnx(
-    treatment_model_factory, onnx_converter, is_classification, onnx_dataset
+def test_tlearner_onnx(
+    nuisance_model_factory, onnx_converter, is_classification, onnx_dataset
 ):
-    if not function_has_argument(treatment_model_factory.fit, "sample_weight"):
-        pytest.skip()
-
-    supports_categoricals = treatment_model_factory in [
+    supports_categoricals = nuisance_model_factory in [
+        LGBMClassifier,
         LGBMRegressor,
         # convert_sklearn does not support categoricals https://github.com/onnx/sklearn-onnx/issues/1051
+        # HistGradientBoostingClassifier,
         # HistGradientBoostingRegressor,
         # convert_xgboost does not support categoricals https://github.com/onnx/onnxmltools/issues/469#issuecomment-1993880910
+        # XGBClassifier,
         # XGBRegressor,
     ]
+
+    nuisance_model_params: Params | None
+    if nuisance_model_factory in [RadiusNeighborsClassifier, RadiusNeighborsRegressor]:
+        nuisance_model_params = {"radius": 10}
+    elif nuisance_model_factory in [
+        HistGradientBoostingClassifier,
+        HistGradientBoostingRegressor,
+    ]:
+        # This is unnecessary for now but if at some point convert_sklearn supports categoricals this is needed
+        nuisance_model_params = {"categorical_features": "from_dtype"}
+    elif nuisance_model_factory in [XGBClassifier, XGBRegressor]:
+        # This is unnecessary for now but if at some point convert_xgboost supports categoricals this is needed
+        nuisance_model_params = {"enable_categorical": True}
+    else:
+        nuisance_model_params = None
 
     X_numerical, X_with_categorical, y_class, y_reg, w = onnx_dataset
     n_numerical_features = X_numerical.shape[1]
@@ -83,18 +88,14 @@ def test_rlearner_onnx(
     n_variants = len(np.unique(w))
     if is_classification:
         y = y_class
-        nuisance_model_factory = LogisticRegression
     else:
         y = y_reg
-        nuisance_model_factory = LinearRegression
 
-    ml = RLearner(
+    ml = TLearner(
         is_classification,
         n_variants,
         nuisance_model_factory=nuisance_model_factory,
-        propensity_model_factory=LGBMClassifier,
-        treatment_model_factory=treatment_model_factory,
-        propensity_model_params={"n_estimators": 1},
+        nuisance_model_params=nuisance_model_params,
         n_folds=2,
     )
     ml.fit(X, y, w)
@@ -128,8 +129,8 @@ def test_rlearner_onnx(
         onnx_X = X.to_numpy(np.float32)
         # This is needed for categoricals as LGBM uses the categorical codes, when
         # other implementations support categoricals this may need to be changed
-        onnx_X[:, n_numerical_features] = X[n_numerical_features].cat.codes
-        onnx_X[:, n_numerical_features + 1] = X[n_numerical_features + 1].cat.codes
+        for i in range(n_categorical_features):
+            onnx_X[:, n_numerical_features + i] = X[n_numerical_features + i].cat.codes
     else:
         onnx_X = X.astype(np.float32)
 

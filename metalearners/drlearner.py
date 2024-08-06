@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+from collections.abc import Mapping, Sequence
+
 import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Any, Self
@@ -18,12 +20,16 @@ from metalearners._typing import (
     _ScikitModel,
 )
 from metalearners._utils import (
+    check_spox_installed,
     clip_element_absolute_value_to_epsilon,
+    copydoc,
     get_one,
     get_predict,
     get_predict_proba,
     index_matrix,
+    infer_input_dict,
     validate_valid_treatment_variant_not_control,
+    warning_experimental_feature,
 )
 from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
 from metalearners.metalearner import (
@@ -38,6 +44,7 @@ from metalearners.metalearner import (
     _fit_cross_fit_estimator_joblib,
     _ModelSpecifications,
     _ParallelJoblibSpecification,
+    get_overall_estimators,
 )
 
 _EPSILON = 1e-09
@@ -331,11 +338,12 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return variant_outcome_evaluation | propensity_evaluation | treatment_evaluation
 
-    def treatment_effect(
+    def average_treatment_effect(
         self,
         X: Matrix,
         y: Vector,
         w: Vector,
+        is_oos: bool,
     ) -> np.ndarray:
         """Compute Average Treatment Effect (ATE) for each treatment variant using the
         Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
@@ -344,9 +352,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
 
         Args:
-            X (Matrix): Covariate matrix.
-            y (Vector): Outcome vector.
+            X (Matrix): Covariate matrix
+            y (Vector): Outcome vector
             w (Vector): Treatment vector
+            is_oos (bool): indicator whether data is out of sample
 
         Returns:
             np.ndarray: Treatment effect and standard error for each treatment variant.
@@ -362,7 +371,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 w=w,
                 y=y,
                 treatment_variant=treatment_variant,
-                is_oos=False,
+                is_oos=is_oos,
             )
         treatment_effect = gamma_matrix.mean(axis=0)
         standard_error = gamma_matrix.std(axis=0) / np.sqrt(len(X))
@@ -439,3 +448,46 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
     @property
     def init_args(self) -> dict[str, Any]:
         return super().init_args | {"adaptive_clipping": self.adaptive_clipping}
+
+    def _necessary_onnx_models(self) -> dict[str, list[_ScikitModel]]:
+        return {
+            TREATMENT_MODEL: get_overall_estimators(
+                self._treatment_models[TREATMENT_MODEL]
+            )
+        }
+
+    @copydoc(MetaLearner._build_onnx, sep="")
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        """In the DRLearner case, the necessary models are:
+
+        * ``"treatment_model"``
+        """
+        warning_experimental_feature("_build_onnx")
+        check_spox_installed()
+        import spox.opset.ai.onnx.v21 as op
+        from onnx.checker import check_model
+        from spox import Var, build, inline
+
+        self._validate_feature_set_none()
+        self._validate_onnx_models(models, set(self._necessary_onnx_models().keys()))
+
+        input_dict = infer_input_dict(models[TREATMENT_MODEL][0])
+
+        treatment_output_name = models[TREATMENT_MODEL][0].graph.output[0].name
+
+        tau_hat: list[Var] = []
+        for m in models[TREATMENT_MODEL]:
+            tau_hat_tv = inline(m)(**input_dict)[treatment_output_name]
+            tau_hat_tv = op.unsqueeze(tau_hat_tv, axes=op.constant(value_int=2))
+            if self.is_classification:
+                if self._supports_multi_class():
+                    raise ValueError(
+                        "ONNX conversion is not implemented for a multi-class output."
+                    )
+                tau_hat_tv = op.concat([op.neg(tau_hat_tv), tau_hat_tv], axis=-1)
+            tau_hat.append(tau_hat_tv)
+
+        cate = op.concat(tau_hat, axis=1)
+        final_model = build(input_dict, {output_name: cate})
+        check_model(final_model, full_check=True)
+        return final_model

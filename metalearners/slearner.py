@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -296,4 +297,15 @@ class SLearner(MetaLearner):
 
         return np.stack(conditional_average_outcomes_list, axis=1).reshape(
             n_obs, self.n_variants, -1
+        )
+
+    @classmethod
+    def _necessary_onnx_models(cls) -> dict[str, list[_ScikitModel]]:
+        raise ValueError(
+            "The SLearner does not implement this method. Please refer to comment in the tutorial."
+        )
+
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
+        raise ValueError(
+            "The SLearner does not implement this method. Please refer to comment in the tutorial."
         )

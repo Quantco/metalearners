@@ -34,6 +34,10 @@ shap = "*"
 matplotlib-base = "*"
 joblib = ">=1.2.0"
 lifelines = "*"
+onnx = "*"
+onnxmltools = "*"
+onnxruntime = "*"
+spox = "*"
 
 [feature.lint.dependencies]
 pre-commit = "*"

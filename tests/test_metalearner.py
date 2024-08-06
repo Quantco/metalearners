@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2024
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections.abc import Mapping, Sequence
 from itertools import chain
 
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
+from metalearners._typing import _ScikitModel
 from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
@@ -110,6 +112,12 @@ class _TestMetaLearner(MetaLearner):
 
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), 2, 1))
+
+    def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"): ...
+
+    @classmethod
+    def _necessary_onnx_models(cls) -> dict[str, list[_ScikitModel]]:
+        return {}
 
 
 @pytest.mark.parametrize("is_classification", [True, False])
