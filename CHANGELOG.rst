@@ -28,6 +28,7 @@ Changelog
   without requiring a full model fit (which is required for CATE
   estimation). A new notebook contains examples.
 
+* Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to compute AIPW point estimate and standard error for _average treatment effects (ATE)_ without requiring a full model fit (which is required for CATE estimation). A new notebook contains examples.
 
 0.8.0 (2024-07-22)
 ------------------
