@@ -343,6 +343,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         X: Matrix,
         y: Vector,
         w: Vector,
+        is_oos: bool,
     ) -> np.ndarray:
         """Compute Average Treatment Effect (ATE) for each treatment variant using the
         Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
@@ -351,9 +352,10 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
 
         Args:
-            X (Matrix): Covariate matrix.
-            y (Vector): Outcome vector.
+            X (Matrix): Covariate matrix
+            y (Vector): Outcome vector
             w (Vector): Treatment vector
+            is_oos (bool): indicator whether data is out of sample
 
         Returns:
             np.ndarray: Treatment effect and standard error for each treatment variant.
@@ -369,7 +371,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 w=w,
                 y=y,
                 treatment_variant=treatment_variant,
-                is_oos=False,
+                is_oos=is_oos,
             )
         treatment_effect = gamma_matrix.mean(axis=0)
         standard_error = gamma_matrix.std(axis=0) / np.sqrt(len(X))
