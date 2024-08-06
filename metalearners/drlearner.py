@@ -338,7 +338,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return variant_outcome_evaluation | propensity_evaluation | treatment_evaluation
 
-    def treatment_effect(
+    def average_treatment_effect(
         self,
         X: Matrix,
         y: Vector,

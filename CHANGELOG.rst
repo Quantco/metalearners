@@ -22,7 +22,7 @@ Changelog
 
 * Added ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
 
-* Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to
+* Added :meth:`metalearners.metalearner.DRLearner.average_treatment_effect` to
   compute AIPW point estimate and standard error for _average
   treatment effects (ATE)_
   without requiring a full model fit (which is required for CATE

@@ -150,5 +150,5 @@ def test_treatment_effect(
         n_folds=2,
     )
     ml.fit_all_nuisance(X, Y, W)
-    est = ml.treatment_effect(X, Y, W)
+    est = ml.average_treatment_effect(X, Y, W)
     np.testing.assert_almost_equal(est[:, 0], tau.mean(), decimal=1)
