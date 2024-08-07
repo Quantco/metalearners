@@ -7,7 +7,7 @@
 Changelog
 =========
 
-0.9.0 (2024-07-xx)
+0.9.0 (2024-08-02)
 ------------------
 
 **New features**
@@ -16,19 +16,16 @@ Changelog
 
 * Add :class:`metalearners.utils.FixedBinaryPropensity`.
 
-* Added ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
+* Add ``_build_onnx`` to :class:`metalearners.MetaLearner` abstract class and implement it
   for :class:`metalearners.TLearner`, :class:`metalearners.XLearner`, :class:`metalearners.RLearner`
   and :class:`metalearners.DRLearner`.
 
-* Added ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
+* Add ``_necessary_onnx_models`` to :class:`metalearners.MetaLearner`.
 
-* Added :meth:`metalearners.metalearner.DRLearner.average_treatment_effect` to
-  compute AIPW point estimate and standard error for _average
-  treatment effects (ATE)_
-  without requiring a full model fit (which is required for CATE
-  estimation). A new notebook contains examples.
+* Add :meth:`metalearners.metalearner.DRLearner.average_treatment_effect` to
+  compute the AIPW point estimate and standard error for
+  _average treatment effects (ATE)_ without requiring a full model fit.
 
-* Added :meth:`metalearners.metalearner.DRLearner.treatment_effect` to compute AIPW point estimate and standard error for _average treatment effects (ATE)_ without requiring a full model fit (which is required for CATE estimation). A new notebook contains examples.
 
 0.8.0 (2024-07-22)
 ------------------

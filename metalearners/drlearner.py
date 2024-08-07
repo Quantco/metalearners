@@ -344,11 +344,11 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         y: Vector,
         w: Vector,
         is_oos: bool,
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Compute Average Treatment Effect (ATE) for each treatment variant using the
         Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
-        stage treatment model: it uses the pseudo-outcome alone and computes the average
-        and SE. Can be used following the
+        stage treatment model: it uses the pseudo-outcome alone and computes the point
+        estimate and standard error. Can be used following the
         :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
 
         Args:
@@ -358,7 +358,8 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             is_oos (bool): indicator whether data is out of sample
 
         Returns:
-            np.ndarray: Treatment effect and standard error for each treatment variant.
+            np.ndarray: Treatment effect for each treatment variant.
+            np.ndarray: Standard error for each treatment variant.
         """
         if not self._nuisance_models_fit:
             raise ValueError(
@@ -375,7 +376,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             )
         treatment_effect = gamma_matrix.mean(axis=0)
         standard_error = gamma_matrix.std(axis=0) / np.sqrt(len(X))
-        return np.c_[treatment_effect, standard_error]
+        return treatment_effect, standard_error
 
     def _pseudo_outcome(
         self,
