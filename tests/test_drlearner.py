@@ -135,7 +135,7 @@ def test_drlearner_onnx(
     np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)
 
 
-def test_treatment_effect(
+def test_average_treatment_effect(
     numerical_experiment_dataset_continuous_outcome_binary_treatment_linear_te,
 ):
     X, _, W, Y, _, tau = (
@@ -150,5 +150,5 @@ def test_treatment_effect(
         n_folds=2,
     )
     ml.fit_all_nuisance(X, Y, W)
-    est = ml.average_treatment_effect(X, Y, W, is_oos=False)
-    np.testing.assert_almost_equal(est[:, 0], tau.mean(), decimal=1)
+    ate_estimate, _ = ml.average_treatment_effect(X, Y, W, is_oos=False)
+    np.testing.assert_almost_equal(ate_estimate, tau.mean(), decimal=1)
