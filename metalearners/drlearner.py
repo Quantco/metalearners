@@ -198,7 +198,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         )
 
         self._assign_joblib_nuisance_results(results)
-
+        self._nuisance_models_fit = True
         return self
 
     def fit_all_treatment(
@@ -337,6 +337,45 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         )
 
         return variant_outcome_evaluation | propensity_evaluation | treatment_evaluation
+
+    def average_treatment_effect(
+        self,
+        X: Matrix,
+        y: Vector,
+        w: Vector,
+        is_oos: bool,
+    ) -> np.ndarray:
+        """Compute Average Treatment Effect (ATE) for each treatment variant using the
+        Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
+        stage treatment model: it uses the pseudo-outcome alone and computes the average
+        and SE. Can be used following the
+        :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
+
+        Args:
+            X (Matrix): Covariate matrix
+            y (Vector): Outcome vector
+            w (Vector): Treatment vector
+            is_oos (bool): indicator whether data is out of sample
+
+        Returns:
+            np.ndarray: Treatment effect and standard error for each treatment variant.
+        """
+        if not self._nuisance_models_fit:
+            raise ValueError(
+                "The nuisance models need to be fitted before computing the treatment effect."
+            )
+        gamma_matrix = np.zeros((len(X), self.n_variants - 1))
+        for treatment_variant in range(1, self.n_variants):
+            gamma_matrix[:, treatment_variant - 1] = self._pseudo_outcome(
+                X=X,
+                w=w,
+                y=y,
+                treatment_variant=treatment_variant,
+                is_oos=is_oos,
+            )
+        treatment_effect = gamma_matrix.mean(axis=0)
+        standard_error = gamma_matrix.std(axis=0) / np.sqrt(len(X))
+        return np.c_[treatment_effect, standard_error]
 
     def _pseudo_outcome(
         self,
