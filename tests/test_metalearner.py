@@ -107,7 +107,7 @@ class _TestMetaLearner(MetaLearner):
     def predict(self, X, is_oos, oos_method=None):
         return np.zeros((len(X), self.n_variants - 1, 1))
 
-    def evaluate(self, X, y, w, is_oos, oos_method=None):
+    def evaluate(self, X, y, w, is_oos, oos_method=None, scoring=None):
         return {}
 
     def predict_conditional_average_outcomes(self, X, is_oos, oos_method=None):
