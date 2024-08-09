@@ -533,6 +533,58 @@ class RLearner(MetaLearner):
             )
         }
 
+    def predict_conditional_average_outcomes(
+        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
+    ) -> np.ndarray:
+        n_obs = len(X)
+
+        cate_estimates = self.predict(
+            X=X,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+        propensity_estimates = self.predict_nuisance(
+            X=X,
+            model_kind=PROPENSITY_MODEL,
+            model_ord=0,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+        outcome_estimates = self.predict_nuisance(
+            X=X,
+            model_kind=OUTCOME_MODEL,
+            model_ord=0,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+
+        conditional_average_outcomes_list = []
+
+        control_outcomes = outcome_estimates
+
+        # TODO: Consider whether the readability vs efficiency trade-off should be dealth with differently here.
+        # One could use a matrix/tensor operation.
+        for treatment_variant in range(1, self.n_variants):
+            control_outcomes -= (
+                propensity_estimates[:, treatment_variant]
+                @ cate_estimates[:, treatment_variant - 1]
+            )
+
+        conditional_average_outcomes_list.append(control_outcomes)
+
+        for treatment_variant in range(1, self.n_variants):
+            conditional_average_outcomes_list.append(
+                control_outcomes
+                + np.reshape(
+                    cate_estimates[:, treatment_variant - 1, :],
+                    (control_outcomes.shape),
+                )
+            )
+
+        return np.stack(conditional_average_outcomes_list, axis=1).reshape(
+            n_obs, self.n_variants, -1
+        )
+
     @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the RLearner case, the necessary models are:
