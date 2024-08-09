@@ -732,7 +732,7 @@ def test_validate_outcome_multi_class(metalearner_prefix, success):
 
 
 @pytest.mark.parametrize("is_classification", [True, False])
-@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "X", "DR"])
+@pytest.mark.parametrize("metalearner_prefix", ["S", "T", "R", "X", "DR"])
 def test_conditional_average_outcomes_smoke(
     metalearner_prefix, is_classification, request
 ):

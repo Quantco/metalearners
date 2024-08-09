@@ -7,12 +7,26 @@
 Changelog
 =========
 
+0.10.0 (2024-08-xx)
+-------------------
+
+**New features**
+
+* Add abstract method
+  :meth:`~metalearners.metalearner.MetaLearner.predict_conditional_average_outcomes`
+  to :class:`~metalearners.metalearner.MetaLearner`.
+
+* Implement
+  :meth:`~metalearners.rlearner.RLearner.predict_conditional_average_outcomes`
+  for :class:`~metalearners.rlearner.RLearner`.
+
+
 0.9.0 (2024-08-02)
 ------------------
 
 **New features**
 
-* Add :meth:`metalearners.metalearner.MetaLearner.init_params`.
+* Add :meth:`metalearners.metalearner.MetaLearner.init_args`.
 
 * Add :class:`metalearners.utils.FixedBinaryPropensity`.
 
