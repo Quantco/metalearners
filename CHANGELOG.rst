@@ -12,7 +12,7 @@ Changelog
 
 **New features**
 
-* Add :meth:`metalearners.metalearner.MetaLearner.init_params`.
+* Add :meth:`metalearners.metalearner.MetaLearner.init_args`.
 
 * Add :class:`metalearners.utils.FixedBinaryPropensity`.
 
