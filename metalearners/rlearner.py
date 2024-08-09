@@ -565,10 +565,16 @@ class RLearner(MetaLearner):
         # TODO: Consider whether the readability vs efficiency trade-off should be dealth with differently here.
         # One could use a matrix/tensor operation.
         for treatment_variant in range(1, self.n_variants):
-            for outcome_channel in range(0, cate_estimates.shape[2]):
-                control_outcomes[:, outcome_channel] -= (
+            if (n_outputs := cate_estimates.shape[2]) > 1:
+                for outcome_channel in range(0, n_outputs):
+                    control_outcomes[:, outcome_channel] -= (
+                        propensity_estimates[:, treatment_variant]
+                        * cate_estimates[:, treatment_variant - 1, outcome_channel]
+                    )
+            else:
+                control_outcomes -= (
                     propensity_estimates[:, treatment_variant]
-                    * cate_estimates[:, treatment_variant - 1, outcome_channel]
+                    * cate_estimates[:, treatment_variant - 1, 0]
                 )
 
         conditional_average_outcomes_list.append(control_outcomes)
