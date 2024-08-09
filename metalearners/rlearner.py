@@ -586,8 +586,8 @@ class RLearner(MetaLearner):
 
         control_outcomes = outcome_estimates
 
-        # TODO: Consider whether the readability vs efficiency trade-off should be dealth with differently here.
-        # One could use a matrix/tensor operation.
+        # TODO: Consider whether the readability vs efficiency trade-off should be dealt with differently here.
+        # One could use matrix/tensor operations instead.
         for treatment_variant in range(1, self.n_variants):
             if (n_outputs := cate_estimates.shape[2]) > 1:
                 for outcome_channel in range(0, n_outputs):
