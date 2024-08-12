@@ -20,6 +20,10 @@ Changelog
   :meth:`~metalearners.rlearner.RLearner.predict_conditional_average_outcomes`
   for :class:`~metalearners.rlearner.RLearner`.
 
+**Bug fixes**
+
+* Fix bug in which the :class:`~metalearners.slearner.SLearner`'s
+  inference step would have some leakage in the in-sample scenario.
 
 0.9.0 (2024-08-02)
 ------------------
