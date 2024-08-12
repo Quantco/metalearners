@@ -1340,23 +1340,6 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        r"""Predict the vectors of conditional average outcomes.
-
-        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
-        :math:`w`.
-
-        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
-        the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
-
-        The returned ndarray is of shape:
-
-        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
-          of a regression problem.
-
-        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
-          i.e. in case of a classification problem.
-        """
         if self._treatment_variants_indices is None:
             raise ValueError(
                 "The metalearner needs to be fitted before predicting."
