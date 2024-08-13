@@ -7,7 +7,7 @@
 Changelog
 =========
 
-0.10.0 (2024-08-xx)
+0.10.0 (2024-08-13)
 -------------------
 
 **New features**
@@ -24,6 +24,7 @@ Changelog
 
 * Fix bug in which the :class:`~metalearners.slearner.SLearner`'s
   inference step would have some leakage in the in-sample scenario.
+
 
 0.9.0 (2024-08-02)
 ------------------
