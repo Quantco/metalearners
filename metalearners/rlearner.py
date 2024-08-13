@@ -533,6 +533,89 @@ class RLearner(MetaLearner):
             )
         }
 
+    def predict_conditional_average_outcomes(
+        self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
+    ) -> np.ndarray:
+        r"""Predict the vectors of conditional average outcomes.
+
+        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
+        :math:`w`.
+
+        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
+        the estimates will stem from cross-fitting. Otherwise,
+        various approaches exist, specified via ``oos_method``.
+
+        The returned ndarray is of shape:
+
+        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
+          of a regression problem.
+
+        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
+          i.e. in case of a classification problem.
+
+        The conditional average outcomes are estimated as follows:
+
+        * :math:`Y_i(0) = \hat{\mu}(X_i) - \sum_{k=1}^{K} \hat{e}_k(X_i) \hat{\tau_k}(X_i)`
+        * :math:`Y_i(k) = Y_i(0) + \hat{\tau_k}(X_i)` for :math:`k \in \{1, \dots, K\}`
+
+        where :math:`K` is the number of treatment variants.
+        """
+        n_obs = len(X)
+
+        cate_estimates = self.predict(
+            X=X,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+        propensity_estimates = self.predict_nuisance(
+            X=X,
+            model_kind=PROPENSITY_MODEL,
+            model_ord=0,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+        outcome_estimates = self.predict_nuisance(
+            X=X,
+            model_kind=OUTCOME_MODEL,
+            model_ord=0,
+            is_oos=is_oos,
+            oos_method=oos_method,
+        )
+
+        conditional_average_outcomes_list = []
+
+        control_outcomes = outcome_estimates
+
+        # TODO: Consider whether the readability vs efficiency trade-off should be dealt with differently here.
+        # One could use matrix/tensor operations instead.
+        for treatment_variant in range(1, self.n_variants):
+            if (n_outputs := cate_estimates.shape[2]) > 1:
+                for outcome_channel in range(0, n_outputs):
+                    control_outcomes[:, outcome_channel] -= (
+                        propensity_estimates[:, treatment_variant]
+                        * cate_estimates[:, treatment_variant - 1, outcome_channel]
+                    )
+            else:
+                control_outcomes -= (
+                    propensity_estimates[:, treatment_variant]
+                    * cate_estimates[:, treatment_variant - 1, 0]
+                )
+
+        conditional_average_outcomes_list.append(control_outcomes)
+
+        for treatment_variant in range(1, self.n_variants):
+            conditional_average_outcomes_list.append(
+                control_outcomes
+                + np.reshape(
+                    cate_estimates[:, treatment_variant - 1, :],
+                    (control_outcomes.shape),
+                )
+            )
+
+        return np.stack(conditional_average_outcomes_list, axis=1).reshape(
+            n_obs, self.n_variants, -1
+        )
+
     @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the RLearner case, the necessary models are:
