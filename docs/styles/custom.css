@@ -1,0 +1,11 @@
+/*
+Hides the In[ ] blocks.
+Out[ ] blocks are not displayed
+*/
+.jp-InputPrompt, .jp-OutputPrompt {
+    display: none !important;
+}
+
+.custom-highlight {
+    border: 1px solid red;
+}

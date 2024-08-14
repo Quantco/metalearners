@@ -1,0 +1,87 @@
+site_name: metalearners
+site_description: description
+site_url: http://url
+theme:
+  name: material
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: deep purple
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+      primary: deep purple
+  features:
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+    - navigation.tabs
+  icon:
+    repo: fontawesome/brands/github-alt
+    edit: material/pencil
+repo_name: quantco/metalearners
+repo_url: https://github.com/quantco/metalearners
+edit_uri: edit/main/docs/
+plugins:
+  - search
+  - mkdocs-jupyter:
+      ignore_h1_titles: False # Heading H1 -> Site title
+      execute: true
+      allow_errors: false
+      show_input: True
+      include_source: True
+      # highlight_extra_classes: custom-highlight -> add custom styling to code & output cells
+      no_input: False
+      execute_ignore:
+        - examples/example_data_generation.ipynb
+        - examples/example_estimating_ates.ipynb
+        - examples/example_feature_importance_shap.ipynb
+        - examples/example_gridsearch.ipynb
+        - examples/example_lime.ipynb
+        - examples/example_onnx.ipynb
+        - examples/example_optuna.ipynb
+        - examples/example_propensity.ipynb
+        - examples/example_reuse.ipynb
+        - examples/example_survival.ipynb
+
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [metalearners]
+          options:
+            unwrap_annotated: true
+            show_symbol_type_heading: true
+            docstring_style: numpy
+            docstring_section_style: spacy
+            separate_signature: true
+            merge_init_into_class: true
+            show_submodules: true # show *all* code docu
+
+nav:
+  # Demonstrate notebook inclusion
+  - Welcome: index.md
+  - Examples:
+      - examples/index.md
+      - examples/example_basic.ipynb
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+extra_css:
+  - styles/custom.css
