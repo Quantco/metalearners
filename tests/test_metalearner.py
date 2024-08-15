@@ -727,9 +727,17 @@ def test_fit_params(metalearner_factory, fit_params, expected_keys, dummy_datase
         is_classification=False,
         n_folds=1,
     )
-    # Using cross-fitting is not possible with a single fold.
+    if metalearner_factory == XLearner:
+        # TODO: The X-Learner doesn't support using synchronize_cross_fitting=False.
+        # As a consequence, it doesn't support n_folds=1 either.
+        # We should find an alternative to testing this property for the X-Learner.
+        pytest.skip()
     metalearner.fit(
-        X=X, y=y, w=w, fit_params=fit_params, synchronize_cross_fitting=False
+        X=X,
+        y=y,
+        w=w,
+        fit_params=fit_params,
+        synchronize_cross_fitting=False,
     )
 
 
@@ -994,9 +1002,9 @@ def test_shap_values_smoke(
     [
         TLearner,
         SLearner,
-        XLearner,
         RLearner,
         DRLearner,
+        # The X-Learner does not support synchronze_cross_fitting = False.
     ],
 )
 @pytest.mark.parametrize("n_variants", [2, 5])

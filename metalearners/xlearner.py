@@ -99,8 +99,11 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
+        # TODO: Move this to object initialization.
         if not synchronize_cross_fitting:
-            raise ValueError()
+            raise ValueError(
+                "The X-Learner does not support synchronize_cross_fitting=False."
+            )
 
         self._cv_split_indices = self._split(X)
         self._treatment_cv_split_indices = {}
