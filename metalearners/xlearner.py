@@ -566,7 +566,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 ):
                     fold_model = cfe._estimators[fold_index]
                     predict_method = getattr(fold_model, predict_method_name)
-                    fold_estimates = predict_method(X[test_indices])
+                    fold_estimates = predict_method(index_matrix(X, test_indices))
                     conditional_average_outcome_estimates[test_indices] = fold_estimates
 
                 conditional_average_outcomes_list.append(
