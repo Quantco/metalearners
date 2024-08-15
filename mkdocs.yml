@@ -47,16 +47,7 @@ plugins:
       # highlight_extra_classes: custom-highlight -> add custom styling to code & output cells
       no_input: False
       execute_ignore:
-        - examples/example_data_generation.ipynb
-        - examples/example_estimating_ates.ipynb
-        - examples/example_feature_importance_shap.ipynb
-        - examples/example_gridsearch.ipynb
-        - examples/example_lime.ipynb
-        - examples/example_onnx.ipynb
-        - examples/example_optuna.ipynb
-        - examples/example_propensity.ipynb
-        - examples/example_reuse.ipynb
-        - examples/example_survival.ipynb
+        - examples/example_optuna.ipynb # Skip because this will take a long time to execute
 
   - mkdocstrings:
       handlers:
@@ -75,8 +66,17 @@ nav:
   # Demonstrate notebook inclusion
   - Welcome: index.md
   - Examples:
-      - examples/index.md
       - examples/example_basic.ipynb
+      - examples/example_estimating_ates.ipynb
+      - examples/example_reuse.ipynb
+      - examples/example_lime.ipynb
+      - examples/example_feature_importance_shap.ipynb
+      - examples/example_optuna.ipynb
+      - examples/example_gridsearch.ipynb
+      - examples/example_data_generation.ipynb
+      - examples/example_survival.ipynb
+      - examples/example_propensity.ipynb
+      - examples/example_onnx.ipynb
 markdown_extensions:
   - admonition
   - pymdownx.highlight
