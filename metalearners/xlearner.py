@@ -172,7 +172,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         if not hasattr(self, "_treatment_cv_split_indices"):
             raise ValueError(
                 "The nuisance models need to be fitted before fitting the treatment models. "
-                "In particular, the MetaLearner's attribute _cvs, "
+                "In particular, the MetaLearner's attribute _treatment_cv_split_indices, "
                 "typically set during nuisance fitting, does not exist."
             )
         qualified_fit_params = self._qualified_fit_params(fit_params)
