@@ -544,41 +544,34 @@ if __name__ == "__main__":
         )
         print_separator()
 
-        if metalearner in {
-            "S",
-            "T",
-            "X",
-            "R",
-            "DR",
-        }:  # implemented multivariant support
-            print(
-                "Start comparing libraries on synthetic data with continuous "
-                "outcomes, multiple treatments and linear treatment effect."
-            )
-            losses[f"{metalearner}-learner"][
-                "synthetic_data_continuous_outcome_multi_treatment_linear_te"
-            ] = losses_synthetic_data(
-                is_classification=False,
-                metalearner=metalearner,
-                propensity_score=[0.2, 0.1, 0.3, 0.15, 0.25],
-            )
-            print_separator()
+        print(
+            "Start comparing libraries on synthetic data with continuous "
+            "outcomes, multiple treatments and linear treatment effect."
+        )
+        losses[f"{metalearner}-learner"][
+            "synthetic_data_continuous_outcome_multi_treatment_linear_te"
+        ] = losses_synthetic_data(
+            is_classification=False,
+            metalearner=metalearner,
+            propensity_score=[0.2, 0.1, 0.3, 0.15, 0.25],
+        )
+        print_separator()
 
-            print(
-                "Start comparing libraries on synthetic data with continuous "
-                "outcomes, multiple treatments and constant treatment effect."
-            )
-            losses[f"{metalearner}-learner"][
-                "synthetic_data_continuous_outcome_multi_treatment_constant_te"
-            ] = losses_synthetic_data(
-                is_classification=False,
-                metalearner=metalearner,
-                propensity_score=[0.2, 0.1, 0.3, 0.15, 0.25],
-                tau=np.array([-2, 5, 0, 3]),
-            )
-            print_separator()
-            # TODO: Add benchmarking with classification outcomes and multiple treatments,
-            # when data_generation allows for it.
+        print(
+            "Start comparing libraries on synthetic data with continuous "
+            "outcomes, multiple treatments and constant treatment effect."
+        )
+        losses[f"{metalearner}-learner"][
+            "synthetic_data_continuous_outcome_multi_treatment_constant_te"
+        ] = losses_synthetic_data(
+            is_classification=False,
+            metalearner=metalearner,
+            propensity_score=[0.2, 0.1, 0.3, 0.15, 0.25],
+            tau=np.array([-2, 5, 0, 3]),
+        )
+        print_separator()
+        # TODO: Add benchmarking with classification outcomes and multiple treatments,
+        # when data_generation allows for it.
 
     dict_to_json_file(losses)
     dict_to_markdown_file(losses)
