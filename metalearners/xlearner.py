@@ -557,7 +557,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                         X=X,
                         model_kind=VARIANT_OUTCOME_MODEL,
                         model_ord=tv,
-                        is_oos=True,
+                        is_oos=is_oos,
                         oos_method=oos_method,
                     )
                 )
