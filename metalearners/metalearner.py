@@ -30,6 +30,7 @@ from metalearners._utils import (
     ONNX_PROBABILITIES_OUTPUTS,
     default_metric,
     index_matrix,
+    safe_len,
     validate_model_and_predict_method,
     validate_number_positive,
 )
@@ -120,7 +121,7 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
     if feature_set is None:
         X_filtered = X
     elif len(feature_set) == 0:
-        X_filtered = np.ones((len(X), 1))
+        X_filtered = np.ones((safe_len(X), 1))
     else:
         if isinstance(X, pd.DataFrame):
             X_filtered = X[list(feature_set)]
@@ -1347,7 +1348,7 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
                 "typically set during fitting, is None."
             )
         # TODO: Consider multiprocessing
-        n_obs = len(X)
+        n_obs = safe_len(X)
         nuisance_tensors = self._nuisance_tensors(n_obs)
         conditional_average_outcomes_list = nuisance_tensors[VARIANT_OUTCOME_MODEL]
 

@@ -8,7 +8,7 @@ import pandas as pd
 import shap
 
 from metalearners._typing import Matrix, _ScikitModel
-from metalearners._utils import simplify_output_2d
+from metalearners._utils import safe_len, simplify_output_2d
 from metalearners.metalearner import Params
 
 
@@ -59,7 +59,7 @@ class Explainer:
         The ``cate_estimates`` should be the raw outcome of a MetaLearner with 3 dimensions
         and should not be simplified.
         """
-        if len(X) != len(cate_estimates) or len(X) == 0:
+        if safe_len(X) != len(cate_estimates) or safe_len(X) == 0:
             raise ValueError(
                 "X and cate_estimates should contain the same number of observations "
                 "and not be empty."

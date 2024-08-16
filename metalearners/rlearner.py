@@ -20,6 +20,7 @@ from metalearners._utils import (
     get_predict_proba,
     index_matrix,
     infer_input_dict,
+    safe_len,
     validate_all_vectors_same_index,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
@@ -277,7 +278,7 @@ class RLearner(MetaLearner):
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         n_outputs = 2 if self.is_classification else 1
-        tau_hat = np.zeros((len(X), self.n_variants - 1, n_outputs))
+        tau_hat = np.zeros((safe_len(X), self.n_variants - 1, n_outputs))
 
         if is_oos:
 
@@ -298,7 +299,7 @@ class RLearner(MetaLearner):
                     variant_estimates = np.stack(
                         [-variant_estimates, variant_estimates], axis=-1
                     )
-                variant_estimates = variant_estimates.reshape(len(X), n_outputs)
+                variant_estimates = variant_estimates.reshape(safe_len(X), n_outputs)
                 tau_hat[:, treatment_variant - 1, :] = variant_estimates
 
             return tau_hat
@@ -486,7 +487,7 @@ class RLearner(MetaLearner):
         constant ``epsilon`` to the denominator in order to avoid numerical problems.
         """
         if mask is None:
-            mask = np.ones(len(X), dtype=bool)
+            mask = np.ones(safe_len(X), dtype=bool)
 
         validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
 
@@ -560,7 +561,7 @@ class RLearner(MetaLearner):
 
         where :math:`K` is the number of treatment variants.
         """
-        n_obs = len(X)
+        n_obs = safe_len(X)
 
         cate_estimates = self.predict(
             X=X,

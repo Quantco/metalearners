@@ -9,6 +9,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, Vector
+from metalearners._utils import safe_len
 from metalearners.drlearner import DRLearner
 from metalearners.metalearner import MetaLearner
 from metalearners.rlearner import RLearner
@@ -104,4 +105,6 @@ class FixedBinaryPropensity(ClassifierMixin, BaseEstimator):
         return np.argmax(self.predict_proba(X), axis=1)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray[Any, Any]:
-        return np.full((len(X), 2), [1 - self.propensity_score, self.propensity_score])
+        return np.full(
+            (safe_len(X), 2), [1 - self.propensity_score, self.propensity_score]
+        )

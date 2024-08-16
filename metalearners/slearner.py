@@ -21,6 +21,7 @@ from metalearners._typing import (
 from metalearners._utils import (
     convert_treatment,
     get_one,
+    safe_len,
     supports_categoricals,
 )
 from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
@@ -231,7 +232,7 @@ class SLearner(MetaLearner):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        n_obs = len(X)
+        n_obs = safe_len(X)
         conditional_average_outcomes_list = []
 
         for treatment_variant in range(self.n_variants):

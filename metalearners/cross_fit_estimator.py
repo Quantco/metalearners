@@ -16,7 +16,12 @@ from sklearn.model_selection import (
 from typing_extensions import Self
 
 from metalearners._typing import Matrix, OosMethod, PredictMethod, SplitIndices, Vector
-from metalearners._utils import _ScikitModel, index_matrix, validate_number_positive
+from metalearners._utils import (
+    _ScikitModel,
+    index_matrix,
+    safe_len,
+    validate_number_positive,
+)
 
 OVERALL: OosMethod = "overall"
 MEDIAN: OosMethod = "median"
@@ -157,7 +162,7 @@ class CrossFitEstimator:
         (train_indices, test_indices) tuples indicating how to split the data at hand
         into train and test/estimation sets for different folds.
         """
-        _validate_data_match_prior_split(len(X), self._test_indices)
+        _validate_data_match_prior_split(safe_len(X), self._test_indices)
 
         if fit_params is None:
             fit_params = dict()
@@ -215,13 +220,13 @@ class CrossFitEstimator:
     def _predict_all(self, X: Matrix, method: PredictMethod) -> np.ndarray:
         n_outputs = self._n_outputs(method)
         predictions = self._initialize_prediction_tensor(
-            n_observations=len(X),
+            n_observations=safe_len(X),
             n_outputs=n_outputs,
             n_folds=self.n_folds,
         )
         for i, estimator in enumerate(self._estimators):
             predictions[:, :, i] = np.reshape(
-                getattr(estimator, method)(X), (len(X), n_outputs)
+                getattr(estimator, method)(X), (safe_len(X), n_outputs)
             )
         if n_outputs == 1:
             return predictions[:, 0, :]
@@ -242,15 +247,15 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         if not self._test_indices:
             raise ValueError()
-        if len(X) != sum(len(fold) for fold in self._test_indices):
+        if safe_len(X) != sum(len(fold) for fold in self._test_indices):
             raise ValueError(
                 "Trying to predict in-sample on data that is unlike data encountered in training. "
                 f"Training data included {sum(len(fold) for fold in self._test_indices)} "
-                f"observations while prediction data includes {len(X)} observations."
+                f"observations while prediction data includes {safe_len(X)} observations."
             )
         n_outputs = self._n_outputs(method)
         predictions = self._initialize_prediction_tensor(
-            n_observations=len(X),
+            n_observations=safe_len(X),
             n_outputs=n_outputs,
             n_folds=1,
         )
