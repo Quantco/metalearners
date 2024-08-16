@@ -8,7 +8,14 @@ import numpy as np
 from joblib import Parallel, delayed
 from typing_extensions import Self
 
-from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
+from metalearners._typing import (
+    Matrix,
+    OosMethod,
+    Scoring,
+    SplitIndices,
+    Vector,
+    _ScikitModel,
+)
 from metalearners._utils import (
     check_spox_installed,
     copydoc,
@@ -105,8 +112,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 "The X-Learner does not support synchronize_cross_fitting=False."
             )
 
-        self._cv_split_indices = self._split(X)
-        self._treatment_cv_split_indices = {}
+        self._cv_split_indices: SplitIndices = self._split(X)
+        self._treatment_cv_split_indices: dict[int, SplitIndices] = {}
 
         for treatment_variant in range(self.n_variants):
             self._treatment_variants_indices.append(w == treatment_variant)
