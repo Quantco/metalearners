@@ -192,31 +192,31 @@ The X-Learner was introduced by [Kuenzel et al. (2019)](https://arxiv.org/pdf/17
 
 1. Estimate the conditional average outcomes for each variant:
 
-\[
-\begin{align*}
-\mu_0 (x) &:= \mathbb{E}[Y(0) | X = x] \\
-\mu_1 (x) &:= \mathbb{E}[Y(1) | X = x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \mu_0 (x) &:= \mathbb{E}[Y(0) | X = x] \\
+   \mu_1 (x) &:= \mathbb{E}[Y(1) | X = x]
+   \end{align*}
+   \]
 
-2. Impute the treatment effect for the observations in the treated group based on the control-outcome estimator as well as the treatment effect for the observations in the control group based on the treatment-outcome estimator:
+1. Impute the treatment effect for the observations in the treated group based on the control-outcome estimator as well as the treatment effect for the observations in the control group based on the treatment-outcome estimator:
 
-\[
-\begin{align*}
-\widetilde{D}\_1^i &:= Y^i_1 - \hat{\mu}\_0(X^i_1) \\
-\widetilde{D}\_0^i &:= \hat{\mu}\_1(X^i_0) - Y^i_0
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \widetilde{D}\_1^i &:= Y^i_1 - \hat{\mu}\_0(X^i_1) \\
+   \widetilde{D}\_0^i &:= \hat{\mu}\_1(X^i_0) - Y^i_0
+   \end{align*}
+   \]
 
-Then estimate $\tau_1(x) := \mathbb{E}[\widetilde{D}^i_1 | X=x]$ and $\tau_0(x) := \mathbb{E}[\widetilde{D}^i_0 | X=x]$ using the observations in the treatment group and the ones in the control group respectively.
+   Then estimate \(\tau_1(x) := \mathbb{E}[\widetilde{D}_1^i | X=x]\) and \(\tau_0(x) := \mathbb{E}[\widetilde{D}_0^i | X=x]\) using the observations in the treatment group and the ones in the control group respectively.
 
-3. Define the CATE estimate by a weighted average of the two estimates in stage 2:
+1. Define the CATE estimate by a weighted average of the two estimates in stage 2:
 
-$$
-\hat{\tau}^X(x) := g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)
-$$
+   $$
+   \hat{\tau}^X(x) := g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)
+   $$
 
-Where $g(x) \in [0,1]$. We take $g(x) := \mathbb{E}[W = 1 | X=x]$ to be the propensity score.
+   Where \(g(x) \in [0,1]\). We take \(g(x) := \mathbb{E}[W = 1 | X=x]\) to be the propensity score.
 
 #### More than binary treatment
 
@@ -224,35 +224,35 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
 1. One outcome model is estimated for each variant (including the control), and one propensity model is trained as a multiclass classifier, $\forall k \in \{0,\dots, K-1\}$:
 
-\[
-\begin{align*}
-\mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
-e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
+   e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
+   \end{align*}
+   \]
 
-2. The treatment effects are imputed using the corresponding outcome estimator, $\forall k \in \{1,\dots, K-1\}$:
+1. The treatment effects are imputed using the corresponding outcome estimator, $\forall k \in \{1,\dots, K-1\}$:
 
-\[
-\begin{align*}
-\widetilde{D}*k^i &:= Y^i*k - \hat{\mu}\_0(X^i_k) \\
-\widetilde{D}*{0,k}^i &:= \hat{\mu}\_k(X^i*0) - Y^i_0
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \widetilde{D}*k^i &:= Y^i*k - \hat{\mu}\_0(X^i_k) \\
+   \widetilde{D}*{0,k}^i &:= \hat{\mu}\_k(X^i*0) - Y^i_0
+   \end{align*}
+   \]
 
-Then $\tau_k(x) := \mathbb{E}[\widetilde{D}^i_k | X=x]$ is estimated using the observations which received treatment $k$ and $\tau_{0,k}(x) := \mathbb{E}[\widetilde{D}^i_{0,k} | X=x]$ using the observations in the control group.
+   Then $\tau_k(x) := \mathbb{E}[\widetilde{D}^i_k | X=x]$ is estimated using the observations which received treatment $k$ and $\tau_{0,k}(x) := \mathbb{E}[\widetilde{D}^i_{0,k} | X=x]$ using the observations in the control group.
 
-3. Finally, the CATE for each variant is estimated as a weighted average:
+1. Finally, the CATE for each variant is estimated as a weighted average:
 
-$$
-\hat{\tau}_k^X(x) := g(x, k)\hat{\tau}_{0,k}(x) + (1-g(x,k))\hat{\tau}_k(x)
-$$
+   $$
+   \hat{\tau}_k^X(x) := g(x, k)\hat{\tau}_{0,k}(x) + (1-g(x,k))\hat{\tau}_k(x)
+   $$
 
-Where
+   Where
 
-$$
-g(x,k) := \frac{\hat{e}(x,k)}{\hat{e}(x,k) + \hat{e}(x,0)}
-$$
+   $$
+   g(x,k) := \frac{\hat{e}(x,k)}{\hat{e}(x,k) + \hat{e}(x,0)}
+   $$
 
 ### R-Learner
 
@@ -260,31 +260,31 @@ The R-Learner was introduced by [Nie et al. (2017)](https://arxiv.org/pdf/1712.0
 
 1. Estimate a general outcome model and a propensity model:
 
-\[
-\begin{align*}
-m(x) &:= \mathbb{E}[Y | X=x] \\
-e(x) &:= \mathbb{P}[W = 1 | X=x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   m(x) &:= \mathbb{E}[Y | X=x] \\
+   e(x) &:= \mathbb{P}[W = 1 | X=x]
+   \end{align*}
+   \]
 
-2. Estimate the treatment effect by minimizing the R-Loss:
+1. Estimate the treatment effect by minimizing the R-Loss:
 
-\[
-\begin{align*}
-\hat{\tau}^R (\cdot) &:= \argmin*{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
-&=\argmin*{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
-&= \argmin\_{\tau}\left\{\mathbb{E}\left[{\widetilde{W}^i}^2\bigg(\frac{\widetilde{Y}^i}{\widetilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \hat{\tau}^R (\cdot) &:= \argmin*{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
+   &=\argmin*{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
+   &= \argmin\_{\tau}\left\{\mathbb{E}\left[{\widetilde{W}^i}^2\bigg(\frac{\widetilde{Y}^i}{\widetilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
+   \end{align*}
+   \]
 
-Where
+   Where
 
-\[
-\begin{align*}
-\widetilde{W}^i &= W^i - \hat{e}(X^i) \\
-\widetilde{Y}^i &= Y^i - \hat{m}(X^i)
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \widetilde{W}^i &= W^i - \hat{e}(X^i) \\
+   \widetilde{Y}^i &= Y^i - \hat{m}(X^i)
+   \end{align*}
+   \]
 
 And therefore any ML model which supports weighting each observation differently can be used for the final model.
 
@@ -294,14 +294,14 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
 1. Estimate a general outcome model and a propensity model:
 
-\[
-\begin{align*}
-m(x) &:= \mathbb{E}[Y | X=x] \\
-e(x) &:= \mathbb{P}[W = k | X=x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   m(x) &:= \mathbb{E}[Y | X=x] \\
+   e(x) &:= \mathbb{P}[W = k | X=x]
+   \end{align*}
+   \]
 
-2. For each $k \neq 0$, estimate the pairwise treatment effect $\hat{\tau}_{0,k}^R$ between 0 and $k$ by minimizing the R-Loss from above. In order to fit these models, we fit the pseudo outcomes only on observations of either the control group or the treatment variant group $k$.
+1. For each $k \neq 0$, estimate the pairwise treatment effect $\hat{\tau}_{0,k}^R$ between 0 and $k$ by minimizing the R-Loss from above. In order to fit these models, we fit the pseudo outcomes only on observations of either the control group or the treatment variant group $k$.
 
 Note that:
 
@@ -317,27 +317,27 @@ The DR-Learner was introduced by [Kennedy (2020)](https://arxiv.org/pdf/2004.144
 
 1. Estimate the conditional average outcomes for each variant and a propensity model:
 
-\[
-\begin{align*}
-\mu_0 (x, w) &:= \mathbb{E}[Y(0) | X = x] \\
-\mu_1 (x, w) &:= \mathbb{E}[Y(1) | X = x] \\
-e(x) &:= \mathbb{E}[W = 1 | X=x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \mu_0 (x, w) &:= \mathbb{E}[Y(0) | X = x] \\
+   \mu_1 (x, w) &:= \mathbb{E}[Y(1) | X = x] \\
+   e(x) &:= \mathbb{E}[W = 1 | X=x]
+   \end{align*}
+   \]
 
-And construct the pseudo-outcomes:
+   And construct the pseudo-outcomes:
 
-\[
-\begin{align*}
-\varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))}\big\{Y^i - \hat{\mu}*{W^i}(X^i)\big\} + \hat{\mu}_{1}(X^i) - \hat{\mu}\_{0}(X^i)
-\end{align_}
-\]
+   \[
+   \begin{align*}
+   \varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))}\big\{Y^i - \hat{\mu}*{W^i}(X^i)\big\} + \hat{\mu}\_{1}(X^i) - \hat{\mu}\_{0}(X^i)
+   \end{align\*}
+   \]
 
-2. Estimate the CATE by regressing $\varphi$ on $X$:
+1. Estimate the CATE by regressing $\varphi$ on $X$:
 
-$$
-\hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i=x]
-$$
+   $$
+   \hat{\tau}^{DR}(x) := \mathbb{E}[\varphi(X^i, W^i, Y^i) | X^i=x]
+   $$
 
 #### More than binary treatment
 
@@ -345,24 +345,24 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
 1. One outcome model is estimated for each variant (including the control), and one propensity model is trained as a multiclass classifier, $\forall k \in \{0,\dots, K-1\}$:
 
-\[
-\begin{align*}
-\mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
-e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
-\end{align*}
-\]
+   \[
+   \begin{align*}
+   \mu_k (x) &:= \mathbb{E}[Y(k) | X = x]\\
+   e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
+   \end{align*}
+   \]
 
-The pseudo-outcomes are constructed for each treatment variant, $\forall k \in \{1,\dots, K-1\}$:
+   The pseudo-outcomes are constructed for each treatment variant, $\forall k \in \{1,\dots, K-1\}$:
 
-\[
-\begin{align*}
-\varphi*k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}*{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}*k(X^i) \\
-&- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}\_0(X^i)
-\end{align_}
-\]
+   \[
+   \begin{align*}
+   \varphi*k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}*{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}*k(X^i) \\
+   &- \frac{Y^i - \hat{\mu}\_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}\_0(X^i)
+   \end{align\*}
+   \]
 
 1. Finally, the CATE is estimated by regressing $\varphi_k$ on $X$ for each treatment variant, $\forall k \in \{1,\dots, K-1\}$:
 
-$$
-\hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i=x]
-$$
+   $$
+   \hat{\tau}_k^{DR}(x) := \mathbb{E}[\varphi_k(X^i, W^i, Y^i) | X^i=x]
+   $$
