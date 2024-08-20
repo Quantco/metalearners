@@ -1,0 +1,2 @@
+# Ignore artifacts created during notebook execution
+***.onnx
