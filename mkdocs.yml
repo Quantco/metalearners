@@ -40,7 +40,7 @@ plugins:
   - search
   - mkdocs-jupyter:
       ignore_h1_titles: False # Heading H1 -> Site title
-      execute: true
+      execute: false
       allow_errors: false
       show_input: True
       include_source: True
@@ -65,6 +65,7 @@ plugins:
 nav:
   # Demonstrate notebook inclusion
   - Welcome: index.md
+  - Background: background.md
   - Examples:
       - examples/example_basic.ipynb
       - examples/example_estimating_ates.ipynb
@@ -82,6 +83,14 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.inlinehilite
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
 
 extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
   - styles/custom.css
