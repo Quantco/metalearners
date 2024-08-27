@@ -235,7 +235,7 @@ e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
 
 \[
 \begin{align*}
-\widetilde{D}*k^i &:= Y^i*k - \hat{\mu}\_0(X^i_k) \\
+\widetilde{D}\_k^i &:= Y^i*k - \hat{\mu}\_0(X^i*k) \\
 \widetilde{D}*{0,k}^i &:= \hat{\mu}\_k(X^i*0) - Y^i_0
 \end{align*}
 \]
