@@ -54,7 +54,7 @@ def test_crossfitestimator_oos_smoke(
     if backend == "np":
         X = X.to_numpy()
         y = y.to_numpy()
-    if backend == "csr":
+    elif backend == "csr":
         X = csr_matrix(df.values)
         y = y.to_numpy()
 
