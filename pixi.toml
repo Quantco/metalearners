@@ -6,6 +6,12 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 [tasks]
 postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e ."
 coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes"
+nb-convert = { cmd = [
+    "jupyter nbconvert --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags no-convert --to script docs/examples/*.ipynb",
+    "&&",
+    "for file in docs/examples/*.txt; do mv -- $file ${file%.txt}.py; done",
+]}
+nb-mypy = "mypy docs/examples/*.py"
 
 [dependencies]
 pre-commit = "*"
