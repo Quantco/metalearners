@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMRegressor
+from scipy.sparse import csr_matrix
 from sklearn.linear_model import LinearRegression
 
 from metalearners.slearner import SLearner, _append_treatment_to_covariates
@@ -31,16 +32,20 @@ def test_feature_set_doesnt_raise(rng):
 @pytest.mark.parametrize(
     "model, supports_categoricals", [(LinearRegression, False), (LGBMRegressor, True)]
 )
-@pytest.mark.parametrize("use_pd", [False, True])
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
 def test_append_treatment_to_covariates(
     model,
     supports_categoricals,
-    use_pd,
+    backend,
     sample_size,
     request,
 ):
-    dataset_name = "mixed" if use_pd else "numerical"
+    dataset_name = "mixed" if backend == "pd" else "numerical"
     covariates, _, _ = request.getfixturevalue(f"{dataset_name}_covariates")
+
+    if backend == "csr":
+        covariates = csr_matrix(covariates)
+
     treatment = np.array([0] * sample_size)
     n_variants = 4
     X_with_w = _append_treatment_to_covariates(
@@ -52,20 +57,28 @@ def test_append_treatment_to_covariates(
         list(range(n_variants))
     )
 
-    if not use_pd and not supports_categoricals:
-        assert isinstance(X_with_w, np.ndarray)
+    if backend in ["np", "csr"] and not supports_categoricals:
+        if backend == "np":
+            assert isinstance(X_with_w, np.ndarray)
+        elif backend == "csr":
+            assert isinstance(X_with_w, csr_matrix)
         assert (
             (
                 X_with_w[:, -3:]
-                == pd.get_dummies(treatment_pd, dtype=int, drop_first=True)
+                == pd.get_dummies(treatment_pd, dtype=int, drop_first=True).values
             )
             .all()
             .all()
         )
-        assert np.all(X_with_w[:, :-3] == covariates)
+        assert (X_with_w[:, :-3] != covariates).sum() < 1
     else:
         assert isinstance(X_with_w, pd.DataFrame)
-        covariates_pd = pd.DataFrame(covariates) if not use_pd else covariates
+        if backend == "np":
+            covariates_pd = pd.DataFrame(covariates)
+        elif backend == "csr":
+            covariates_pd = pd.DataFrame.sparse.from_spmatrix(covariates)
+        else:
+            covariates_pd = covariates
         covariates_pd.columns = covariates_pd.columns.astype(str)
         if not supports_categoricals:
             assert X_with_w[["treatment_1", "treatment_2", "treatment_3"]].equals(

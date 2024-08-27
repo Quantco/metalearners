@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from scipy.sparse import csr_matrix
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import make_scorer, root_mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -939,16 +940,18 @@ def test_model_reusage(outcome_kind, request):
         ),
     ],
 )
-@pytest.mark.parametrize("use_pandas", [False, True])
-def test_evaluate_feature_set_smoke(metalearner_factory, feature_set, rng, use_pandas):
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+def test_evaluate_feature_set_smoke(metalearner_factory, feature_set, rng, backend):
     n_samples = 100
     X = rng.standard_normal((n_samples, 5))
     y = rng.standard_normal(n_samples)
     w = rng.integers(0, 2, n_samples)
-    if use_pandas:
+    if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "csr":
+        X = csr_matrix(X)
 
     ml = metalearner_factory(
         n_variants=2,
