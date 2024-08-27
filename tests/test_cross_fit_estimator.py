@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from scipy.sparse import csr_matrix
 from sklearn.base import is_classifier, is_regressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
@@ -24,10 +25,10 @@ _SEED = 1337
 @pytest.mark.parametrize("predict_proba", [True, False])
 @pytest.mark.parametrize("is_oos", [True, False])
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
-@pytest.mark.parametrize("use_np", [True, False])
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
 @pytest.mark.parametrize("pass_cv", [True, False])
 def test_crossfitestimator_oos_smoke(
-    mindset_data, rng, use_clf, predict_proba, is_oos, oos_method, use_np, pass_cv
+    mindset_data, rng, use_clf, predict_proba, is_oos, oos_method, backend, pass_cv
 ):
     if not use_clf and predict_proba:
         pytest.skip()
@@ -50,8 +51,11 @@ def test_crossfitestimator_oos_smoke(
         # Arbitrary cut-off
         y = y > 0.8
 
-    if use_np:
+    if backend == "np":
         X = X.to_numpy()
+        y = y.to_numpy()
+    if backend == "csr":
+        X = csr_matrix(df.values)
         y = y.to_numpy()
 
     cfe = CrossFitEstimator(
