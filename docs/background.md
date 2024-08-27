@@ -212,11 +212,11 @@ Then estimate \(\tau_1(x) := \mathbb{E}[\widetilde{D}_1^i | X=x]\) and \(\tau_0(
 
 1. Define the CATE estimate by a weighted average of the two estimates in stage 2:
 
-   $$
-   \hat{\tau}^X(x) := g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)
-   $$
+$$
+\hat{\tau}^X(x) := g(x)\hat{\tau}_0(x) + (1-g(x))\hat{\tau}_1(x)
+$$
 
-   Where \(g(x) \in [0,1]\). We take \(g(x) := \mathbb{E}[W = 1 | X=x]\) to be the propensity score.
+Where \(g(x) \in [0,1]\). We take \(g(x) := \mathbb{E}[W = 1 | X=x]\) to be the propensity score.
 
 #### More than binary treatment
 
