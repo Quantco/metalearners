@@ -69,6 +69,7 @@ nav:
   - Background: background.md
   - FAQ: faq.md
   - Examples:
+      - examples/index.md
       - examples/example_basic.ipynb
       - examples/example_estimating_ates.ipynb
       - examples/example_reuse.ipynb
@@ -91,6 +92,8 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.inlinehilite
+  - pymdownx.tasklist: # Allow for use of check boxes like in gh flavored md
+      custom_checkbox: true
   - pymdownx.arithmatex:
       generic: true
 
