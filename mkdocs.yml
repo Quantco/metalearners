@@ -65,7 +65,9 @@ plugins:
 nav:
   # Demonstrate notebook inclusion
   - Welcome: index.md
+  - Motivation: motivation.md
   - Background: background.md
+  - FAQ: faq.md
   - Examples:
       - examples/example_basic.ipynb
       - examples/example_estimating_ates.ipynb
@@ -78,6 +80,12 @@ nav:
       - examples/example_survival.ipynb
       - examples/example_propensity.ipynb
       - examples/example_onnx.ipynb
+  - What About Parallelism: parallelism.md
+  - API Documentation: api_documentation.md
+  - Glossary: glossary.md
+  - Changelog:
+      - changelog.md
+
 markdown_extensions:
   - admonition
   - pymdownx.highlight
