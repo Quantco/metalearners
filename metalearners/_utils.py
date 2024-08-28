@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import scipy
 from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -22,6 +23,12 @@ _PREDICT_PROBA = "predict_proba"
 ONNX_PROBABILITIES_OUTPUTS = ["probabilities", "output_probability"]
 
 default_rng = np.random.default_rng()
+
+
+def safe_len(X: Matrix) -> int:
+    if scipy.sparse.issparse(X):
+        return X.shape[0]
+    return len(X)
 
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:

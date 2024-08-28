@@ -7,6 +7,14 @@
 Changelog
 =========
 
+0.11.0 (2024-09-xx)
+-------------------
+
+**New features**
+
+* Add support for using ``scipy.sparse.csr_matrix`` as datastructure for covariates ``X``.
+
+
 0.10.0 (2024-08-13)
 -------------------
 

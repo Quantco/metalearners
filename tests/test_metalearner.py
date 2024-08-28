@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
+from scipy.sparse import csr_matrix
 from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -480,8 +481,8 @@ def test_combine_propensity_and_nuisance_specs(
         ),
     ],
 )
-@pytest.mark.parametrize("use_pandas", [False, True])
-def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+def test_feature_set(feature_set, expected_n_features, backend, rng):
     ml = _TestMetaLearner(
         nuisance_model_factory=LGBMRegressor,
         is_classification=False,
@@ -495,10 +496,12 @@ def test_feature_set(feature_set, expected_n_features, use_pandas, rng):
     X = rng.standard_normal((sample_size, n_features))
     y = rng.standard_normal(sample_size)
     w = rng.integers(0, 2, sample_size)
-    if use_pandas:
+    if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "csr":
+        X = csr_matrix(X)
     ml.fit(X, y, w)
 
     for model_kind, model_kind_list in ml._nuisance_models.items():
@@ -1078,15 +1081,17 @@ def test_n_jobs_base_learners(implementation, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("use_pandas", [False, True])
-def test_validate_outcome_one_class(implementation, use_pandas, rng):
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+def test_validate_outcome_one_class(implementation, backend, rng):
     X = rng.standard_normal((10, 2))
     y = np.zeros(10)
     w = rng.integers(0, 2, 10)
-    if use_pandas:
+    if backend == "pandas":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "csr":
+        X = csr_matrix(X)
 
     ml = implementation(
         True,
@@ -1106,15 +1111,17 @@ def test_validate_outcome_one_class(implementation, use_pandas, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("use_pandas", [False, True])
-def test_validate_outcome_different_classes(implementation, use_pandas, rng):
+@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+def test_validate_outcome_different_classes(implementation, backend, rng):
     X = rng.standard_normal((4, 2))
     y = np.array([0, 1, 0, 0])
     w = np.array([0, 0, 1, 1])
-    if use_pandas:
+    if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "csr":
+        X = csr_matrix(X)
 
     ml = implementation(
         True,

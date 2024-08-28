@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from lightgbm import LGBMRegressor
+from scipy.sparse import csr_matrix
 
 from metalearners.metalearner import MetaLearner
 from metalearners.utils import (
@@ -59,8 +60,8 @@ def test_simplify_output_raises(input):
         simplify_output(input)
 
 
-@pytest.mark.parametrize("use_pd", [True, False])
-def test_fixed_binary_propensity(use_pd):
+@pytest.mark.parametrize("backend", ["pd", "pd", "csr"])
+def test_fixed_binary_propensity(backend):
     propensity_score = 0.3
     dominant_class = propensity_score >= 0.5
 
@@ -69,19 +70,24 @@ def test_fixed_binary_propensity(use_pd):
     n_samples = 5
     X_train = np.ones((n_samples, 5))
     y_train = np.ones(n_samples)
-    if use_pd:
-        X_train = pd.DataFrame(X_train)
-        y_train = pd.Series(y_train)
-
-    model.fit(X_train, y_train)
 
     n_test_samples = 3
-    X_test = np.zeros(n_test_samples)
+    X_test = np.zeros((n_test_samples, 5))
 
+    expected_result = np.array(np.ones(n_test_samples) * dominant_class)
+
+    if backend == "pd":
+        X_train = pd.DataFrame(X_train)
+        y_train = pd.Series(y_train)
+        X_test = pd.DataFrame(X_test)
+    elif backend == "csr":
+        X_train = csr_matrix(X_train)
+        X_test = csr_matrix(X_test)
+
+    model.fit(X_train, y_train)
     class_predictions = model.predict(X_test)
-    assert np.array_equal(
-        class_predictions, np.array(np.ones(n_test_samples) * dominant_class)
-    )
+
+    assert np.array_equal(class_predictions, expected_result)
 
     probability_estimates = model.predict_proba(X_test)
     assert np.array_equal(

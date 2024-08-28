@@ -18,6 +18,7 @@ from metalearners._utils import (
     index_matrix,
     infer_input_dict,
     infer_probabilities_output,
+    safe_len,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
 )
@@ -231,7 +232,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 "typically set during fitting, is None."
             )
         n_outputs = 2 if self.is_classification else 1
-        tau_hat = np.zeros((len(X), self.n_variants - 1, n_outputs))
+        tau_hat = np.zeros((safe_len(X), self.n_variants - 1, n_outputs))
         # Propensity score model is always a classifier so we can't use MEDIAN
         propensity_score_oos = OVERALL if oos_method == MEDIAN else oos_method
         propensity_score = self.predict_nuisance(
@@ -266,8 +267,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                     oos_method=oos_method,
                 )
             else:
-                tau_hat_treatment = np.zeros(len(X))
-                tau_hat_control = np.zeros(len(X))
+                tau_hat_treatment = np.zeros(safe_len(X))
+                tau_hat_control = np.zeros(safe_len(X))
 
                 tau_hat_treatment[non_treatment_variant_indices] = (
                     self.predict_treatment(

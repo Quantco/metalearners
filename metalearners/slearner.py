@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix, hstack
 from typing_extensions import Self
 
 from metalearners._typing import (
@@ -21,6 +22,7 @@ from metalearners._typing import (
 from metalearners._utils import (
     convert_treatment,
     get_one,
+    safe_len,
     supports_categoricals,
 )
 from metalearners.cross_fit_estimator import OVERALL, CrossFitEstimator
@@ -56,21 +58,29 @@ def _append_treatment_to_covariates(
             # names are integers and some strings.
             X_with_w.columns = X_with_w.columns.astype(str)
             return X_with_w
+        elif isinstance(X, csr_matrix):
+            return hstack((X, w_dummies), format="csr")
         else:
             return np.concatenate([X, w_dummies], axis=1)
 
+    # This is necessary as each model works differently with categoricals,
+    # in some you need to specify them on instantiation while some others on
+    # fitting. This solutions converts it to a pd.DataFrame as most of the models
+    # have some "automatic" detection of categorical features based on pandas
+    # dtypes. Theoretically it would be possible to get around this conversion
+    # but it would require loads of model specific code.
     if isinstance(X, np.ndarray):
-        # This is necessary as each model works differently with categoricals,
-        # in some you need to specify them on instantiation while some others on
-        # fitting. This solutions converts it to a pd.DataFrame as most of the models
-        # have some "automatic" detection of categorical features based on pandas
-        # dtypes. Theoretically it would be possible to get around this conversion
-        # but it would require loads of model specific code.
         warnings.warn(
             "Converting the input covariates X from np.ndarray to a "
             f"pd.DataFrame as the {_BASE_MODEL} supports categorical variables."
         )
         X = pd.DataFrame(X, copy=True)
+    elif isinstance(X, csr_matrix):
+        warnings.warn(
+            "Converting the input covariates X from a scipy csr_matrix to a "
+            f"pd.DataFrame as the {_BASE_MODEL} supports categorical variables."
+        )
+        X = pd.DataFrame.sparse.from_spmatrix(X)
 
     X_with_w = pd.concat([X, pd.Series(w, dtype="category", name="treatment")], axis=1)
     X_with_w.columns = X_with_w.columns.astype(str)
@@ -231,7 +241,7 @@ class SLearner(MetaLearner):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        n_obs = len(X)
+        n_obs = safe_len(X)
         conditional_average_outcomes_list = []
 
         for treatment_variant in range(self.n_variants):

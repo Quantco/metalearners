@@ -28,6 +28,7 @@ from metalearners._utils import (
     get_predict_proba,
     index_matrix,
     infer_input_dict,
+    safe_len,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
 )
@@ -253,7 +254,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
         n_outputs = 2 if self.is_classification else 1
-        estimates = np.zeros((len(X), self.n_variants - 1, n_outputs))
+        estimates = np.zeros((safe_len(X), self.n_variants - 1, n_outputs))
         for treatment_variant in range(1, self.n_variants):
             estimates_variant = self.predict_treatment(
                 X,
@@ -365,7 +366,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             raise ValueError(
                 "The nuisance models need to be fitted before computing the treatment effect."
             )
-        gamma_matrix = np.zeros((len(X), self.n_variants - 1))
+        gamma_matrix = np.zeros((safe_len(X), self.n_variants - 1))
         for treatment_variant in range(1, self.n_variants):
             gamma_matrix[:, treatment_variant - 1] = self._pseudo_outcome(
                 X=X,
@@ -375,7 +376,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
                 is_oos=is_oos,
             )
         treatment_effect = gamma_matrix.mean(axis=0)
-        standard_error = gamma_matrix.std(axis=0) / np.sqrt(len(X))
+        standard_error = gamma_matrix.std(axis=0) / np.sqrt(safe_len(X))
         return treatment_effect, standard_error
 
     def _pseudo_outcome(
