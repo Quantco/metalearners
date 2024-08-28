@@ -6,7 +6,7 @@ In the context of the topic outlined in [Motivation - Multiprocessing](../motiva
 
    To use parallelism at this level, you can use the `nuisance_model_params`, `treatment_model_params`, and `propensity_model_params` parameters when instantiating the metalearner.
 
-2. **Cross-fitting level**: As explained in the [Cross-fit FAQ](../faq/#why-do-we-cross-fit-for-all-metalearners), cross-fitting is employed for all stand-alone nuisance and treatment models, irrespective of the MetaLearner. This introduces a new possible level of parallelism, as the model associated with each fold can be trained independently of the others.
+2. **Cross-fitting level**: As explained in the [cross-fit FAQ](../faq/#why-do-we-cross-fit-for-all-metalearners), cross-fitting is employed for all stand-alone nuisance and treatment models, irrespective of the MetaLearner. This introduces a new possible level of parallelism, as the model associated with each fold can be trained independently of the others.
 
    To use parallelism at this level, you can use the `n_jobs_cross_fitting` parameter of the [`MetaLearner.fit`][metalearners.metalearner.MetaLearner.fit] method of the metalearner.
 
