@@ -25,7 +25,7 @@ ONNX_PROBABILITIES_OUTPUTS = ["probabilities", "output_probability"]
 default_rng = np.random.default_rng()
 
 
-def safe_len(X):
+def safe_len(X: Matrix) -> int:
     if scipy.sparse.issparse(X):
         return X.shape[0]
     return len(X)
