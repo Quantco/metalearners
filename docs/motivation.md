@@ -2,7 +2,7 @@
 
 ## Why CATE estimation?
 
-Please see the section [How can CATEs be useful?](../background/#how-can-cates-be-useful).
+Please see the section [How can CATEs be useful?](background.md#how-can-cates-be-useful).
 
 ## Why MetaLearners?
 
