@@ -84,6 +84,7 @@ nav:
   - What About Parallelism: parallelism.md
   - API Documentation: api_documentation.md
   - Glossary: glossary.md
+  - Development: development.md
   - Changelog:
       - changelog.md
 
