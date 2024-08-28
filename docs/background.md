@@ -235,8 +235,8 @@ e(x, k) &:= \mathbb{E}[\mathbb{I}\{W = k\} | X=x] = \mathbb{P}[W = k | X=x]
 
 \[
 \begin{align*}
-\widetilde{D}\_k^i &:= Y^i*k - \hat{\mu}\_0(X^i*k) \\
-\widetilde{D}*{0,k}^i &:= \hat{\mu}\_k(X^i*0) - Y^i_0
+\widetilde{D}\_k^i &:= Y^i*k - \hat{\mu}_0(X^i\*k) \\
+\widetilde{D}_{0,k}^i &:= \hat{\mu}\_k(X^i*0) - Y^i_0
 \end{align*}
 \]
 
@@ -329,8 +329,8 @@ And construct the pseudo-outcomes:
 
 \[
 \begin{align*}
-\varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))}\big\{Y^i - \hat{\mu}*{W^i}(X^i)\big\} + \hat{\mu}_{1}(X^i) - \hat{\mu}_{0}(X^i)
-\end{align\*}
+\varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))}\big\{Y^i - \hat{\mu}*{W^i}(X^i)\big\} + \hat{\mu}_{1}(X^i) - \hat{\mu}\_{0}(X^i)
+\end{align_}
 \]
 
 1. Estimate the CATE by regressing $\varphi$ on $X$:
@@ -356,8 +356,8 @@ The pseudo-outcomes are constructed for each treatment variant, $\forall k \in \
 
 \[
 \begin{align*}
-\varphi*k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}*{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}*k(X^i) \\
-&- \frac{Y^i - \hat{\mu}\_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}\_0(X^i)
+\varphi*k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}\_k(X^i) \\
+&- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}\_0(X^i)
 \end{align\*}
 \]
 
