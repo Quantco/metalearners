@@ -76,13 +76,11 @@ mkdocstrings = ">=0.25.2,<0.26"
 mkdocstrings-python = ">=1.10.7,<2"
 
 [feature.docs.tasks]
-# Note that this task will fail on systems without bash.
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
-docs = "cd docs && make html "
+docs = "mkdocs build"
 readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
-mkdocs = "mkdocs serve" # postinstall task needs to be executed in 'docs' environment beforehand
-bmkdocs = "mkdocs build"
+serve-docs = "mkdocs serve" # postinstall task needs to be executed in 'docs' environment beforehand
 
 [feature.build.dependencies]
 python-build = "*"
