@@ -1,11 +1,17 @@
 /*
 Hides the In[ ] blocks.
-Out[ ] blocks are not displayed
+Out[ ] blocks are not displayed.
 */
 .jp-InputPrompt, .jp-OutputPrompt {
     display: none !important;
 }
 
-.custom-highlight {
-    border: 1px solid red;
+/*
+Allows to better see the linked target.
+*/
+:target {
+    box-shadow: 0 0 15px var(--md-primary-fg-color);
+    border: 1px solid var(--md-primary-fg-color);
+    border-radius: 8px;
+    padding: 5px;
 }
