@@ -10,9 +10,9 @@ There are various ways for estimating CATEs, such as [Targeted Maximum Likelihoo
 
 We've found MetaLearners to be a particularly compelling approach for CATE estimation because:
 
-- they are conceptually simple
-- some of them come with strong statistical guarantees, see e.g. [Nie et al. (2019)](https://arxiv.org/pdf/1712.04912.pdf) for the R-Learner or [Kennedy (2023)](https://arxiv.org/abs/2004.14497) for the DR-Learner
-- they rely on existing, arbitrary prediction approaches
+- [x] They are conceptually simple
+- [x] Some of them come with strong statistical guarantees, see e.g. [Nie et al. (2019)](https://arxiv.org/pdf/1712.04912.pdf) for the R-Learner or [Kennedy (2023)](https://arxiv.org/abs/2004.14497) for the DR-Learner
+- [x] They rely on existing, arbitrary prediction approaches
 
 The latter point is particularly important since it implies that battle-tested and production-grade code from existing prediction libraries such as `scikit-learn`, `lightgbm` or `xgboost` can be reused. Given that the field of CATE estimation is still young and engineering efforts limited, this is a highly relevant factor.
 
