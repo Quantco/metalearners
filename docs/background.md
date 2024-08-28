@@ -93,7 +93,7 @@ In the following image, we see some CATE estimates for an intervention based on 
 
 We see that in the left image, there is fairly little heterogeneity in the CATE estimates with respect to age. The second image conveys the presence of a lot of heterogeneity of the treatment with respect to age. Yet, this heterogeneity is not relevant in light of a policy definition since all estimates are on 'one side' of the decision boundary, here chosen to be 0. The third picture, on the other hand, illustrates a scenario where heterogeneity can be leveraged for policy learning: in some regions, the CATE is negative and therefore treatment variant 0 should be preferred over treatment variant 1—in other regions, the opposite holds true.
 
-We would like to learn such policies to apply them to previously unseen data. In order to learn the policy, we can use data from an experiment. We can distinguish two cases when it comes to experiment data: [observational](#) or [RCT](#) data.
+We would like to learn such policies to apply them to previously unseen data. In order to learn the policy, we can use data from an experiment. We can distinguish two cases when it comes to experiment data: [observational](../glossary/#observational-data) or [RCT](../glossary/#randomized-control-trial-rct) data.
 
 Importantly, MetaLearners for CATE estimation can, in principle, be used for both observational or RCT data. Yet, the following conditions need to be validated in order for the MetaLearners to produce valid estimates:
 
