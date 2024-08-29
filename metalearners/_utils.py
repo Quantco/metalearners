@@ -26,6 +26,7 @@ default_rng = np.random.default_rng()
 
 
 def safe_len(X: Matrix) -> int:
+    """Determine the length of a Matrix."""
     if scipy.sparse.issparse(X):
         return X.shape[0]
     return len(X)
