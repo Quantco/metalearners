@@ -7,14 +7,6 @@
 Changelog
 =========
 
-0.12.0 (2024-09-03)
--------------------
-
-**New features**
-
-* Rename ``_treatment_variants_indices`` to ``_treatment_variants_mask``in ``metalearner``, ``xlearner``, ``tlearner``, ``drlearner``, and ``test_learner``.
-
-
 0.11.0 (2024-09-xx)
 -------------------
 
