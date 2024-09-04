@@ -96,17 +96,17 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y, w)
 
-        self._treatment_variants_indices = []
+        self._treatment_variants_mask = []
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
         self._cvs: list = []
 
         for treatment_variant in range(self.n_variants):
-            self._treatment_variants_indices.append(w == treatment_variant)
+            self._treatment_variants_mask.append(w == treatment_variant)
             if synchronize_cross_fitting:
                 cv_split_indices = self._split(
-                    index_matrix(X, self._treatment_variants_indices[treatment_variant])
+                    index_matrix(X, self._treatment_variants_mask[treatment_variant])
                 )
             else:
                 cv_split_indices = None
@@ -116,10 +116,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         for treatment_variant in range(self.n_variants):
             nuisance_jobs.append(
                 self._nuisance_joblib_specifications(
-                    X=index_matrix(
-                        X, self._treatment_variants_indices[treatment_variant]
-                    ),
-                    y=y[self._treatment_variants_indices[treatment_variant]],
+                    X=index_matrix(X, self._treatment_variants_mask[treatment_variant]),
+                    y=y[self._treatment_variants_mask[treatment_variant]],
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=treatment_variant,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
@@ -159,7 +157,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         synchronize_cross_fitting: bool = True,
         n_jobs_base_learners: int | None = None,
     ) -> Self:
-        if self._treatment_variants_indices is None:
+        if self._treatment_variants_mask is None:
             raise ValueError(
                 "The nuisance models need to be fitted before fitting the treatment models."
                 "In particular, the MetaLearner's attribute _treatment_variant_indices, "
@@ -188,9 +186,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             )
             treatment_jobs.append(
                 self._treatment_joblib_specifications(
-                    X=index_matrix(
-                        X, self._treatment_variants_indices[treatment_variant]
-                    ),
+                    X=index_matrix(X, self._treatment_variants_mask[treatment_variant]),
                     y=imputed_te_treatment,
                     model_kind=TREATMENT_EFFECT_MODEL,
                     model_ord=treatment_variant - 1,
@@ -202,7 +198,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
             treatment_jobs.append(
                 self._treatment_joblib_specifications(
-                    X=index_matrix(X, self._treatment_variants_indices[0]),
+                    X=index_matrix(X, self._treatment_variants_mask[0]),
                     y=imputed_te_control,
                     model_kind=CONTROL_EFFECT_MODEL,
                     model_ord=treatment_variant - 1,
@@ -225,7 +221,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         is_oos: bool,
         oos_method: OosMethod = OVERALL,
     ) -> np.ndarray:
-        if self._treatment_variants_indices is None:
+        if self._treatment_variants_mask is None:
             raise ValueError(
                 "The MetaLearner needs to be fitted before predicting. "
                 "In particular, the X-Learner's attribute _treatment_variant_indices, "
@@ -243,13 +239,11 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             oos_method=propensity_score_oos,
         )
 
-        control_indices = self._treatment_variants_indices[0]
+        control_indices = self._treatment_variants_mask[0]
         non_control_indices = ~control_indices
 
         for treatment_variant in range(1, self.n_variants):
-            treatment_variant_indices = self._treatment_variants_indices[
-                treatment_variant
-            ]
+            treatment_variant_indices = self._treatment_variants_mask[treatment_variant]
             non_treatment_variant_indices = ~treatment_variant_indices
             if is_oos:
                 tau_hat_treatment = self.predict_treatment(
