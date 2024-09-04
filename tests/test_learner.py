@@ -880,10 +880,10 @@ def test_model_reusage(outcome_kind, request):
             VARIANT_OUTCOME_MODEL: tlearner._nuisance_models[VARIANT_OUTCOME_MODEL]
         },
     )
-    # We need to manually copy _treatment_variants_indices for the xlearner as it's needed
+    # We need to manually copy _treatment_variants_mask for the xlearner as it's needed
     # for predict, the user should not have to do this as they should call fit before predict.
     # This is just for testing.
-    xlearner._treatment_variants_indices = tlearner._treatment_variants_indices
+    xlearner._treatment_variants_mask = tlearner._treatment_variants_mask
     np.testing.assert_allclose(
         tlearner.predict_conditional_average_outcomes(covariates, False),
         xlearner.predict_conditional_average_outcomes(covariates, False),

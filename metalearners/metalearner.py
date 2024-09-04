@@ -1336,15 +1336,15 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
             n_folds=n_folds,
             random_state=random_state,
         )
-        self._treatment_variants_indices: list[np.ndarray] | None = None
+        self._treatment_variants_mask: list[np.ndarray] | None = None
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        if self._treatment_variants_indices is None:
+        if self._treatment_variants_mask is None:
             raise ValueError(
                 "The metalearner needs to be fitted before predicting."
-                "In particular, the MetaLearner's attribute _treatment_variant_indices, "
+                "In particular, the MetaLearner's attribute _treatment_variant_mask, "
                 "typically set during fitting, is None."
             )
         # TODO: Consider multiprocessing
@@ -1363,17 +1363,17 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
                 )
             else:
                 conditional_average_outcomes_list[tv][
-                    self._treatment_variants_indices[tv]
+                    self._treatment_variants_mask[tv]
                 ] = self.predict_nuisance(
-                    X=index_matrix(X, self._treatment_variants_indices[tv]),
+                    X=index_matrix(X, self._treatment_variants_mask[tv]),
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=tv,
                     is_oos=False,
                 )
                 conditional_average_outcomes_list[tv][
-                    ~self._treatment_variants_indices[tv]
+                    ~self._treatment_variants_mask[tv]
                 ] = self.predict_nuisance(
-                    X=index_matrix(X, ~self._treatment_variants_indices[tv]),
+                    X=index_matrix(X, ~self._treatment_variants_mask[tv]),
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=tv,
                     is_oos=True,

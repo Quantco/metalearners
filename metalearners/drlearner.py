@@ -150,12 +150,12 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y, w)
 
-        self._treatment_variants_indices = []
+        self._treatment_variants_mask = []
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
         for treatment_variant in range(self.n_variants):
-            self._treatment_variants_indices.append(w == treatment_variant)
+            self._treatment_variants_mask.append(w == treatment_variant)
 
         self._cv_split_indices: SplitIndices | None
 
@@ -168,10 +168,8 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         for treatment_variant in range(self.n_variants):
             nuisance_jobs.append(
                 self._nuisance_joblib_specifications(
-                    X=index_matrix(
-                        X, self._treatment_variants_indices[treatment_variant]
-                    ),
-                    y=y[self._treatment_variants_indices[treatment_variant]],
+                    X=index_matrix(X, self._treatment_variants_mask[treatment_variant]),
+                    y=y[self._treatment_variants_mask[treatment_variant]],
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=treatment_variant,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
