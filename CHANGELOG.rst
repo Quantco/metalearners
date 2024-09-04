@@ -12,7 +12,7 @@ Changelog
 
 **New features**
 
-* Rename ``_treatment_variants_indices`` to ``_treatment_variants_mask``in ``metalearner``, ``xlearner``, and ``test_learner``.
+* Rename ``_treatment_variants_indices`` to ``_treatment_variants_mask``in ``metalearner``, ``xlearner``, ``tlearner``, and ``test_learner``.
 
 
 0.11.0 (2024-09-xx)

@@ -1344,7 +1344,7 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
         if self._treatment_variants_mask is None:
             raise ValueError(
                 "The metalearner needs to be fitted before predicting."
-                "In particular, the MetaLearner's attribute _treatment_variant_indices, "
+                "In particular, the MetaLearner's attribute _treatment_variant_mask, "
                 "typically set during fitting, is None."
             )
         # TODO: Consider multiprocessing

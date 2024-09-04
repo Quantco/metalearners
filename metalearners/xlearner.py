@@ -160,7 +160,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         if self._treatment_variants_mask is None:
             raise ValueError(
                 "The nuisance models need to be fitted before fitting the treatment models."
-                "In particular, the MetaLearner's attribute _treatment_variant_indices, "
+                "In particular, the MetaLearner's attribute _treatment_variant_mask, "
                 "typically set during nuisance fitting, is None."
             )
         if not hasattr(self, "_cvs"):
@@ -224,7 +224,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         if self._treatment_variants_mask is None:
             raise ValueError(
                 "The MetaLearner needs to be fitted before predicting. "
-                "In particular, the X-Learner's attribute _treatment_variant_indices, "
+                "In particular, the X-Learner's attribute _treatment_variant_mask, "
                 "typically set during fitting, is None."
             )
         n_outputs = 2 if self.is_classification else 1
@@ -244,7 +244,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         for treatment_variant in range(1, self.n_variants):
             treatment_variant_indices = self._treatment_variants_mask[treatment_variant]
-            non_treatment_variant_indices = ~treatment_variant_indices
+            non_treatment_variant_mask = ~treatment_variant_indices
             if is_oos:
                 tau_hat_treatment = self.predict_treatment(
                     X=X,
@@ -264,14 +264,12 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                 tau_hat_treatment = np.zeros(safe_len(X))
                 tau_hat_control = np.zeros(safe_len(X))
 
-                tau_hat_treatment[non_treatment_variant_indices] = (
-                    self.predict_treatment(
-                        X=index_matrix(X, non_treatment_variant_indices),
-                        model_kind=TREATMENT_EFFECT_MODEL,
-                        model_ord=treatment_variant - 1,
-                        is_oos=True,
-                        oos_method=oos_method,
-                    )
+                tau_hat_treatment[non_treatment_variant_mask] = self.predict_treatment(
+                    X=index_matrix(X, non_treatment_variant_mask),
+                    model_kind=TREATMENT_EFFECT_MODEL,
+                    model_ord=treatment_variant - 1,
+                    is_oos=True,
+                    oos_method=oos_method,
                 )
 
                 tau_hat_treatment[treatment_variant_indices] = self.predict_treatment(
