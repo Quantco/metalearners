@@ -243,8 +243,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         non_control_indices = ~control_indices
 
         for treatment_variant in range(1, self.n_variants):
-            treatment_variant_indices = self._treatment_variants_mask[treatment_variant]
-            non_treatment_variant_mask = ~treatment_variant_indices
+            treatment_variant_mask = self._treatment_variants_mask[treatment_variant]
+            non_treatment_variant_mask = ~treatment_variant_mask
             if is_oos:
                 tau_hat_treatment = self.predict_treatment(
                     X=X,
@@ -272,8 +272,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
                     oos_method=oos_method,
                 )
 
-                tau_hat_treatment[treatment_variant_indices] = self.predict_treatment(
-                    X=index_matrix(X, treatment_variant_indices),
+                tau_hat_treatment[treatment_variant_mask] = self.predict_treatment(
+                    X=index_matrix(X, treatment_variant_mask),
                     model_kind=TREATMENT_EFFECT_MODEL,
                     model_ord=treatment_variant - 1,
                     is_oos=False,
