@@ -165,14 +165,15 @@ def convert_and_pad_propensity_score(
      propensity score per variant. The expansion assumes that the provided scores are
      those for the second variant.
     """
-    if isinstance(propensity_scores, pd.Series) or isinstance(
-        propensity_scores, pd.DataFrame
-    ):
-        propensity_scores = propensity_scores.to_numpy()
-    p_is_1d = len(propensity_scores.shape) == 1 or propensity_scores.shape[1] == 1
+    if isinstance(propensity_scores, np.ndarray):
+        np_propensity_scores = propensity_scores
+    else:
+        np_propensity_scores = propensity_scores.to_numpy()
+
+    p_is_1d = len(np_propensity_scores.shape) == 1 or np_propensity_scores.shape[1] == 1
     if n_variants == 2 and p_is_1d:
-        propensity_scores = np.c_[1 - propensity_scores, propensity_scores]
-    return propensity_scores
+        np_propensity_scores = np.c_[1 - np_propensity_scores, np_propensity_scores]
+    return np_propensity_scores
 
 
 def get_n_variants(propensity_scores: Matrix) -> int:
