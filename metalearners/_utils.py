@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy
 from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
 from sklearn.ensemble import (
@@ -32,8 +33,15 @@ def safe_len(X: Matrix) -> int:
     return len(X)
 
 
+def copy_matrix(matrix: Matrix) -> Matrix:
+    """Make a copy of a matrix."""
+    if isinstance(matrix, pl.DataFrame):
+        return matrix.clone()
+    return matrix.copy()
+
+
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
-    """Subselect certain rows from a matrix."""
+    """Subselect certain ows from a matrix."""
     if isinstance(rows, pd.Series):
         rows = rows.to_numpy()
     if isinstance(matrix, pd.DataFrame):
@@ -58,6 +66,14 @@ def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:
         if any(data_structure.index != reference_index):
             return False
     return True
+
+
+def to_np(data: Vector | Matrix) -> np.ndarray:
+    if isinstance(data, np.ndarray):
+        return data
+    if hasattr(data, "to_numpy"):
+        return data.to_numpy()
+    return np.array(data)
 
 
 def is_pd_df_or_series(arg) -> bool:

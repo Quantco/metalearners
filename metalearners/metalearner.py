@@ -1336,7 +1336,7 @@ class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
             n_folds=n_folds,
             random_state=random_state,
         )
-        self._treatment_variants_mask: list[np.ndarray] | None = None
+        self._treatment_variants_mask: list[Vector] | None = None
 
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL

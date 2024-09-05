@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from scipy.stats import wishart
 
 from metalearners._typing import Matrix, Vector
@@ -12,6 +13,7 @@ from metalearners._utils import (
     check_probability,
     check_propensity_score,
     convert_and_pad_propensity_score,
+    copy_matrix,
     default_rng,
     get_n_variants,
     sigmoid,
@@ -239,8 +241,11 @@ def insert_missing(
     check_probability(missing_probability, zero_included=True)
     missing_mask = rng.binomial(1, p=missing_probability, size=X.shape).astype("bool")
 
-    masked = X.copy()
-    masked[missing_mask] = np.nan
+    masked = copy_matrix(X)
+    if isinstance(masked, pl.DataFrame):
+        raise ValueError()
+    else:
+        masked[missing_mask] = np.nan
     return masked
 
 

@@ -19,8 +19,10 @@ from metalearners._utils import (
     get_predict,
     get_predict_proba,
     index_matrix,
+    index_vector,
     infer_input_dict,
     safe_len,
+    to_np,
     validate_all_vectors_same_index,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
@@ -516,14 +518,16 @@ class RLearner(MetaLearner):
 
         y_residuals = y[mask] - y_estimates
 
-        w_binarized = w[mask] == treatment_variant
+        w_binarized = to_np(index_vector(w, mask) == treatment_variant)
         w_residuals = w_binarized - w_estimates_binarized
         w_residuals_padded = clip_element_absolute_value_to_epsilon(
             w_residuals, epsilon
         )
 
-        pseudo_outcomes = y_residuals / w_residuals_padded
-        weights = np.square(w_residuals)
+        pseudo_outcomes = to_np(y_residuals / w_residuals_padded)
+        # In principle np.square could also return a scalar.
+        # We ensure that the type is np.ndarray.
+        weights = to_np(np.square(w_residuals))
 
         return pseudo_outcomes, weights
 

@@ -71,7 +71,7 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y, w)
 
-        self._treatment_variants_mask = []
+        self._treatment_variants_mask: list[Vector] = []
 
         for v in range(self.n_variants):
             self._treatment_variants_mask.append(w == v)
