@@ -42,10 +42,12 @@ def copy_matrix(matrix: Matrix) -> Matrix:
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain ows from a matrix."""
-    if isinstance(rows, pd.Series):
+    if isinstance(rows, pd.Series) or isinstance(rows, pl.Series):
         rows = rows.to_numpy()
     if isinstance(matrix, pd.DataFrame):
         return matrix.iloc[rows]
+    if isinstance(matrix, pl.DataFrame):
+        return matrix.filter(pl.Series(rows))
     return matrix[rows, :]
 
 
@@ -55,6 +57,8 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
         rows = rows.to_numpy()
     if isinstance(vector, pd.Series):
         return vector.iloc[rows]
+    if isinstance(vector, pl.Series):
+        return vector.filter(rows)
     return vector[rows]
 
 
