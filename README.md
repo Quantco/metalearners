@@ -34,7 +34,7 @@ rlearner = RLearner(
 )
 
 features = ["age", "weight", "height"]
-rlearner.fit(df[features], df["treatment"], df["outcomes"])
+rlearner.fit(df[features], df["outcomes"], df["treatment"])
 cate_estimates = rlearner.predict(df[features], is_oos=False)
 ```
 
