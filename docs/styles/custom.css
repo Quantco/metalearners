@@ -7,11 +7,10 @@ Out[ ] blocks are not displayed.
 }
 
 /*
-Allows to better see the linked target.
+Add your custom style here to highlight the target element.
+This e.g. triggers when an internal link to a function in the API documentation is clicked.
+The function will be the target then.
 */
 :target {
-    box-shadow: 0 0 15px var(--md-primary-fg-color);
-    border: 1px solid var(--md-primary-fg-color);
-    border-radius: 8px;
-    padding: 5px;
+
 }
