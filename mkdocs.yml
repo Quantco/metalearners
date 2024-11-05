@@ -40,7 +40,7 @@ plugins:
   - search
   - mkdocs-jupyter:
       ignore_h1_titles: False # Heading H1 -> Site title
-      execute: false
+      execute: false # TODO: Discuss whether this should be turned back on later
       allow_errors: false
       show_input: True
       include_source: True
@@ -54,6 +54,9 @@ plugins:
         python:
           paths: [metalearners]
           options:
+            extensions:
+              - griffe_inherited_docstrings:
+                  merge: True
             unwrap_annotated: true
             show_symbol_type_heading: true
             docstring_style: numpy
@@ -61,6 +64,7 @@ plugins:
             separate_signature: true
             merge_init_into_class: true
             show_submodules: true # show *all* code docu
+            inherited_members: true
 
 nav:
   # Demonstrate notebook inclusion
