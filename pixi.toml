@@ -72,8 +72,9 @@ statsmodels = "*"
 nbconvert = "*"
 mkdocs-jupyter = ">=0.24.8,<0.25"
 mkdocs-material = ">=9.5.31,<10"
-mkdocstrings = ">=0.25.2,<0.26"
-mkdocstrings-python = ">=1.10.7,<2"
+mkdocstrings = ">=0.25.2"
+mkdocstrings-python = ">=1.12,<2"
+griffe-inherited-docstrings = ">=1.1.1,<2"
 
 [feature.docs.tasks]
 nb-convert = "nb-convert.sh"
