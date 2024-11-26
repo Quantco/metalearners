@@ -22,8 +22,8 @@ The latter point is particularly important since it implies that battle-tested a
 
 What we've come to like about the design of both is that:
 
-- their Metalearner implementations mostly follow the interface one might expect from an `sklearn` Estimator
-- they are, in the intended use cases, fairly straightforward and intuitive to use
+- [x] their Metalearner implementations mostly follow the interface one might expect from an `sklearn` Estimator
+- [x] they are, in the intended use cases, fairly straightforward and intuitive to use
 
 Yet, we've also found that in some regards, the MetaLearner implementations from `causalml` and `econml` don't perfectly lend themselves to use cases we care about.
 
