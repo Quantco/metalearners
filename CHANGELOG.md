@@ -4,8 +4,7 @@
 
 ### New features
 
-- Add support for using ``scipy.sparse.csr_matrix`` as datastructure for covariates ``X``.
-
+- Add support for using `scipy.sparse.csr_matrix` as datastructure for covariates `X`.
 
 ## 0.10.0 (2024-08-13)
 
