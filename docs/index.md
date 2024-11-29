@@ -6,12 +6,12 @@
 <!-- markdownlint-disable MD007 -->
 <!-- prettier-ignore -->
 - [Motivation](motivation.md)
-    - [Why CATE estimation?](motivation_ortho_#why-cate-estimation)
-    - [Why MetaLearners?](motivation/#why-metalearners)
-    - [Why not `causalml` or `econml`?](motivation/#why-not-causalml-or-econml)
+    - [Why CATE estimation?](motivation.md/#why-cate-estimation)
+    - [Why MetaLearners?](motivation.md/#why-metalearners)
+    - [Why not `causalml` or `econml`?](motivation.md/#why-not-causalml-or-econml)
 - [Background](background.md)
-    - [CATE estimation](background/#cate-estimation)
-    - [MetaLearners](background/#metalearners)
+    - [CATE estimation](background.md/#cate-estimation)
+    - [MetaLearners](background.md/#metalearners)
 - [Glossary](glossary.md)
 - [What about parallelism?](parallelism.md)
 - [Examples](examples/index.md)
