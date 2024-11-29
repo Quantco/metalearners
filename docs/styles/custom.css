@@ -5,12 +5,3 @@ Out[ ] blocks are not displayed.
 .jp-InputPrompt, .jp-OutputPrompt {
     display: none !important;
 }
-
-/*
-Add your custom style here to highlight the target element.
-This e.g. triggers when an internal link to a function in the API documentation is clicked.
-The function will be the target then.
-*/
-:target {
-
-}
