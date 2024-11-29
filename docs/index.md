@@ -26,7 +26,7 @@
     - [Estimating CATEs for survival analysis](examples/example_survival.ipynb)
     - [What if I know the propensity score?](examples/example_propensity.ipynb)
     - [Converting a MetaLearner to ONNX](examples/example_onnx.ipynb)
-    - [Using Sparse Covariate Matrices](example_sparse_inputs.ipynb)
+    - [Using Sparse Covariate Matrices](examples/example_sparse_inputs.ipynb)
 - [Development](development.md)
 - [FAQ](faq.md)
 - [API Documentation](api_documentation.md)
