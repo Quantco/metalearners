@@ -85,6 +85,7 @@ nav:
       - examples/example_survival.ipynb
       - examples/example_propensity.ipynb
       - examples/example_onnx.ipynb
+      - examples/example_sparse_inputs.ipynb
   - What About Parallelism: parallelism.md
   - API Documentation: api_documentation.md
   - Glossary: glossary.md
