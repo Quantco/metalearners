@@ -20,13 +20,13 @@ pixi run postinstall
 pixi run pytest tests
 ```
 
-You can build the documentation locally by running:
+You can preview the documentation locally by running:
 
 ```bash
 pixi run -e docs postinstall
 pixi run -e docs docs
 ```
 
-You can then inspect the locally built docs by opening `docs/_build/index.html`.
+Mkdocs will start a local server and you can preview the documentation by visiting `http://localhost:8000`.
 
 You can find all `pixi` tasks in the `pixi.toml` file.
