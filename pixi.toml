@@ -77,11 +77,13 @@ mkdocstrings-python = ">=1.12,<2"
 griffe-inherited-docstrings = ">=1.1.1,<2"
 
 [feature.docs.tasks]
+# Postinstall task needs to be executed in 'docs' environment beforehand to resolve API references
+docs = "mkdocs serve"
+docs-build = "mkdocs build --strict"
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
+# Notebook testing
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
-docs = "mkdocs build"
-readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
-serve-docs = "mkdocs serve" # postinstall task needs to be executed in 'docs' environment beforehand
 
 [feature.build.dependencies]
 python-build = "*"
