@@ -1,5 +1,5 @@
 /*
-Hides the In[ ] blocks.
+Hides the In[ ] blocks in rendered jupyter notebooks.
 Out[ ] blocks are not displayed.
 */
 .jp-InputPrompt, .jp-OutputPrompt {
