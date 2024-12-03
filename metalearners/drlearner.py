@@ -29,6 +29,7 @@ from metalearners._utils import (
     index_matrix,
     infer_input_dict,
     safe_len,
+    to_np,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
 )
@@ -416,7 +417,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             y0_estimate = y0_estimate[:, 0]
             y1_estimate = y1_estimate[:, 0]
 
-        pseudo_outcome = (
+        pseudo_outcome = to_np(
             (
                 (y - y1_estimate)
                 / clip_element_absolute_value_to_epsilon(

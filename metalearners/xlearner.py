@@ -16,9 +16,11 @@ from metalearners._utils import (
     get_predict,
     get_predict_proba,
     index_matrix,
+    index_vector,
     infer_input_dict,
     infer_probabilities_output,
     safe_len,
+    to_np,
     validate_valid_treatment_variant_not_control,
     warning_experimental_feature,
 )
@@ -96,7 +98,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         self._validate_treatment(w)
         self._validate_outcome(y, w)
 
-        self._treatment_variants_mask = []
+        self._treatment_variants_mask: list[Vector] = []
 
         qualified_fit_params = self._qualified_fit_params(fit_params)
 
@@ -421,12 +423,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
         treatment_indices = w == treatment_variant
         control_indices = w == 0
 
-        treatment_outcome = index_matrix(
-            conditional_average_outcome_estimates, control_indices
-        )[:, treatment_variant]
-        control_outcome = index_matrix(
-            conditional_average_outcome_estimates, treatment_indices
-        )[:, 0]
+        treatment_outcome = conditional_average_outcome_estimates[
+            control_indices, treatment_variant
+        ]
+        control_outcome = conditional_average_outcome_estimates[treatment_indices, 0]
 
         if self.is_classification:
             # Get the probability of positive class, multiclass is currently not supported.
@@ -436,8 +436,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             control_outcome = control_outcome[:, 0]
             treatment_outcome = treatment_outcome[:, 0]
 
-        imputed_te_treatment = y[treatment_indices] - control_outcome
-        imputed_te_control = treatment_outcome - y[control_indices]
+        imputed_te_treatment = (
+            to_np(index_vector(y, treatment_indices)) - control_outcome
+        )
+        imputed_te_control = treatment_outcome - to_np(index_vector(y, control_indices))
 
         return imputed_te_control, imputed_te_treatment
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy
 from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
 from sklearn.ensemble import (
@@ -32,12 +33,21 @@ def safe_len(X: Matrix) -> int:
     return len(X)
 
 
+def copy_matrix(matrix: Matrix) -> Matrix:
+    """Make a copy of a matrix."""
+    if isinstance(matrix, pl.DataFrame):
+        return matrix.clone()
+    return matrix.copy()
+
+
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
-    """Subselect certain rows from a matrix."""
-    if isinstance(rows, pd.Series):
+    """Subselect certain ows from a matrix."""
+    if isinstance(rows, pd.Series) or isinstance(rows, pl.Series):
         rows = rows.to_numpy()
     if isinstance(matrix, pd.DataFrame):
         return matrix.iloc[rows]
+    if isinstance(matrix, pl.DataFrame):
+        return matrix.filter(pl.Series(rows))
     return matrix[rows, :]
 
 
@@ -47,6 +57,9 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
         rows = rows.to_numpy()
     if isinstance(vector, pd.Series):
         return vector.iloc[rows]
+    if isinstance(vector, pl.Series):
+        pl_rows = pl.Series(rows)
+        return vector.filter(pl_rows)
     return vector[rows]
 
 
@@ -58,6 +71,14 @@ def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:
         if any(data_structure.index != reference_index):
             return False
     return True
+
+
+def to_np(data: Vector | Matrix) -> np.ndarray:
+    if isinstance(data, np.ndarray):
+        return data
+    if hasattr(data, "to_numpy"):
+        return data.to_numpy()
+    return np.array(data)
 
 
 def is_pd_df_or_series(arg) -> bool:
@@ -165,14 +186,15 @@ def convert_and_pad_propensity_score(
      propensity score per variant. The expansion assumes that the provided scores are
      those for the second variant.
     """
-    if isinstance(propensity_scores, pd.Series) or isinstance(
-        propensity_scores, pd.DataFrame
-    ):
-        propensity_scores = propensity_scores.to_numpy()
-    p_is_1d = len(propensity_scores.shape) == 1 or propensity_scores.shape[1] == 1
+    if isinstance(propensity_scores, np.ndarray):
+        np_propensity_scores = propensity_scores
+    else:
+        np_propensity_scores = propensity_scores.to_numpy()
+
+    p_is_1d = len(np_propensity_scores.shape) == 1 or np_propensity_scores.shape[1] == 1
     if n_variants == 2 and p_is_1d:
-        propensity_scores = np.c_[1 - propensity_scores, propensity_scores]
-    return propensity_scores
+        np_propensity_scores = np.c_[1 - np_propensity_scores, np_propensity_scores]
+    return np_propensity_scores
 
 
 def get_n_variants(propensity_scores: Matrix) -> int:
