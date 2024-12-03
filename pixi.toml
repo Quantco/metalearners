@@ -69,10 +69,16 @@ myst-nb = "*"
 econml = ">=0.15"
 doubleml = "*"
 statsmodels = "*"
+mkdocs-jupyter = ">=0.24.8,<0.25"
+mkdocs-material = ">=9.5.31,<10"
+mkdocstrings = ">=0.25.2"
+mkdocstrings-python = ">=1.12,<2"
+griffe-inherited-docstrings = ">=1.1.1,<2"
 
 [feature.docs.tasks]
-docs = "cd docs && make html "
-readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
+docs = "mkdocs build"
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
+serve-docs = "mkdocs serve" # postinstall task needs to be executed in 'docs' environment beforehand
 
 [feature.build.dependencies]
 build = "*"
