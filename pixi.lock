@@ -2443,6 +2443,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/autograd-gamma-0.5.0-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/babel-2.14.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.12.3-pyha770c72_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/black-24.10.0-py311h38be061_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bleach-6.1.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/blosc-1.21.6-hef167b5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-1.1.0-hd590300_1.conda
@@ -2790,6 +2791,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/autograd-gamma-0.5.0-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/babel-2.14.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.12.3-pyha770c72_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/black-24.10.0-py311h6eed73b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bleach-6.1.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/blosc-1.21.6-h7d75f6d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/brotli-1.1.0-h0dc2134_1.conda
@@ -3122,6 +3124,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/autograd-gamma-0.5.0-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/babel-2.14.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.12.3-pyha770c72_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/black-24.10.0-py311h267d04e_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bleach-6.1.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/blosc-1.21.6-h5499902_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/brotli-1.1.0-hb547adb_1.conda
@@ -3453,6 +3456,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/autograd-gamma-0.5.0-pyh9f0ad1d_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/babel-2.14.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.12.3-pyha770c72_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/black-24.10.0-py311h1ea47a8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/bleach-6.1.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/blosc-1.21.6-h85f69ea_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/brotli-1.1.0-hcfcfb64_1.conda
@@ -7383,6 +7387,87 @@ packages:
   license_family: MIT
   size: 391969
   timestamp: 1714119854151
+- kind: conda
+  name: black
+  version: 24.10.0
+  build: py311h1ea47a8_0
+  subdir: win-64
+  url: https://conda.anaconda.org/conda-forge/win-64/black-24.10.0-py311h1ea47a8_0.conda
+  sha256: 8f818b565127c2846b331addd64ad9e7db59f3b413126a4eba5c08e50eca8d13
+  md5: 22b6302f1fd44b83c5d659b40dc4fedc
+  depends:
+  - click >=8.0.0
+  - mypy_extensions >=0.4.3
+  - packaging >=22.0
+  - pathspec >=0.9
+  - platformdirs >=2
+  - python >=3.11,<3.12.0a0
+  - python_abi 3.11.* *_cp311
+  license: MIT
+  license_family: MIT
+  size: 423352
+  timestamp: 1728504147411
+- kind: conda
+  name: black
+  version: 24.10.0
+  build: py311h267d04e_0
+  subdir: osx-arm64
+  url: https://conda.anaconda.org/conda-forge/osx-arm64/black-24.10.0-py311h267d04e_0.conda
+  sha256: 70c41af42699e765acb5a027740b97300bf696af22d0406dd26d66cd1aa7959f
+  md5: 2780798c556604ad91ddeb01e2e3f2ea
+  depends:
+  - click >=8.0.0
+  - mypy_extensions >=0.4.3
+  - packaging >=22.0
+  - pathspec >=0.9
+  - platformdirs >=2
+  - python >=3.11,<3.12.0a0
+  - python >=3.11,<3.12.0a0 *_cpython
+  - python_abi 3.11.* *_cp311
+  license: MIT
+  license_family: MIT
+  size: 399611
+  timestamp: 1728503954546
+- kind: conda
+  name: black
+  version: 24.10.0
+  build: py311h38be061_0
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/black-24.10.0-py311h38be061_0.conda
+  sha256: fad9bf51c6574af15900a4e1226f45d315fe79a5424f9fc97db35e3f74927e70
+  md5: fceab39cec6b08375a81d1406e30ea1e
+  depends:
+  - click >=8.0.0
+  - mypy_extensions >=0.4.3
+  - packaging >=22.0
+  - pathspec >=0.9
+  - platformdirs >=2
+  - python >=3.11,<3.12.0a0
+  - python_abi 3.11.* *_cp311
+  license: MIT
+  license_family: MIT
+  size: 398766
+  timestamp: 1728503879231
+- kind: conda
+  name: black
+  version: 24.10.0
+  build: py311h6eed73b_0
+  subdir: osx-64
+  url: https://conda.anaconda.org/conda-forge/osx-64/black-24.10.0-py311h6eed73b_0.conda
+  sha256: d242a4f2faeca61e7cc323b8c61b65b08192bc660d80a41e5d8dab000abfd078
+  md5: d3f6c057e93e39d9df94ffa3c4693333
+  depends:
+  - click >=8.0.0
+  - mypy_extensions >=0.4.3
+  - packaging >=22.0
+  - pathspec >=0.9
+  - platformdirs >=2
+  - python >=3.11,<3.12.0a0
+  - python_abi 3.11.* *_cp311
+  license: MIT
+  license_family: MIT
+  size: 399950
+  timestamp: 1728503926364
 - kind: conda
   name: bleach
   version: 6.1.0

@@ -12,7 +12,7 @@ $\tau(X) = \mathbb{E}[Y(1) - Y(0)|X]$ in the binary case and $\tau_{i,j}(X) = \m
 
 $\mathbb{E}[Y_i(w) | X]$ for each treatment variant $w$.
 
-##### Covariates
+#### Covariates
 
 The features $X$ based on which a CATE is estimated.
 

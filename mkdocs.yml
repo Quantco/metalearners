@@ -15,14 +15,12 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-      primary: deep purple
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
-      primary: deep purple
   features:
     - content.action.edit
     - search.suggest
@@ -57,10 +55,13 @@ plugins:
             extensions:
               - griffe_inherited_docstrings:
                   merge: true
-            unwrap_annotated: true
+            allow_inspection: true
+            # unwrap_annotated: true
+            show_signature_annotations: true
+            show_signature: true
             show_symbol_type_heading: true
-            docstring_style: numpy
-            docstring_section_style: spacy
+            docstring_style: "google" # null for no tables
+            docstring_section_style: "table"
             separate_signature: true
             merge_init_into_class: true
             show_submodules: true # show *all* code docu
@@ -95,6 +96,7 @@ nav:
 
 markdown_extensions:
   - admonition
+  - pymdownx.details
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.inlinehilite
