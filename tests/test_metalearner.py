@@ -15,7 +15,7 @@ from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-from metalearners._typing import _ScikitModel
+from metalearners._typing import Matrix, Vector, _ScikitModel
 from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
@@ -1088,9 +1088,9 @@ def test_n_jobs_base_learners(implementation, rng):
 )
 @pytest.mark.parametrize("backend", ["np", "pd", "csr", "pl"])
 def test_validate_outcome_one_class(implementation, backend, rng):
-    X = rng.standard_normal((10, 2))
-    y = np.zeros(10)
-    w = rng.integers(0, 2, 10)
+    X: Matrix = rng.standard_normal((10, 2))
+    y: Vector = np.zeros(10)
+    w: Vector = rng.integers(0, 2, 10)
     if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
@@ -1122,9 +1122,9 @@ def test_validate_outcome_one_class(implementation, backend, rng):
 )
 @pytest.mark.parametrize("backend", ["np", "pd", "csr", "pl"])
 def test_validate_outcome_different_classes(implementation, backend, rng):
-    X = rng.standard_normal((4, 2))
-    y = np.array([0, 1, 0, 0])
-    w = np.array([0, 0, 1, 1])
+    X: Matrix = rng.standard_normal((4, 2))
+    y: Vector = np.array([0, 1, 0, 0])
+    w: Vector = np.array([0, 0, 1, 1])
     if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)

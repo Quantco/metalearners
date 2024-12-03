@@ -58,7 +58,8 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
     if isinstance(vector, pd.Series):
         return vector.iloc[rows]
     if isinstance(vector, pl.Series):
-        return vector.filter(rows)
+        pl_rows = pl.Series(rows)
+        return vector.filter(pl_rows)
     return vector[rows]
 
 
