@@ -10,11 +10,11 @@ MetaLearners for Conditional Average Treatment Effect (CATE) estimation
 
 The library focuses on providing
 
-- Methodologically sound cross-fitting
-- Convenient access to and reuse of base models
-- Consistent APIs across Metalearners
-- Support for more than binary treatment variants
-- Integrations with `pandas`, `shap`, `lime`, `optuna` and soon `onnx`
+-   Methodologically sound cross-fitting
+-   Convenient access to and reuse of base models
+-   Consistent APIs across Metalearners
+-   Support for more than binary treatment variants
+-   Integrations with `pandas`, `shap`, `lime`, `optuna` and soon `onnx`
 
 ## Example
 
