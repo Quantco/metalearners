@@ -35,8 +35,8 @@ jobs:
       - name: pre-commit
         run: pixi run pre-commit-run --color=always --show-diff-on-failure
 
-  mypy-example-nbs:
-    name: Check notebooks mypy
+  check-example-nbs:
+    name: Check notebooks mypy and output exists
     timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
@@ -48,6 +48,9 @@ jobs:
         run: |
           pixi run nb-convert
           pixi run nb-mypy
+      - name: Check output exists
+        run: |
+          pixi run nb-assert-output
 
   unit-tests:
     name: Unit Tests

@@ -9,6 +9,7 @@ coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-m
 # Note that this task will fail on systems without bash.
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
+nb-assert-output = "sh nb-output-check.sh"
 
 [dependencies]
 pre-commit = "*"
