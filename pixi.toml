@@ -9,6 +9,7 @@ coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-m
 # Note that this task will fail on systems without bash.
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
+nb-assert-output = "sh nb-output-check.sh"
 
 [dependencies]
 pre-commit = "*"
@@ -69,10 +70,18 @@ myst-nb = "*"
 econml = ">=0.15"
 doubleml = "*"
 statsmodels = "*"
+mkdocs-jupyter = ">=0.24.8,<0.25"
+mkdocs-material = ">=9.5.31,<10"
+mkdocstrings = ">=0.25.2"
+mkdocstrings-python = ">=1.12,<2"
+griffe-inherited-docstrings = ">=1.1.1,<2"
+black = ">=24.10.0,<25" # enables formatted (e.g. line-wrapped) function signatures
 
 [feature.docs.tasks]
-docs = "cd docs && make html "
-readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
+# postinstall task needs to be executed in 'docs' environment beforehand to resolve API references
+docs = "mkdocs serve"
+docs-build = "mkdocs build --strict"
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
 
 [feature.build.dependencies]
 build = "*"
