@@ -10,11 +10,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy
-from sklearn.base import check_array, check_X_y, is_classifier, is_regressor
+from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
 )
+from sklearn.utils import check_array, check_X_y
 
 from metalearners._typing import Matrix, PredictMethod, Vector, _ScikitModel
 
@@ -131,6 +132,7 @@ def check_propensity_score(
         )
 
     if features is not None:
+
         check_X_y(features, propensity_scores, multi_output=True, **check_kwargs)
     else:
         check_array(propensity_scores, **check_kwargs)
