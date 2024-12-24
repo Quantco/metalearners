@@ -75,7 +75,7 @@ docs = "cd docs && make html "
 readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
 
 [feature.build.dependencies]
-# build = "*"
+python-build = "*"
 
 [feature.build.tasks]
 build = "python -m build"
