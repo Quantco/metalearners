@@ -59,13 +59,13 @@ repos:
         language: system
         entry: pixi run -e lint trailing-whitespace-fixer
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: end-of-file-fixer
         name: fix end of files
         language: system
         entry: pixi run -e lint end-of-file-fixer
         types: [text]
-        stages: [commit, push, manual]
+        stages: [pre-commit, pre-push, manual]
       - id: check-merge-conflict
         name: check for merge conflicts
         language: system
