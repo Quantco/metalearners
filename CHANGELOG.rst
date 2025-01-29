@@ -7,6 +7,14 @@
 Changelog
 =========
 
+0.12.0 (2025-01-29)
+-------------------
+
+**Other changes**
+
+* Comply with ``scikit-learn`` versions 1.6 and higher.
+
+
 0.11.0 (2024-09-05)
 -------------------
 
