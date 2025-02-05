@@ -4,6 +4,7 @@
 import warnings
 from collections.abc import Mapping, Sequence
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, hstack
@@ -40,10 +41,19 @@ def _append_treatment_to_covariates(
     X: Matrix, w: Vector, supports_categoricals: bool, n_variants: int
 ) -> Matrix:
     """Appends treatment columns to covariates and one-hot-encode if necessary."""
-    w = convert_treatment(w)
-    w = pd.Series(w, dtype="category").cat.set_categories(list(range(n_variants)))
+    w_np = convert_treatment(w)
 
-    if isinstance(X, pd.DataFrame) and "treatment" in X.columns:
+    # We enforce pandas as an intermediate data structure for the treatment vector w
+    # since we might rely on pandas' get_dummies function. We haven't found a narwhals
+    # alternative to get_dummies yet.
+    w_pd = pd.Series(w_np, dtype="category", name="treatment").cat.set_categories(
+        list(range(n_variants))
+    )
+
+    def _stringify_column_names(df_nw):
+        return df_nw.rename({column: str(column) for column in df_nw.columns})
+
+    if hasattr(X, "columns") and "treatment" in X.columns:
         raise ValueError('"treatment" cannot be a column name in X.')
 
     if isinstance(X, pd.DataFrame):
@@ -51,17 +61,18 @@ def _append_treatment_to_covariates(
         X = X.reset_index(drop=True)
 
     if not supports_categoricals:
-        w_dummies = pd.get_dummies(w, prefix="treatment", dtype=int, drop_first=True)
-        if isinstance(X, pd.DataFrame):
-            X_with_w = pd.concat([X, w_dummies], axis=1)
+        w_dummies = pd.get_dummies(w_pd, prefix="treatment", dtype=int, drop_first=True)
+        if nw.dependencies.is_into_dataframe(X):
+            X_nw = nw.from_native(X)
+            w_dummies_nw = nw.from_native(w_dummies)
+            X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
             # This is because some models (LinearRegression) raise an error if some column
             # names are integers and some strings.
-            X_with_w.columns = X_with_w.columns.astype(str)
-            return X_with_w
-        elif isinstance(X, csr_matrix):
+            X_with_w_nw = _stringify_column_names(X_with_w_nw)
+            return X_with_w_nw.to_native()
+        if isinstance(X, csr_matrix):
             return hstack((X, w_dummies), format="csr")
-        else:
-            return np.concatenate([X, w_dummies], axis=1)
+        return np.concatenate([X, w_dummies], axis=1)
 
     # This is necessary as each model works differently with categoricals,
     # in some you need to specify them on instantiation while some others on
@@ -72,20 +83,24 @@ def _append_treatment_to_covariates(
     if isinstance(X, np.ndarray):
         warnings.warn(
             "Converting the input covariates X from np.ndarray to a "
-            f"pd.DataFrame as the {_BASE_MODEL} supports categorical variables."
+            f"DataFrame as {_BASE_MODEL} supports categorical variables."
         )
-        X = pd.DataFrame(X, copy=True)
+        # TODO: Can/should we use nw.from_numpy instead?
+        X_nw = nw.from_native(pd.DataFrame(X))
     elif isinstance(X, csr_matrix):
         warnings.warn(
             "Converting the input covariates X from a scipy csr_matrix to a "
-            f"pd.DataFrame as the {_BASE_MODEL} supports categorical variables."
+            f"pd.DataFrame as {_BASE_MODEL} supports categorical variables."
         )
-        X = pd.DataFrame.sparse.from_spmatrix(X)
+        X_nw = nw.from_native(pd.DataFrame.sparse.from_spmatrix(X))
+    else:
+        X_nw = nw.from_native(pd.DataFrame(X))
 
-    X_with_w = pd.concat([X, pd.Series(w, dtype="category", name="treatment")], axis=1)
-    X_with_w.columns = X_with_w.columns.astype(str)
+    w_nw = nw.from_native(pd.DataFrame(w_pd))
 
-    return X_with_w
+    X_with_w_nw = nw.concat([X_nw, w_nw], how="horizontal")
+    X_with_w_nw = _stringify_column_names(X_with_w_nw)
+    return X_with_w_nw.to_native()
 
 
 class SLearner(MetaLearner):
