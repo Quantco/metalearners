@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -46,6 +46,8 @@ def _append_treatment_to_covariates(
     # We enforce pandas as an intermediate data structure for the treatment vector w
     # since we might rely on pandas' get_dummies function. We haven't found a narwhals
     # alternative to get_dummies yet.
+    # Moreover, it seems that nw.concat does not the concatenation of a polars and a
+    # pandas data structure. Hence, we always transform to X to pandas.
     w_pd = pd.Series(w_np, dtype="category", name="treatment").cat.set_categories(
         list(range(n_variants))
     )
@@ -63,12 +65,15 @@ def _append_treatment_to_covariates(
     if not supports_categoricals:
         w_dummies = pd.get_dummies(w_pd, prefix="treatment", dtype=int, drop_first=True)
         if nw.dependencies.is_into_dataframe(X):
+            if not isinstance(X, pd.DataFrame):
+                X = X.to_pandas()
             X_nw = nw.from_native(X)
-            w_dummies_nw = nw.from_native(w_dummies)
-            X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
             # This is because some models (LinearRegression) raise an error if some column
             # names are integers and some strings.
-            X_with_w_nw = _stringify_column_names(X_with_w_nw)
+            X_nw = _stringify_column_names(X_nw)
+            w_dummies_nw = nw.from_native(w_dummies)
+            X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
+
             return X_with_w_nw.to_native()
         if isinstance(X, csr_matrix):
             return hstack((X, w_dummies), format="csr")
@@ -97,9 +102,9 @@ def _append_treatment_to_covariates(
         X_nw = nw.from_native(pd.DataFrame(X))
 
     w_nw = nw.from_native(pd.DataFrame(w_pd))
+    X_nw = _stringify_column_names(X_nw)
 
     X_with_w_nw = nw.concat([X_nw, w_nw], how="horizontal")
-    X_with_w_nw = _stringify_column_names(X_with_w_nw)
     return X_with_w_nw.to_native()
 
 

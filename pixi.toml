@@ -45,6 +45,7 @@ onnxmltools = "*"
 onnxruntime = "*"
 spox = "*"
 narwhals = ">=1.25.0,<2"
+pyarrow = ">=19.0.0,<20"
 
 [feature.lint.dependencies]
 pre-commit = "*"

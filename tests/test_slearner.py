@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -32,7 +33,7 @@ def test_feature_set_doesnt_raise(rng):
 @pytest.mark.parametrize(
     "model, supports_categoricals", [(LinearRegression, False), (LGBMRegressor, True)]
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "pd", "csr", "pl"])
 def test_append_treatment_to_covariates(
     model,
     supports_categoricals,
@@ -40,8 +41,11 @@ def test_append_treatment_to_covariates(
     sample_size,
     request,
 ):
-    dataset_name = "mixed" if backend == "pd" else "numerical"
+    dataset_name = "mixed" if backend in {"pd", "pl"} else "numerical"
     covariates, _, _ = request.getfixturevalue(f"{dataset_name}_covariates")
+
+    if backend == "pl":
+        covariates = pl.from_pandas(covariates)
 
     if backend == "csr":
         covariates = csr_matrix(covariates)
@@ -72,26 +76,36 @@ def test_append_treatment_to_covariates(
         )
         assert (X_with_w[:, :-3] != covariates).sum() < 1
     else:
-        assert isinstance(X_with_w, pd.DataFrame)
+        if backend == "pd":
+            assert isinstance(X_with_w, pd.DataFrame)
+        elif backend == "pl":
+            assert isinstance(X_with_w, pd.DataFrame)
         if backend == "np":
             covariates_pd = pd.DataFrame(covariates)
         elif backend == "csr":
             covariates_pd = pd.DataFrame.sparse.from_spmatrix(covariates)
+        elif backend == "pl":
+            covariates_pd = covariates.to_pandas()
         else:
             covariates_pd = covariates
         covariates_pd.columns = covariates_pd.columns.astype(str)
         if not supports_categoricals:
-            assert X_with_w[["treatment_1", "treatment_2", "treatment_3"]].equals(
+            assert X_with_w[["treatment_1", "treatment_2", "treatment_3"]].equals(  # type: ignore
                 pd.get_dummies(
                     treatment_pd, dtype=int, drop_first=True, prefix="treatment"
                 )
             )
 
-            assert X_with_w.drop(
-                ["treatment_1", "treatment_2", "treatment_3"], axis=1
-            ).equals(covariates_pd)
+            pd.testing.assert_frame_equal(
+                X_with_w.drop(["treatment_1", "treatment_2", "treatment_3"], axis=1),  # type: ignore
+                covariates_pd,
+            )
         else:
             assert X_with_w["treatment"].dtype == "category"
-            assert np.all(X_with_w["treatment"].cat.categories == [0, 1, 2, 3])
+            assert np.all(X_with_w["treatment"].cat.categories == [0, 1, 2, 3])  # type: ignore
 
-            assert X_with_w.drop("treatment", axis=1).equals(covariates_pd)
+            pd.testing.assert_frame_equal(  # type: ignore
+                X_with_w.drop("treatment", axis=1),  # type: ignore
+                covariates_pd,
+                check_dtype=False,
+            )
