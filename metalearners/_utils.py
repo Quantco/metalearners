@@ -7,9 +7,11 @@ from inspect import signature
 from operator import le, lt
 from pathlib import Path
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
 import scipy
+from narwhals.dependencies import is_into_dataframe, is_into_series
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -35,19 +37,25 @@ def safe_len(X: Matrix) -> int:
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
-    if isinstance(rows, pd.Series):
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(matrix, pd.DataFrame):
-        return matrix.iloc[rows]
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix)  # type: ignore
+        return matrix_nw[rows].to_native()  # type: ignore
     return matrix[rows, :]
 
 
 def index_vector(vector: Vector, rows: Vector) -> Vector:
     """Subselect certain rows from a vector."""
-    if isinstance(rows, pd.Series):
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(vector, pd.Series):
-        return vector.iloc[rows]
+    if is_into_series(vector):
+        vector_nw = nw.from_native(vector, series_only=True)
+        return vector_nw[rows].to_native()  # type: ignore
     return vector[rows]
 
 

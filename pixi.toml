@@ -43,6 +43,7 @@ onnx = "*"
 onnxmltools = "*"
 onnxruntime = "*"
 spox = "*"
+narwhals = ">=1.25.0,<2"
 
 [feature.lint.dependencies]
 pre-commit = "*"
