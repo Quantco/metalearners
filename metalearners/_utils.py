@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -258,8 +258,8 @@ def convert_treatment(treatment: Vector) -> np.ndarray:
     """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
     if isinstance(treatment, np.ndarray):
         new_treatment = treatment.copy()
-    elif isinstance(treatment, pd.Series):
-        new_treatment = treatment.to_numpy()
+    elif nw.dependencies.is_into_series(treatment):
+        new_treatment = nw.from_native(treatment, series_only=True).to_numpy()
     if new_treatment.dtype == bool:
         return new_treatment.astype(int)
     if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
