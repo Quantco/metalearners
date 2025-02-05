@@ -119,15 +119,12 @@ def _combine_propensity_and_nuisance_specs(
 
 def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
     if feature_set is None:
-        X_filtered = X
-    elif len(feature_set) == 0:
-        X_filtered = np.ones((safe_len(X), 1))
-    else:
-        if isinstance(X, pd.DataFrame):
-            X_filtered = X[list(feature_set)]
-        else:
-            X_filtered = X[:, np.array(feature_set)]
-    return X_filtered
+        return X
+    if len(feature_set) == 0:
+        return np.ones((safe_len(X), 1))
+    if isinstance(X, pd.DataFrame):
+        return X[list(feature_set)]
+    return X[:, np.array(feature_set)]
 
 
 def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
