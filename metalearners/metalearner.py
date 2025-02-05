@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
@@ -7,6 +7,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
 import shap
@@ -122,8 +123,13 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
         return X
     if len(feature_set) == 0:
         return np.ones((safe_len(X), 1))
-    if isinstance(X, pd.DataFrame):
-        return X[list(feature_set)]
+    if nw.dependencies.is_into_dataframe(X):
+        X_nw = nw.from_native(X)  # type: ignore
+        if all(map(lambda x: isinstance(x, int), feature_set)):
+            return X_nw.select(nw.col(str(index)) for index in feature_set).to_native()
+        if all(map(lambda x: isinstance(x, str), feature_set)):
+            return X_nw.select(feature_set).to_native()  # type: ignore
+        raise ValueError("features must either be all ints or all strings.")
     return X[:, np.array(feature_set)]
 
 
