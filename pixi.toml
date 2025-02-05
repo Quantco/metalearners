@@ -26,6 +26,7 @@ mypy = "*"
 pytest = ">=6"
 pytest-cov = "*"
 pytest-xdist = "*"
+polars = "*"
 # Remove the upper bound once this xgboost problem
 # has been fixed: https://github.com/dmlc/xgboost/issues/11093
 scikit-learn = ">=1.4,<1.6"
