@@ -31,6 +31,7 @@ from metalearners._utils import (
     ONNX_PROBABILITIES_OUTPUTS,
     default_metric,
     index_matrix,
+    index_vector,
     safe_len,
     validate_model_and_predict_method,
     validate_number_positive,
@@ -347,9 +348,9 @@ class MetaLearner(ABC):
                 f" Yet we found {len(np.unique(y))} classes."
             )
         if self.is_classification:
-            classes_0 = set(np.unique(y[w == 0]))
+            classes_0 = set(np.unique(index_vector(y, w == 0)))
             for tv in range(self.n_variants):
-                if set(np.unique(y[w == tv])) != classes_0:
+                if set(np.unique(index_vector(y, w == tv))) != classes_0:
                     raise ValueError(
                         f"Variants 0 and {tv} have seen different sets of classification outcomes. Please check your data."
                     )
