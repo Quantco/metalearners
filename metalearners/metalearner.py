@@ -166,7 +166,7 @@ def _evaluate_model_kind(
     oos_method: OosMethod = OVERALL,
     sample_weights: Sequence[Vector] | None = None,
 ) -> dict[str, float]:
-    """Helper function to evaluate all the models of the same model kind."""
+    """Helper function to evaluate that all models are of the same model kind."""
     prefix = f"{model_kind}_"
     evaluation_metrics: dict[str, float] = {}
     for idx, scorer in enumerate(scorers):
