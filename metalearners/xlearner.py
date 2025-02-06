@@ -16,6 +16,7 @@ from metalearners._utils import (
     get_predict,
     get_predict_proba,
     index_matrix,
+    index_vector,
     infer_input_dict,
     infer_probabilities_output,
     safe_len,
@@ -114,10 +115,11 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
+            mask = self._treatment_variants_mask[treatment_variant]
             nuisance_jobs.append(
                 self._nuisance_joblib_specifications(
-                    X=index_matrix(X, self._treatment_variants_mask[treatment_variant]),
-                    y=y[self._treatment_variants_mask[treatment_variant]],
+                    X=index_matrix(X, mask),
+                    y=index_vector(y, mask),
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=treatment_variant,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
@@ -330,8 +332,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         variant_outcome_evaluation = _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
-            Xs=[X[w == tv] for tv in range(self.n_variants)],
-            ys=[y[w == tv] for tv in range(self.n_variants)],
+            Xs=[index_matrix(X, w == tv) for tv in range(self.n_variants)],
+            ys=[index_vector(y, w == tv) for tv in range(self.n_variants)],
             scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,
@@ -371,7 +373,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         te_treatment_evaluation = _evaluate_model_kind(
             self._treatment_models[TREATMENT_EFFECT_MODEL],
-            Xs=[X[w == tv] for tv in range(1, self.n_variants)],
+            Xs=[index_matrix(X, w == tv) for tv in range(1, self.n_variants)],
             ys=imputed_te_treatment,
             scorers=safe_scoring[TREATMENT_EFFECT_MODEL],
             model_kind=TREATMENT_EFFECT_MODEL,
@@ -383,7 +385,7 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
 
         te_control_evaluation = _evaluate_model_kind(
             self._treatment_models[CONTROL_EFFECT_MODEL],
-            Xs=[X[w == 0] for _ in range(1, self.n_variants)],
+            Xs=[index_matrix(X, w == 0) for _ in range(1, self.n_variants)],
             ys=imputed_te_control,
             scorers=safe_scoring[CONTROL_EFFECT_MODEL],
             model_kind=CONTROL_EFFECT_MODEL,
@@ -436,8 +438,8 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             control_outcome = control_outcome[:, 0]
             treatment_outcome = treatment_outcome[:, 0]
 
-        imputed_te_treatment = y[treatment_indices] - control_outcome
-        imputed_te_control = treatment_outcome - y[control_indices]
+        imputed_te_treatment = index_vector(y, treatment_indices) - control_outcome
+        imputed_te_control = treatment_outcome - index_vector(y, control_indices)
 
         return imputed_te_control, imputed_te_treatment
 
