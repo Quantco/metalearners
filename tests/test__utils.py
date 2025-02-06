@@ -383,7 +383,8 @@ def test_index_matrix(matrix_backend, rows_backend):
 
 @pytest.mark.parametrize("vector_backend", [np.ndarray, pd.Series, pl.Series])
 @pytest.mark.parametrize("rows_backend", [np.array, pd.Series, pl.Series])
-def test_index_vector(vector_backend, rows_backend):
+@pytest.mark.parametrize("use_boolean_mask", [True, False])
+def test_index_vector(vector_backend, rows_backend, use_boolean_mask):
     n_samples = 10
     samples = list(range(n_samples))
     if vector_backend == np.ndarray:
@@ -394,7 +395,11 @@ def test_index_vector(vector_backend, rows_backend):
     else:
         vector = vector_backend(samples)
 
-    rows = rows_backend([1, 4, 5])
+    desired_rows = [1, 4, 5]
+    if use_boolean_mask:
+        rows = rows_backend([sample in desired_rows for sample in samples])
+    else:
+        rows = rows_backend(desired_rows)
 
     result = index_vector(vector=vector, rows=rows)
     assert isinstance(result, vector_backend)
@@ -402,5 +407,5 @@ def test_index_vector(vector_backend, rows_backend):
     if isinstance(result, pd.Series | pl.Series):
         result = result.to_numpy()
 
-    expected = np.array([1, 4, 5])
+    expected = np.array(desired_rows)
     assert (result == expected).all()
