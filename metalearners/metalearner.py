@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
@@ -7,6 +7,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
 import shap
@@ -30,6 +31,7 @@ from metalearners._utils import (
     ONNX_PROBABILITIES_OUTPUTS,
     default_metric,
     index_matrix,
+    index_vector,
     safe_len,
     validate_model_and_predict_method,
     validate_number_positive,
@@ -119,15 +121,18 @@ def _combine_propensity_and_nuisance_specs(
 
 def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
     if feature_set is None:
-        X_filtered = X
-    elif len(feature_set) == 0:
-        X_filtered = np.ones((safe_len(X), 1))
-    else:
-        if isinstance(X, pd.DataFrame):
-            X_filtered = X[list(feature_set)]
-        else:
-            X_filtered = X[:, np.array(feature_set)]
-    return X_filtered
+        return X
+    if len(feature_set) == 0:
+        return np.ones((safe_len(X), 1))
+    if nw.dependencies.is_into_dataframe(X):
+        X_nw = nw.from_native(X)  # type: ignore
+        if all(map(lambda x: isinstance(x, int), feature_set)):
+            columns = [X_nw.columns[index] for index in feature_set]  # type: ignore
+            return X_nw.select(nw.col(column) for column in columns).to_native()
+        if all(map(lambda x: isinstance(x, str), feature_set)):
+            return X_nw.select(feature_set).to_native()  # type: ignore
+        raise ValueError("features must either be all ints or all strings.")
+    return X[:, np.array(feature_set)]
 
 
 def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
@@ -162,7 +167,7 @@ def _evaluate_model_kind(
     oos_method: OosMethod = OVERALL,
     sample_weights: Sequence[Vector] | None = None,
 ) -> dict[str, float]:
-    """Helper function to evaluate all the models of the same model kind."""
+    """Helper function to evaluate that all models are of the same model kind."""
     prefix = f"{model_kind}_"
     evaluation_metrics: dict[str, float] = {}
     for idx, scorer in enumerate(scorers):
@@ -343,9 +348,9 @@ class MetaLearner(ABC):
                 f" Yet we found {len(np.unique(y))} classes."
             )
         if self.is_classification:
-            classes_0 = set(np.unique(y[w == 0]))
+            classes_0 = set(np.unique(index_vector(y, w == 0)))
             for tv in range(self.n_variants):
-                if set(np.unique(y[w == tv])) != classes_0:
+                if set(np.unique(index_vector(y, w == tv))) != classes_0:
                     raise ValueError(
                         f"Variants 0 and {tv} have seen different sets of classification outcomes. Please check your data."
                     )

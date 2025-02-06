@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -7,9 +7,11 @@ from inspect import signature
 from operator import le, lt
 from pathlib import Path
 
+import narwhals as nw
 import numpy as np
 import pandas as pd
 import scipy
+from narwhals.dependencies import is_into_dataframe, is_into_series
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -35,19 +37,29 @@ def safe_len(X: Matrix) -> int:
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
-    if isinstance(rows, pd.Series):
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(matrix, pd.DataFrame):
-        return matrix.iloc[rows]
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix)  # type: ignore
+        if rows.dtype == "bool":
+            return matrix_nw.filter(rows.tolist()).to_native()
+        return matrix_nw[rows.tolist(), :].to_native()
     return matrix[rows, :]
 
 
 def index_vector(vector: Vector, rows: Vector) -> Vector:
     """Subselect certain rows from a vector."""
-    if isinstance(rows, pd.Series):
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(vector, pd.Series):
-        return vector.iloc[rows]
+    if is_into_series(vector):
+        vector_nw = nw.from_native(vector, series_only=True)
+        if rows.dtype == "bool":
+            return vector_nw.filter(rows.tolist()).to_native()
+        return vector_nw[rows.tolist()].to_native()  # type: ignore
     return vector[rows]
 
 
@@ -250,8 +262,8 @@ def convert_treatment(treatment: Vector) -> np.ndarray:
     """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
     if isinstance(treatment, np.ndarray):
         new_treatment = treatment.copy()
-    elif isinstance(treatment, pd.Series):
-        new_treatment = treatment.to_numpy()
+    elif nw.dependencies.is_into_series(treatment):
+        new_treatment = nw.from_native(treatment, series_only=True).to_numpy()
     if new_treatment.dtype == bool:
         return new_treatment.astype(int)
     if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):

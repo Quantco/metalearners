@@ -12,6 +12,7 @@ from metalearners._utils import (
     check_spox_installed,
     copydoc,
     index_matrix,
+    index_vector,
     infer_input_dict,
     infer_probabilities_output,
     warning_experimental_feature,
@@ -80,10 +81,14 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
 
         nuisance_jobs: list[_ParallelJoblibSpecification | None] = []
         for treatment_variant in range(self.n_variants):
+            mask = self._treatment_variants_mask[treatment_variant]
+            X_variant = index_matrix(X, mask)
+            y_variant = index_vector(y, mask)
+            # breakpoint()
             nuisance_jobs.append(
                 self._nuisance_joblib_specifications(
-                    X=index_matrix(X, self._treatment_variants_mask[treatment_variant]),
-                    y=y[self._treatment_variants_mask[treatment_variant]],
+                    X=X_variant,
+                    y=y_variant,
                     model_kind=VARIANT_OUTCOME_MODEL,
                     model_ord=treatment_variant,
                     n_jobs_cross_fitting=n_jobs_cross_fitting,
@@ -139,8 +144,8 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
 
         return _evaluate_model_kind(
             cfes=self._nuisance_models[VARIANT_OUTCOME_MODEL],
-            Xs=[X[w == tv] for tv in range(self.n_variants)],
-            ys=[y[w == tv] for tv in range(self.n_variants)],
+            Xs=[index_matrix(X, w == tv) for tv in range(self.n_variants)],
+            ys=[index_vector(y, w == tv) for tv in range(self.n_variants)],
             scorers=safe_scoring[VARIANT_OUTCOME_MODEL],
             model_kind=VARIANT_OUTCOME_MODEL,
             is_oos=is_oos,
