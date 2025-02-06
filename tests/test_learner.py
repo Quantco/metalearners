@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -940,7 +941,7 @@ def test_model_reusage(outcome_kind, request):
         ),
     ],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_evaluate_feature_set_smoke(metalearner_factory, feature_set, rng, backend):
     n_samples = 100
     X = rng.standard_normal((n_samples, 5))
@@ -950,6 +951,10 @@ def test_evaluate_feature_set_smoke(metalearner_factory, feature_set, rng, backe
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
+        w = pl.Series(w)
     elif backend == "csr":
         X = csr_matrix(X)
 
