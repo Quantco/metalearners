@@ -355,7 +355,8 @@ def test_validate_valid_treatment_variant_not_control(
     "matrix_backend", [np.ndarray, pd.DataFrame, csr_matrix, pl.DataFrame]
 )
 @pytest.mark.parametrize("rows_backend", [np.array, pd.Series, pl.Series])
-def test_index_matrix(matrix_backend, rows_backend):
+@pytest.mark.parametrize("use_boolean_mask", [True, False])
+def test_index_matrix(matrix_backend, rows_backend, use_boolean_mask):
     n_samples = 10
     samples = list(range(n_samples))
     if matrix_backend == np.ndarray:
@@ -367,9 +368,14 @@ def test_index_matrix(matrix_backend, rows_backend):
         matrix = csr_matrix(np.array(samples).reshape((-1, 1)))
     else:
         matrix = matrix_backend(samples)
-    rows = rows_backend([1, 4, 5])
-    result = index_matrix(matrix=matrix, rows=rows)
 
+    desired_rows = [1, 4, 5]
+    if use_boolean_mask:
+        rows = rows_backend([sample in desired_rows for sample in samples])
+    else:
+        rows = rows_backend(desired_rows)
+
+    result = index_matrix(matrix=matrix, rows=rows)
     assert isinstance(result, matrix_backend)
     assert result.shape[1] == matrix.shape[1]
 
@@ -377,7 +383,7 @@ def test_index_matrix(matrix_backend, rows_backend):
         result = result.to_numpy()
     processed_result = result[:, 0]
 
-    expected = np.array([1, 4, 5])
+    expected = np.array(desired_rows)
     assert (processed_result == expected).sum() == len(expected)
 
 
