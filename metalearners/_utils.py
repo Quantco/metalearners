@@ -55,6 +55,8 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
         rows = rows.to_numpy()
     if is_into_series(vector):
         vector_nw = nw.from_native(vector, series_only=True)
+        if rows.dtype == "bool":
+            return vector_nw.filter(rows).to_native()
         return vector_nw[rows].to_native()  # type: ignore
     return vector[rows]
 
