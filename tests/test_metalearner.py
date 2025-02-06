@@ -7,6 +7,7 @@ from itertools import chain
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -481,7 +482,7 @@ def test_combine_propensity_and_nuisance_specs(
         ),
     ],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_feature_set(feature_set, expected_n_features, backend, rng):
     ml = _TestMetaLearner(
         nuisance_model_factory=LGBMRegressor,
@@ -500,6 +501,10 @@ def test_feature_set(feature_set, expected_n_features, backend, rng):
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
+        w = pl.Series(w)
     elif backend == "csr":
         X = csr_matrix(X)
     ml.fit(X, y, w)
