@@ -126,7 +126,8 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
     if nw.dependencies.is_into_dataframe(X):
         X_nw = nw.from_native(X)  # type: ignore
         if all(map(lambda x: isinstance(x, int), feature_set)):
-            return X_nw.select(nw.col(index) for index in feature_set).to_native()  # type: ignore
+            columns = [X_nw.columns[index] for index in feature_set]  # type: ignore
+            return X_nw.select(nw.col(column) for column in columns).to_native()
         if all(map(lambda x: isinstance(x, str), feature_set)):
             return X_nw.select(feature_set).to_native()  # type: ignore
         raise ValueError("features must either be all ints or all strings.")
