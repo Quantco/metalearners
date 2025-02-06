@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -60,7 +61,7 @@ def test_simplify_output_raises(input):
         simplify_output(input)
 
 
-@pytest.mark.parametrize("backend", ["pd", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_fixed_binary_propensity(backend):
     propensity_score = 0.3
     dominant_class = propensity_score >= 0.5
@@ -80,6 +81,10 @@ def test_fixed_binary_propensity(backend):
         X_train = pd.DataFrame(X_train)
         y_train = pd.Series(y_train)
         X_test = pd.DataFrame(X_test)
+    elif backend == "pl":
+        X_train = pl.DataFrame(X_train)  # type: ignore
+        y_train = pl.Series(y_train)  # type: ignore
+        X_test = pl.DataFrame(X_test)  # type: ignore
     elif backend == "csr":
         X_train = csr_matrix(X_train)
         X_test = csr_matrix(X_test)
