@@ -1086,15 +1086,19 @@ def test_n_jobs_base_learners(implementation, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_validate_outcome_one_class(implementation, backend, rng):
     X = rng.standard_normal((10, 2))
     y = np.zeros(10)
     w = rng.integers(0, 2, 10)
-    if backend == "pandas":
+    if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)  # type: ignore
+        y = pl.Series(y)  # type: ignore
+        w = pl.Series(w)  # type: ignore
     elif backend == "csr":
         X = csr_matrix(X)
 
@@ -1116,7 +1120,7 @@ def test_validate_outcome_one_class(implementation, backend, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_validate_outcome_different_classes(implementation, backend, rng):
     X = rng.standard_normal((4, 2))
     y = np.array([0, 1, 0, 0])
@@ -1125,6 +1129,10 @@ def test_validate_outcome_different_classes(implementation, backend, rng):
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)  # type: ignore
+        y = pl.Series(y)  # type: ignore
+        w = pl.Series(w)  # type: ignore
     elif backend == "csr":
         X = csr_matrix(X)
 
