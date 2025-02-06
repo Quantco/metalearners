@@ -4,6 +4,7 @@
 from functools import partial
 
 import numpy as np
+import polars as pl
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -25,7 +26,7 @@ _SEED = 1337
 @pytest.mark.parametrize("predict_proba", [True, False])
 @pytest.mark.parametrize("is_oos", [True, False])
 @pytest.mark.parametrize("oos_method", ["overall", "mean", "median"])
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 @pytest.mark.parametrize("pass_cv", [True, False])
 def test_crossfitestimator_oos_smoke(
     mindset_data, rng, use_clf, predict_proba, is_oos, oos_method, backend, pass_cv
@@ -47,9 +48,13 @@ def test_crossfitestimator_oos_smoke(
     df, outcome_column, _, feature_columns, _ = mindset_data
     X = df[feature_columns]
     y = df[outcome_column]
+
     if use_clf:
         # Arbitrary cut-off
         y = y > 0.8
+
+    n_positives = float(sum(y))
+    n_negatives = float(sum(1 - y))
 
     if backend == "np":
         X = X.to_numpy()
@@ -57,6 +62,9 @@ def test_crossfitestimator_oos_smoke(
     elif backend == "csr":
         X = csr_matrix(df.values)
         y = y.to_numpy()
+    elif backend == "pl":
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
 
     cfe = CrossFitEstimator(
         n_folds=5,
@@ -95,11 +103,11 @@ def test_crossfitestimator_oos_smoke(
             rmse = partial(mean_squared_error, squared=False)
         assert rmse(y, predictions) < y.std()
     elif predict_proba:
-        assert log_loss(y, predictions[:, 1]) < log_loss(y, 0.5 * np.ones(len(y)))
+        log_loss_baseline = log_loss(y, 0.5 * np.ones(len(y)))
+        assert log_loss(y, predictions[:, 1]) < log_loss_baseline
     else:
-        assert (
-            accuracy_score(y, predictions) >= (max(sum(y), sum(1 - y)) / len(y)) - 0.01
-        )
+        accuracy_baseline = max(n_positives, n_negatives) / len(y)
+        assert accuracy_score(y, predictions) >= accuracy_baseline - 0.01
 
 
 @pytest.mark.parametrize("estimator_factory", [LGBMClassifier, LogisticRegression])
