@@ -67,6 +67,7 @@ myst-nb = "*"
 econml = ">=0.15"
 doubleml = "*"
 statsmodels = "*"
+nbconvert = "*"
 [feature.docs.tasks]
 # Note that this task will fail on systems without bash.
 nb-convert = "nb-convert.sh"
