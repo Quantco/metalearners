@@ -9,7 +9,6 @@ postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-
 [dependencies]
 pip = "*"
 python = ">=3.10"
-git_root = "*"
 shap = "*"
 matplotlib-base = "*"
 joblib = ">=1.2.0"
@@ -22,6 +21,7 @@ lime = "*"
 glum = "*"
 
 [feature.dev.dependencies]
+git_root = "*"
 mypy = "*"
 typing-extensions = "*"
 ipykernel = "*"
