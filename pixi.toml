@@ -11,38 +11,35 @@ nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
 
 [dependencies]
-pre-commit = "*"
+python = ">=3.10"
 git_root = "*"
 pip = "*"
-python = ">=3.10"
-setuptools-scm = "*"
-setuptools = ">=61"
-ipykernel = "*"
-ipywidgets = "*"
-lime = "*"
-optuna = "*"
-nbconvert = "*"
-mypy = "*"
-pytest = ">=6"
-pytest-cov = "*"
-pytest-xdist = "*"
+shap = "*"
+matplotlib-base = "*"
+joblib = ">=1.2.0"
 # Remove the upper bound once this xgboost problem
 # has been fixed: https://github.com/dmlc/xgboost/issues/11093
 scikit-learn = ">=1.4,<1.6"
 numpy = "*"
 pandas = "*"
-typing-extensions = "*"
+lime = "*"
+glum = "*"
+
+[feature.dev.dependencies]
+nbconvert = "*"
+ipykernel = "*"
+ipywidgets = "*"
 lightgbm = "*"
 xgboost = "*"
-glum = "*"
-shap = "*"
-matplotlib-base = "*"
-joblib = ">=1.2.0"
 lifelines = "*"
 onnx = "*"
 onnxmltools = "*"
 onnxruntime = "*"
 spox = "*"
+optuna = "*"
+pytest = ">=6"
+pytest-cov = "*"
+pytest-xdist = "*"
 
 [feature.lint.dependencies]
 pre-commit = "*"
@@ -77,6 +74,8 @@ docs = "cd docs && make html "
 readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
 
 [feature.build.dependencies]
+setuptools-scm = "*"
+setuptools = ">=61"
 python-build = "*"
 
 [feature.build.tasks]
@@ -108,9 +107,10 @@ python = "3.11.*"
 python = "3.12.*"
 
 [environments]
-py310 = ["py310"]
-py311 = ["py311"]
-py312 = ["py312"]
+default = ["dev"]
+py310 = ["py310", "dev"]
+py311 = ["py311", "dev"]
+py312 = ["py312", "dev"]
 
 lint = { features = ["lint"], no-default-feature = true }
 
