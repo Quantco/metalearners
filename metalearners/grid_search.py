@@ -79,7 +79,7 @@ def _fit_and_score(job: _FitAndScoreJob) -> GSResult:
 
 
 def _format_results(
-    results: list[GSResult] | Generator[GSResult, None, None]
+    results: list[GSResult] | Generator[GSResult, None, None],
 ) -> pd.DataFrame:
     rows = []
     for result in results:

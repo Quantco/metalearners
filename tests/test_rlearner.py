@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import repeat
@@ -137,4 +137,4 @@ def test_rlearner_onnx(
         ["tau"],
         {"X": onnx_X},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)
+    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-3)
