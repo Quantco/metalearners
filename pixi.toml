@@ -17,8 +17,12 @@ scikit-learn = ">=1.4,<1.6"
 numpy = "*"
 pandas = "*"
 
-[feature.dev.dependencies]
+[host-dependencies]
 pip = "*"
+setuptools-scm = "*"
+setuptools = ">=61"
+
+[feature.dev.dependencies]
 git_root = "*"
 mypy = "*"
 typing-extensions = "*"
@@ -40,7 +44,6 @@ glum = "*"
 coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes"
 
 [feature.lint.dependencies]
-pip = "*"
 pre-commit = "*"
 black = "*"
 ruff = "*"
@@ -77,8 +80,6 @@ docs = "cd docs && make html "
 readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
 
 [feature.build.dependencies]
-setuptools-scm = "*"
-setuptools = ">=61"
 python-build = "*"
 
 [feature.build.tasks]
