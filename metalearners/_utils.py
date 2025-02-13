@@ -44,7 +44,7 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     if is_into_dataframe(matrix):
         matrix_nw = nw.from_native(matrix)  # type: ignore
         if rows.dtype == "bool":
-            return matrix_nw[rows.tolist()].to_native()
+            return matrix_nw.filter(rows.tolist()).to_native()
         return matrix_nw[rows.tolist(), :].to_native()
     return matrix[rows, :]
 
