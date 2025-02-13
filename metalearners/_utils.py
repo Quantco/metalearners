@@ -44,7 +44,7 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
     if is_into_dataframe(matrix):
         matrix_nw = nw.from_native(matrix)  # type: ignore
         if rows.dtype == "bool":
-            return matrix_nw.filter(rows.tolist()).to_native()
+            return matrix_nw[rows].to_native()
         return matrix_nw[rows.tolist(), :].to_native()
     return matrix[rows, :]
 
@@ -58,8 +58,8 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
     if is_into_series(vector):
         vector_nw = nw.from_native(vector, series_only=True)
         if rows.dtype == "bool":
-            return vector_nw.filter(rows.tolist()).to_native()
-        return vector_nw[rows.tolist()].to_native()  # type: ignore
+            return vector_nw.filter(rows).to_native()
+        return vector_nw[rows].to_native()  # type: ignore
     return vector[rows]
 
 
