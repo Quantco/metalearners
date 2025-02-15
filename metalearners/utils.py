@@ -1,10 +1,9 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from typing import Any
 
 import numpy as np
-import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
 from typing_extensions import Self
 
@@ -104,7 +103,7 @@ class FixedBinaryPropensity(ClassifierMixin, BaseEstimator):
     def predict(self, X: Matrix) -> np.ndarray[Any, Any]:
         return np.argmax(self.predict_proba(X), axis=1)
 
-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray[Any, Any]:
+    def predict_proba(self, X: Matrix) -> np.ndarray[Any, Any]:
         return np.full(
             (safe_len(X), 2), [1 - self.propensity_score, self.propensity_score]
         )

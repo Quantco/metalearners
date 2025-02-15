@@ -14,6 +14,8 @@ joblib = ">=1.2.0"
 scikit-learn = ">=1.4"
 numpy = "*"
 pandas = "*"
+narwhals = ">=1.25.0,<2"
+pyarrow = ">=19.0.0,<20"
 
 [host-dependencies]
 pip = "*"
@@ -38,6 +40,7 @@ pytest = ">=6"
 pytest-cov = "*"
 pytest-xdist = "*"
 glum = "*"
+polars = "*"
 [feature.dev.tasks]
 coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes"
 
