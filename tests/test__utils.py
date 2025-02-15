@@ -179,9 +179,9 @@ def test_convert_treatment_raise(use_pd):
     [
         (LinearRegression(), False),
         (
-            HistGradientBoostingClassifier(),
+            HistGradientBoostingClassifier(categorical_features=None),
             False,
-        ),  # The default for categorical_features will change to "from_dtype" in v1.6
+        ),
         (HistGradientBoostingClassifier(categorical_features="from_dtype"), True),
         (LGBMRegressor(), True),
         (XGBRegressor(), False),
