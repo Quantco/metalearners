@@ -4,7 +4,7 @@
 import warnings
 from collections.abc import Mapping, Sequence
 
-import narwhals as nw
+import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, hstack
@@ -94,15 +94,15 @@ def _append_treatment_to_covariates(
             f"DataFrame as {_BASE_MODEL} supports categorical variables."
         )
         # TODO: Can/should we use nw.from_numpy instead?
-        X_nw = nw.from_native(pd.DataFrame(X))
+        X_nw = nw.from_native(pd.DataFrame(X), eager_only=True)
     elif isinstance(X, csr_matrix):
         warnings.warn(
             "Converting the input covariates X from a scipy csr_matrix to a "
             f"pd.DataFrame as {_BASE_MODEL} supports categorical variables."
         )
-        X_nw = nw.from_native(pd.DataFrame.sparse.from_spmatrix(X))
+        X_nw = nw.from_native(pd.DataFrame.sparse.from_spmatrix(X), eager_only=True)
     else:
-        X_nw = nw.from_native(pd.DataFrame(X))
+        X_nw = nw.from_native(pd.DataFrame(X), eager_only=True)
 
     w_nw = nw.from_native(pd.DataFrame(w_pd))
     X_nw = _stringify_column_names(X_nw)

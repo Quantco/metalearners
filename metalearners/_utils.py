@@ -7,7 +7,7 @@ from inspect import signature
 from operator import le, lt
 from pathlib import Path
 
-import narwhals as nw
+import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
 import scipy
