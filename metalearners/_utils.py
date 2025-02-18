@@ -42,7 +42,7 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
             raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
     if is_into_dataframe(matrix):
-        matrix_nw = nw.from_native(matrix)  # type: ignore
+        matrix_nw = nw.from_native(matrix, eager_only=True)  # type: ignore
         if rows.dtype == "bool":
             return matrix_nw.filter(rows.tolist()).to_native()
         return matrix_nw[rows.tolist(), :].to_native()
@@ -56,7 +56,7 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
             raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
     if is_into_series(vector):
-        vector_nw = nw.from_native(vector, series_only=True)
+        vector_nw = nw.from_native(vector, series_only=True, eager_only=True)  # type: ignore
         if rows.dtype == "bool":
             return vector_nw.filter(rows).to_native()
         return vector_nw[rows].to_native()  # type: ignore
@@ -263,7 +263,9 @@ def convert_treatment(treatment: Vector) -> np.ndarray:
     if isinstance(treatment, np.ndarray):
         new_treatment = treatment.copy()
     elif nw.dependencies.is_into_series(treatment):
-        new_treatment = nw.from_native(treatment, series_only=True).to_numpy()
+        new_treatment = nw.from_native(
+            treatment, series_only=True, eager_only=True
+        ).to_numpy()  # type: ignore
     if new_treatment.dtype == bool:
         return new_treatment.astype(int)
     if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):

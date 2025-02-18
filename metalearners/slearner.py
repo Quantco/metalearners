@@ -67,11 +67,11 @@ def _append_treatment_to_covariates(
         if nw.dependencies.is_into_dataframe(X):
             if not isinstance(X, pd.DataFrame):
                 X = X.to_pandas()
-            X_nw = nw.from_native(X)
+            X_nw = nw.from_native(X, eager_only=True)
             # This is because some models (LinearRegression) raise an error if some column
             # names are integers and some strings.
             X_nw = _stringify_column_names(X_nw)
-            w_dummies_nw = nw.from_native(w_dummies)
+            w_dummies_nw = nw.from_native(w_dummies, eager_only=True)
             X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
 
             return X_with_w_nw.to_native()
