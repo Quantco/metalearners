@@ -41,11 +41,14 @@ def _append_treatment_to_covariates(
     X: Matrix, w: Vector, supports_categoricals: bool, n_variants: int
 ) -> Matrix:
     """Appends treatment columns to covariates and one-hot-encode if necessary."""
+    # TODO: Consider adapting convert_treatment as to not always transform to np.
     w_np = convert_treatment(w)
 
-    # We enforce pandas as an intermediate data structure for the treatment vector w
-    # since we might rely on pandas' get_dummies function. We haven't found a narwhals
-    # alternative to get_dummies yet.
+    # We enforce pandas' Series as an intermediate data structure for the treatment vector w,
+    # since we rely on pandas' get dummies function. While there is a narwhals to_dummies
+    # method, it, at the time of writing, doesn't allow for the manual setting of categories
+    # which aren't observed in the vector w.
+
     # Moreover, it seems that nw.concat does not the concatenation of a polars and a
     # pandas data structure. Hence, we always transform to X to pandas.
     w_pd = pd.Series(w_np, dtype="category", name="treatment").cat.set_categories(
