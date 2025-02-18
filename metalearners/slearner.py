@@ -93,8 +93,11 @@ def _append_treatment_to_covariates(
             "Converting the input covariates X from np.ndarray to a "
             f"DataFrame as {_BASE_MODEL} supports categorical variables."
         )
-        # TODO: Can/should we use nw.from_numpy instead?
-        X_nw = nw.from_native(pd.DataFrame(X), eager_only=True)
+        # By default, the columns are named column_i by narwhals.
+        # The pandas behavior we are used to relies on naming them i.
+        X_nw = nw.from_numpy(X, native_namespace=pd).rename(
+            {f"column_{i}": str(i) for i in range(X.shape[1])}
+        )
     elif isinstance(X, csr_matrix):
         warnings.warn(
             "Converting the input covariates X from a scipy csr_matrix to a "
