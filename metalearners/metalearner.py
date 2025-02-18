@@ -230,7 +230,7 @@ def _fit_cross_fit_estimator_joblib(
     parallel_joblib_job: _ParallelJoblibSpecification,
 ) -> _ParallelJoblibResult:
     r"""Helper function to call from a delayed `joblib` object to fit a
-    [CrossFitEstimator][metaleaners.cross_fit_estimator.CrossFitEstimator] in
+    [CrossFitEstimator][metalearners.cross_fit_estimator.CrossFitEstimator] in
     parallel."""
     return _ParallelJoblibResult(
         model_kind=parallel_joblib_job.model_kind,
