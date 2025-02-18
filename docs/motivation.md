@@ -10,9 +10,9 @@ There are various ways for estimating CATEs, such as [Targeted Maximum Likelihoo
 
 We've found MetaLearners to be a particularly compelling approach for CATE estimation because:
 
--   [x] They are conceptually simple
--   [x] Some of them come with strong statistical guarantees, see e.g. [Nie et al. (2019)](https://arxiv.org/pdf/1712.04912.pdf) for the R-Learner or [Kennedy (2023)](https://arxiv.org/abs/2004.14497) for the DR-Learner
--   [x] They rely on existing, arbitrary prediction approaches
+- [x] They are conceptually simple
+- [x] Some of them come with strong statistical guarantees, see e.g. [Nie et al. (2019)](https://arxiv.org/pdf/1712.04912.pdf) for the R-Learner or [Kennedy (2023)](https://arxiv.org/abs/2004.14497) for the DR-Learner
+- [x] They rely on existing, arbitrary prediction approaches
 
 The latter point is particularly important since it implies that battle-tested and production-grade code from existing prediction libraries such as `scikit-learn`, `lightgbm` or `xgboost` can be reused. Given that the field of CATE estimation is still young and engineering efforts limited, this is a highly relevant factor.
 
@@ -22,8 +22,8 @@ The latter point is particularly important since it implies that battle-tested a
 
 What we've come to like about the design of both is that:
 
--   [x] their Metalearner implementations mostly follow the interface one might expect from an `sklearn` Estimator
--   [x] they are, in the intended use cases, fairly straightforward and intuitive to use
+- [x] Their Metalearner implementations mostly follow the interface one might expect from an `sklearn` Estimator
+- [x] They are, in the intended use cases, fairly straightforward and intuitive to use
 
 Yet, we've also found that in some regards, the MetaLearner implementations from `causalml` and `econml` don't perfectly lend themselves to use cases we care about.
 
@@ -46,9 +46,9 @@ Given MetaLearners' modular design, it should, in principle, be simple to not on
 
 We envision two concrete use cases where this might be relevant in that it would save considerable resources:
 
--   When tuning hyperparameters of a given MetaLearner architecture (e.g., an R-Learner) on a given dataset, one might, for instance, want to tune the hyperparameters of an outcome model in light of the behavior of the overall MetaLearner. In such a scenario, it is redundant to retrain a propensity model for every single outcome model hyperparameter constellation. Instead, one might want to reuse and plug in an already trained propensity model.
+- When tuning hyperparameters of a given MetaLearner architecture (e.g., an R-Learner) on a given dataset, one might, for instance, want to tune the hyperparameters of an outcome model in light of the behavior of the overall MetaLearner. In such a scenario, it is redundant to retrain a propensity model for every single outcome model hyperparameter constellation. Instead, one might want to reuse and plug in an already trained propensity model.
 
--   When training several MetaLearner architectures on the same dataset, some base models might be part of the design of several of these MetaLearner architectures. An example of this could be an outcome model, used in both the R-Learner and DR-Learner. In such a scenario, it seems desirable to reuse the conceptually equivalent outcome model instead of training it several times.
+- When training several MetaLearner architectures on the same dataset, some base models might be part of the design of several of these MetaLearner architectures. An example of this could be an outcome model, used in both the R-Learner and DR-Learner. In such a scenario, it seems desirable to reuse the conceptually equivalent outcome model instead of training it several times.
 
 ![Component Reuse](imgs/component_reuse.drawio.svg)
 
