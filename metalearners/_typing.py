@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Callable, Collection, Mapping, Sequence
@@ -25,8 +25,8 @@ Vector = Union[pd.Series, np.ndarray]  # noqa
 Matrix = Union[pd.DataFrame, np.ndarray, sps.csr_matrix]  # noqa
 # TODO: Adapt this to narwhals backend.
 # E.g. like so?
-# Vector = Union[nw.IntoSeries, np.ndarray]
-# Matrix = Union[nw.IntoFrame, np.ndarray, sps.csr_matrix]
+# Vector = Union[nw.typing.IntoSeries, np.ndarray]
+# Matrix = Union[nw.typing.IntoFrame, np.ndarray, sps.csr_matrix]
 
 
 class _ScikitModel(Protocol):
