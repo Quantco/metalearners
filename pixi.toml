@@ -16,6 +16,8 @@ numpy = "*"
 pandas = "*"
 narwhals = ">=1.25.0,<2"
 pyarrow = ">=19.0.0,<20"
+# We only rely on polars in _typing.
+polars = "*"
 
 [host-dependencies]
 pip = "*"
@@ -40,7 +42,6 @@ pytest = ">=6"
 pytest-cov = "*"
 pytest-xdist = "*"
 glum = "*"
-polars = "*"
 [feature.dev.tasks]
 coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-missing --color=yes"
 
