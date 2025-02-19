@@ -15,6 +15,7 @@ from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
+from metalearners._typing import Matrix, Vector, _ScikitModel
 from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
@@ -33,7 +34,6 @@ from metalearners.metalearner import (
 from metalearners.rlearner import _SAMPLE_WEIGHT, OUTCOME_MODEL, RLearner
 from metalearners.slearner import _BASE_MODEL, SLearner
 from metalearners.tlearner import TLearner
-from metalearners.typing import Matrix, Vector, _ScikitModel
 from metalearners.xlearner import CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL, XLearner
 
 _SEED = 1337

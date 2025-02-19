@@ -8,8 +8,8 @@ import pytest
 from lightgbm import LGBMRegressor
 from scipy.sparse import csr_matrix
 
+from metalearners._typing import Matrix, Vector
 from metalearners.metalearner import MetaLearner
-from metalearners.typing import Matrix, Vector
 from metalearners.utils import (
     FixedBinaryPropensity,
     metalearner_factory,
