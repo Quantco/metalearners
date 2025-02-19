@@ -14,6 +14,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from xgboost import XGBClassifier, XGBRegressor
 
+from metalearners._typing import Vector
 from metalearners._utils import (
     are_pd_indices_equal,
     check_probability,
@@ -146,28 +147,45 @@ def test_check_probability(value, zero_included, one_included):
 
 
 @pytest.mark.parametrize(
-    "treatment",
+    "treatment_values",
     [
-        np.array([0, 1, 0, 2]),
-        np.array([0.0, 1.0, 2.0]),
-        np.array([False, True, False]),
+        [0, 1, 0, 2],
+        [0.0, 1.0, 2.0],
+        [False, True, False],
     ],
 )
-@pytest.mark.parametrize("use_pd", [False, True])
-def test_convert_treatment(treatment, use_pd):
-    if use_pd:
-        treatment = pd.Series(treatment)
+@pytest.mark.parametrize("backend", ["np", "pd", "pl"])
+def test_convert_treatment(treatment_values, backend):
+    treatment: Vector
+    if backend == "np":
+        treatment = np.array(treatment_values)
+    elif backend == "pd":
+        treatment = pd.Series(treatment_values)
+    else:
+        treatment = pl.Series(treatment_values)
+
     new_treatment = convert_treatment(treatment)
     assert isinstance(new_treatment, np.ndarray)
     assert new_treatment.dtype == int
 
 
-@pytest.mark.parametrize("use_pd", [False, True])
-def test_convert_treatment_raise(use_pd):
-    if use_pd:
-        treatment = pd.Series([1.2, 0.5])
+@pytest.mark.parametrize(
+    "treatment_values",
+    [
+        [1.2, 0.05],
+        ["1", "0", "1"],
+    ],
+)
+@pytest.mark.parametrize("backend", ["np", "pd", "pl"])
+def test_convert_treatment_raise(treatment_values, backend):
+    treatment: Vector
+    if backend == "np":
+        treatment = np.array(treatment_values)
+    elif backend == "pd":
+        treatment = pd.Series(treatment_values)
     else:
-        treatment = np.array([1.2, 0.5])
+        treatment = pl.Series(treatment_values)
+
     with pytest.raises(
         TypeError,
         match="Treatment must be boolean, integer or float with integer values.",
