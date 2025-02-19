@@ -90,22 +90,22 @@ def test_append_treatment_to_covariates(
             covariates_pd = covariates
         covariates_pd.columns = covariates_pd.columns.astype(str)
         if not supports_categoricals:
-            assert X_with_w[["treatment_1", "treatment_2", "treatment_3"]].equals(  # type: ignore
+            assert X_with_w[["treatment_1", "treatment_2", "treatment_3"]].equals(
                 pd.get_dummies(
                     treatment_pd, dtype=int, drop_first=True, prefix="treatment"
                 )
             )
 
             pd.testing.assert_frame_equal(
-                X_with_w.drop(["treatment_1", "treatment_2", "treatment_3"], axis=1),  # type: ignore
+                X_with_w.drop(["treatment_1", "treatment_2", "treatment_3"], axis=1),
                 covariates_pd,
             )
         else:
             assert X_with_w["treatment"].dtype == "category"
-            assert np.all(X_with_w["treatment"].cat.categories == [0, 1, 2, 3])  # type: ignore
+            assert np.all(X_with_w["treatment"].cat.categories == [0, 1, 2, 3])
 
-            pd.testing.assert_frame_equal(  # type: ignore
-                X_with_w.drop("treatment", axis=1),  # type: ignore
+            pd.testing.assert_frame_equal(
+                X_with_w.drop("treatment", axis=1),
                 covariates_pd,
                 check_dtype=False,
             )

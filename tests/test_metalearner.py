@@ -15,7 +15,6 @@ from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-from metalearners._typing import _ScikitModel
 from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
@@ -34,6 +33,7 @@ from metalearners.metalearner import (
 from metalearners.rlearner import _SAMPLE_WEIGHT, OUTCOME_MODEL, RLearner
 from metalearners.slearner import _BASE_MODEL, SLearner
 from metalearners.tlearner import TLearner
+from metalearners.typing import Matrix, Vector, _ScikitModel
 from metalearners.xlearner import CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL, XLearner
 
 _SEED = 1337
@@ -1122,17 +1122,17 @@ def test_validate_outcome_one_class(implementation, backend, rng):
 )
 @pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_validate_outcome_different_classes(implementation, backend, rng):
-    X = rng.standard_normal((4, 2))
-    y = np.array([0, 1, 0, 0])
-    w = np.array([0, 0, 1, 1])
+    X: Matrix = rng.standard_normal((4, 2))
+    y: Vector = np.array([0, 1, 0, 0])
+    w: Vector = np.array([0, 0, 1, 1])
     if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
     elif backend == "pl":
-        X = pl.DataFrame(X)  # type: ignore
-        y = pl.Series(y)  # type: ignore
-        w = pl.Series(w)  # type: ignore
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
+        w = pl.Series(w)
     elif backend == "csr":
         X = csr_matrix(X)
 
