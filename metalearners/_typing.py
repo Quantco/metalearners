@@ -23,6 +23,10 @@ Features = Collection[str] | Collection[int] | None
 # ruff is not happy about the usage of Union.
 Vector = Union[pd.Series, np.ndarray]  # noqa
 Matrix = Union[pd.DataFrame, np.ndarray, sps.csr_matrix]  # noqa
+# TODO: Adapt this to narwhals backend.
+# E.g. like so?
+# Vector = Union[nw.IntoSeries, np.ndarray]
+# Matrix = Union[nw.IntoFrame, np.ndarray, sps.csr_matrix]
 
 
 class _ScikitModel(Protocol):
