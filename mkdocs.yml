@@ -44,8 +44,6 @@ plugins:
       include_source: true
       # highlight_extra_classes: custom-highlight -> add custom styling to code & output cells
       no_input: false
-      execute_ignore:
-        - examples/example_optuna.ipynb # Skip because this will take a long time to execute
 
   - mkdocstrings:
       handlers:
