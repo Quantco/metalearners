@@ -20,11 +20,11 @@ If we think of $Y(1)$ as the outcome if we had chosen treatment variant 1 and $Y
 
 More concretely, these treatment effects can be defined for several levels of granularity. Assuming treatment variants 1 and 0, we distinguish the following:
 
--   The **Individual Treatment Effect** is the treatment effect of one treatment variant compared to another variant on a particular experiment unit $i$, e.g. $\tau^i = Y^i(1) - Y^i(0)$.
+- The **Individual Treatment Effect** is the treatment effect of one treatment variant compared to another variant on a particular experiment unit $i$, e.g. $\tau^i = Y^i(1) - Y^i(0)$.
 
--   The **Conditional Average Treatment Effect** is an expected treatment effect conditioning on covariates $X$: $\tau(X) = \mathbb{E}[Y(1) - Y(0) | X]$. Since the CATE conditions on covariates, it is able to capture heterogeneity of the treatment effect. In other words, it captures for which instantiations of $X$ the treatment effect is higher and for which it is lower.
+- The **Conditional Average Treatment Effect** is an expected treatment effect conditioning on covariates $X$: $\tau(X) = \mathbb{E}[Y(1) - Y(0) | X]$. Since the CATE conditions on covariates, it is able to capture heterogeneity of the treatment effect. In other words, it captures for which instantiations of $X$ the treatment effect is higher and for which it is lower.
 
--   The **Average Treatment Effect** is an expected treatment effect, not conditioning on covariates: $\tau(X) = \mathbb{E}[Y(1) - Y(0)]$.
+- The **Average Treatment Effect** is an expected treatment effect, not conditioning on covariates: $\tau(X) = \mathbb{E}[Y(1) - Y(0)]$.
 
 ### CATE estimation is not supervised learning
 
@@ -36,8 +36,8 @@ Let's illustrate why doing just that isn't quite as easy with an example.
 
 Imagine we have 3 experiment participants, i.e., experiment units: Susan, Judea, and Victor. Now we would like to figure out the treatment effect of making them listen to Bach, $W = 1$, compared to not making them listen to Bach, $W=0$, on their joyfulness $Y$. There are two covariates that we can base our heterogeneity on:
 
--   Their age
--   Whether they are a musician themselves or not
+- Their age
+- Whether they are a musician themselves or not
 
 In an ideal world, we'd observe both $Y^i(1)$ and $Y^i(0)$ and could therefore compute $\tau^i$ for each unit, see the table below.
 
@@ -83,9 +83,9 @@ As a consequence, when encountering 'new' data, which hasn't been used for learn
 
 As was described before, CATEs lend themselves fairly naturally to use cases where:
 
--   There is a notion of a treatment, intervention, or action
--   One suspects the treatments to behave heterogeneously with respect to some covariates
--   The heterogeneity crosses a decision boundary
+- There is a notion of a treatment, intervention, or action
+- One suspects the treatments to behave heterogeneously with respect to some covariates
+- The heterogeneity crosses a decision boundary
 
 In the following image, we see some CATE estimates for an intervention based on a single covariate: age.
 
@@ -97,19 +97,19 @@ We would like to learn such policies to apply them to previously unseen data. In
 
 Importantly, MetaLearners for CATE estimation can, in principle, be used for both observational or RCT data. Yet, the following conditions need to be validated in order for the MetaLearners to produce valid estimates:
 
--   **Positivity/overlap**
+- **Positivity/overlap**
 
 $$
 \forall k: \Pr[W=k|X] > 0
 $$
 
--   **Conditional ignorability/unconfoundedness**
+- **Conditional ignorability/unconfoundedness**
 
 $$
 \forall k', k''\ s.t.\ k' \neq k: (Y(k'), Y(k'')) \perp W | X
 $$
 
--   **Stable Unit Treatment Value**
+- **Stable Unit Treatment Value**
 
 $$
 \forall k: W = k \Rightarrow Y = Y(k)
@@ -305,11 +305,11 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
 Note that:
 
--   In chapter 7, [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912) suggest a generalization of the R-Loss simultaneously taking all treatment variants into account. Yet, [Acharki et al. (2023)](https://arxiv.org/pdf/2205.14714) point out practical shortcomings of this approach.
+- In chapter 7, [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912) suggest a generalization of the R-Loss simultaneously taking all treatment variants into account. Yet, [Acharki et al. (2023)](https://arxiv.org/pdf/2205.14714) point out practical shortcomings of this approach.
 
--   Our implementation differs subtly from the CausalML implementation: while we train a multi-class propensity model whose estimates we normalize subsequently, CausalML estimates one propensity model per control-treatment pair.
+- Our implementation differs subtly from the CausalML implementation: while we train a multi-class propensity model whose estimates we normalize subsequently, CausalML estimates one propensity model per control-treatment pair.
 
--   Rather than estimating one treatment effect per control-treatment pair, we could also estimate the treatment effects between each treatment variant.
+- Rather than estimating one treatment effect per control-treatment pair, we could also estimate the treatment effects between each treatment variant.
 
 ### DR-Learner
 

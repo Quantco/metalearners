@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 
@@ -479,7 +479,7 @@ class RLearner(MetaLearner):
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the R-Learner pseudo outcome and corresponding weights.
 
-        If `mask` is provided, the retuned pseudo outcomes and weights are only
+        If `mask` is provided, the returned pseudo outcomes and weights are only
         with respect the observations that the mask selects.
 
         Since the pseudo outcome is a fraction of residuals, we add a small
