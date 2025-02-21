@@ -22,7 +22,6 @@ from metalearners._typing import (
 from metalearners._utils import (
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
-    copydoc,
     get_one,
     get_predict,
     get_predict_proba,
@@ -52,25 +51,25 @@ _EPSILON = 1e-09
 
 
 class DRLearner(_ConditionalAverageOutcomeMetaLearner):
-    r"""DR-Learner for CATE estimation as described by `Kennedy (2020) <https://arxiv.org/pdf/2004.14497>`_.
+    r"""DR-Learner for CATE estimation as described by [Kennedy (2020)](https://arxiv.org/pdf/2004.14497).
 
     Importantly, the current DR-Learner implementation only supports:
 
-        * binary classes in case of a classification outcome
+    * binary classes in case of a classification outcome
 
     The DR-Learner contains the following nuisance models:
 
-        * a ``"propensity_model"`` estimating :math:`\Pr[W=k|X]`
-        * one ``"variant_outcome_model"`` for each treatment variant (including control)
-          estimating :math:`\mathbb{E}[Y|X, W=k]`
+    * a ``"propensity_model"`` estimating $\Pr[W=k|X]$
+    * one ``"variant_outcome_model"`` for each treatment variant (including control)
+        estimating $\mathbb{E}[Y|X, W=k]$
 
     and one treatment model for each treatment variant (without control):
 
-        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
+    * ``"treatment_model"`` which estimates $\mathbb{E}[Y(k) - Y(0) | X]$
 
     If ``adaptive_clipping`` is set to ``True``, then the pseudo outcomes are computed using
     adaptive propensity clipping described in section 4.1, equation *DR-Switch* of
-    `Mahajan et al. (2024) <https://arxiv.org/pdf/2211.01939>`_.
+    [Mahajan et al. (2024)](https://arxiv.org/pdf/2211.01939).
     """
 
     @classmethod
@@ -348,7 +347,7 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
         Augmented IPW estimator (Robins et al 1994). Does not require fitting a second-
         stage treatment model: it uses the pseudo-outcome alone and computes the point
         estimate and standard error. Can be used following the
-        :meth:`~metalearners.drlearner.DRLearner.fit_all_nuisance` method.
+        [`fit_all_nuisance`][metalearners.drlearner.DRLearner.fit_all_nuisance] method.
 
         Args:
             X (Matrix): Covariate matrix
@@ -456,7 +455,6 @@ class DRLearner(_ConditionalAverageOutcomeMetaLearner):
             )
         }
 
-    @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the DRLearner case, the necessary models are:
 

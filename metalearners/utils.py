@@ -23,11 +23,11 @@ def metalearner_factory(metalearner_prefix: str) -> type[MetaLearner]:
 
     The accepted ``metalearner_prefix`` values are:
 
-    * ``"S"`` for :class:`~metalearners.slearner.SLearner`
-    * ``"T"`` for :class:`~metalearners.tlearner.TLearner`
-    * ``"X"`` for :class:`~metalearners.xlearner.XLearner`
-    * ``"R"`` for :class:`~metalearners.rlearner.RLearner`
-    * ``"DR"`` for :class:`~metalearners.drlearner.DRLearner`
+    * ``"S"`` for [`SLearner`][metalearners.slearner.SLearner]
+    * ``"T"`` for [`TLearner`][metalearners.tlearner.TLearner]
+    * ``"X"`` for [`XLearner`][metalearners.xlearner.XLearner]
+    * ``"R"`` for [`RLearner`][metalearners.rlearner.RLearner]
+    * ``"DR"`` for [`DRLearner`][metalearners.drlearner.DRLearner]
     """
     match metalearner_prefix:
         case "T":
@@ -51,17 +51,17 @@ def simplify_output(tensor: np.ndarray) -> np.ndarray:
 
     The returned results will be of shape
 
-    * :math:`(n_{obs})` if there are 2 tratment variants and and the outcome is either
+    * $(n_{obs})$ if there are 2 tratment variants and and the outcome is either
       a regression outcome or a binary classification outcome.
 
-    * :math:`(n_{obs}, n_{classes})` if there are 2 treatment variants and and the outcome
+    * $(n_{obs}, n_{classes})$ if there are 2 treatment variants and and the outcome
       is a classification outcome with at least 3 classes.
 
-    * :math:`(n_{obs}, n_{variants} - 1)` if there are at least 3
+    * $(n_{obs}, n_{variants} - 1)$ if there are at least 3
       variants and the outcome is either a regression outcome or a binary classification
       outcome.
 
-    * :math:`(n_{obs}, n_{variants} - 1, n_{classes})` if there are at least 3
+    * $(n_{obs}, n_{variants} - 1, n_{classes})$ if there are at least 3
       variants and and the outcome is a classification outcome with at least 3 classes.
     """
     if (n_dim := len(tensor.shape)) != 3:

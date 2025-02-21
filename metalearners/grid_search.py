@@ -142,10 +142,10 @@ class MetaLearnerGridSearch:
     and not through ``metalearner_params``.
 
     ``base_learner_grid`` keys should be the names of the needed base models contained in the
-    :class:`~metalearners.metalearners.MetaLearner` defined by ``metalearner_factory``, for
+    [`MetaLearner`][metalearners.metalearner.MetaLearner] defined by ``metalearner_factory``, for
     information about this names check
-    :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
-    :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`. The
+    [`MetaLearner.nuisance_model_specifications`][metalearners.metalearner.MetaLearner.nuisance_model_specifications] and
+    [`MetaLearner.treatment_model_specifications`][metalearners.metalearner.MetaLearner.treatment_model_specifications]. The
     values should be sequences of model factories.
 
     If base models are meant to be reused, they should be passed through ``metalearner_params``
@@ -156,46 +156,46 @@ class MetaLearnerGridSearch:
     model class name. An example for optimizing over the :class:`metalearners.DRLearner`
     would be:
 
-    .. code-block:: python
+    ```python
+    base_learner_grid = {
+        "propensity_model": (LGBMClassifier, LogisticRegression),
+        "variant_outcome_model": (LGBMRegressor, LinearRegression),
+        "treatment_model": (LGBMRegressor)
+    }
 
-        base_learner_grid = {
-            "propensity_model": (LGBMClassifier, LogisticRegression),
-            "variant_outcome_model": (LGBMRegressor, LinearRegression),
-            "treatment_model": (LGBMRegressor)
-        }
-
-        param_grid = {
-            "propensity_model": {
-                "LGBMClassifier": {"n_estimators": [1, 2, 3], "verbose": [-1]}
-            },
-            "variant_outcome_model": {
-                "LGBMRegressor": {"n_estimators": [1, 2], "verbose": [-1]},
-            },
-            "treatment_model": {
-                "LGBMRegressor": {"n_estimators": [5, 10], "verbose": [-1]},
-            },
-        }
+    param_grid = {
+        "propensity_model": {
+            "LGBMClassifier": {"n_estimators": [1, 2, 3], "verbose": [-1]}
+        },
+        "variant_outcome_model": {
+            "LGBMRegressor": {"n_estimators": [1, 2], "verbose": [-1]},
+        },
+        "treatment_model": {
+            "LGBMRegressor": {"n_estimators": [5, 10], "verbose": [-1]},
+        },
+    }
+    ```
 
     If some model is not present in ``param_grid``, the default parameters will be used.
 
-    For information on how to define ``scoring`` see :meth:`~metalearners.metalearner.MetaLearner.evaluate`.
+    For information on how to define ``scoring`` see [`MetaLearner.evaluate`][metalearners.metalearner.MetaLearner.evaluate].
 
-    ``verbose`` will be passed to `joblib.Parallel <https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation>`_.
+    ``verbose`` will be passed to [`joblib.Parallel`](https://joblib.readthedocs.io/en/latest/parallel.html#parallel-reference-documentation).
 
     ``store_raw_results`` and ``store_results`` define which and how the results are saved
-    after calling :meth:`~metalearners.grid_search.MetaLearnerGridSearch.fit` depending on
+    after calling [`MetaLearnerGridSearch.fit`][metalearners.grid_search.MetaLearnerGridSearch.fit] depending on
     their values:
 
     * Both are ``True`` (default): ``raw_results_`` will be a list of
-      :class:`~metalearners.grid_search.GSResult` with all the results and ``results_``
+      [`GSResult`][metalearners.grid_search.GSResult] with all the results and ``results_``
       will be a DataFrame with the processed results.
     * ``store_raw_results=True`` and ``store_results=False``: ``raw_results_`` will be a
-      list of :class:`~metalearners.grid_search.GSResult` with all the results
+      list of [`GSResult`][metalearners.grid_search.GSResult] with all the results
       and ``results`` will be ``None``.
     * ``store_raw_results=False`` and ``store_results=True``: ``raw_results_`` will be
       ``None`` and ``results_`` will be a DataFrame with the processed results.
     * Both are ``False``: ``raw_results_`` will be a generator which yields a
-      :class:`~metalearners.grid_search.GSResult` for each configuration and ``results``
+      [`GSResult`][metalearners.grid_search.GSResult] for each configuration and ``results``
       will be None. This configuration can be useful in the case the grid search is big
       and you do not want to store all MetaLearners objects rather evaluate them after
       fitting each one and just store one.
@@ -206,7 +206,7 @@ class MetaLearnerGridSearch:
     of individual metalearners until explicitly requested, e.g. in a loop. This attribute
     can be use to track the progress, for instance, by creating a progress bar or a similar utility.
 
-    For an illustration see :ref:`our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch <example-grid-search>`.
+    For an illustration see [our example on Tuning hyperparameters of a MetaLearner with MetaLearnerGridSearch](examples/example_gridsearch.ipynb).
     """
 
     def __init__(
@@ -267,7 +267,7 @@ class MetaLearnerGridSearch:
         ``X_test``, ``y_test`` and ``w_test`` are optional, in case they are passed all the
         fitted metalearners will be evaluated on it.
 
-        ``kwargs`` will be passed through to the :meth:`~metalearners.metalearner.MetaLearner.fit`
+        ``kwargs`` will be passed through to the [`MetaLearner.fit`][metalearners.metalearner.MetaLearner.fit]
         call of each individual MetaLearner.
         """
         nuisance_models_wo_propensity = (

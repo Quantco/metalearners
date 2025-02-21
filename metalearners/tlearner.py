@@ -10,7 +10,6 @@ from typing_extensions import Self
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
     check_spox_installed,
-    copydoc,
     index_matrix,
     infer_input_dict,
     infer_probabilities_output,
@@ -31,7 +30,7 @@ from metalearners.metalearner import (
 
 
 class TLearner(_ConditionalAverageOutcomeMetaLearner):
-    """T-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_."""
+    """T-Learner for CATE estimation as described by [Kuenzel et al (2019)](https://arxiv.org/pdf/1706.03461.pdf)."""
 
     # TODO: Parametrize instantiation of the TLearner as to add an optional
     # second-stage model regularizing the treatment effects, rather than
@@ -156,7 +155,6 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             )
         }
 
-    @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the TLearner case, the necessary models are:
 

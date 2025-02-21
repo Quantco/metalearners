@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
@@ -230,7 +230,7 @@ def _fit_cross_fit_estimator_joblib(
     parallel_joblib_job: _ParallelJoblibSpecification,
 ) -> _ParallelJoblibResult:
     r"""Helper function to call from a delayed `joblib` object to fit a
-    [CrossFitEstimator][metalearners.cross_fit_estimator.CrossFitEstimator] in
+    [`CrossFitEstimator`][metalearners.cross_fit_estimator.CrossFitEstimator] in
     parallel."""
     return _ParallelJoblibResult(
         model_kind=parallel_joblib_job.model_kind,
@@ -635,8 +635,8 @@ class MetaLearner(ABC):
         n_jobs_cross_fitting: int | None = None,
         cv: SplitIndices | None = None,
     ) -> _ParallelJoblibSpecification | None:
-        r"""Create a `metalearners.metalearner._ParallelJoblibSpecification` to fit the
-        corresponding nuisance model.
+        r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
+        oblibSpecification] to fit the corresponding nuisance model.
 
         `y` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
         If pre-fitted models were passed at instantiation, these are never refitted.
@@ -715,8 +715,8 @@ class MetaLearner(ABC):
         n_jobs_cross_fitting: int | None = None,
         cv: SplitIndices | None = None,
     ) -> _ParallelJoblibSpecification:
-        r"""Create a `metalearners.metalearner._ParallelJoblibSpecification` to fit the
-        corresponding treatment model.
+        r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
+        oblibSpecification] to fit the corresponding treatment model.
 
         `y` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         If pre-fitted models were passed at instantiation, these are never refitted.
@@ -774,14 +774,14 @@ class MetaLearner(ABC):
 
         If pre-fitted models were passed at instantiation, these are never refitted.
 
-        The only difference with [fit][metalearners.metalearner.MetaLearner.fit] parameters,
+        The only difference with [`fit`][metalearners.metalearner.MetaLearner.fit] parameters,
         is that if `fit_params` follows the first usage pattern (explained in
-        [fit][metalearners.metalearner.MetaLearner.fit]), then the training parameters
+        [`fit`][metalearners.metalearner.MetaLearner.fit]), then the training parameters
         will only be used for the nuisance models, and in the case they should also be used
         by the treatment models, these should also be passed in the following call to
-        [fit_all_treatment][metalearners.metalearner.MetaLearner.fit_all_treatment].
+        [`fit_all_treatment`][metalearners.metalearner.MetaLearner.fit_all_treatment].
 
-        This method, combined with [fit_all_treatment][metalearners.metalearner.MetaLearner.fit_all_treatment],
+        This method, combined with [`fit_all_treatment`][metalearners.metalearner.MetaLearner.fit_all_treatment],
         facilitates the segmentation of the metalearner fitting process into two distinct parts.
         This division allows for interventions between the two stages, such as performing
         feature selection for the treatment models or conducting hyperparameter optimization
@@ -802,9 +802,9 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit all treatment models of the MetaLearner.
 
-        The only difference with [fit][metalearners.metalearner.MetaLearner.fit] parameters,
+        The only difference with [`fit`][metalearners.metalearner.MetaLearner.fit] parameters,
         is that if `fit_params` follows the first usage pattern (explained in
-        [fit][metalearners.metalearner.MetaLearner.fit]), then the training parameters
+        [`fit`][metalearners.metalearner.MetaLearner.fit]), then the training parameters
         will only be used for the treatment models, as the nuisance models should already
         be fitted.
         """
@@ -826,7 +826,7 @@ class MetaLearner(ABC):
 
         `n_jobs_cross_fitting` will be used at the cross-fitting level and
         `n_jobs_base_learners` will be used at the stage level. `None` means 1 unless in a
-        [joblib.parallel_backend](https://joblib.readthedocs.io/en/latest/generated/joblib.parallel_backend.html#joblib.parallel_backend)
+        [`joblib.parallel_backend`](https://joblib.readthedocs.io/en/latest/generated/joblib.parallel_backend.html#joblib.parallel_backend)
         context. `-1` means using all processors.
         For more information about parallelism check [parallelism](parallelism.md).
 
@@ -981,8 +981,8 @@ class MetaLearner(ABC):
 
         The keys in `scoring` which are not a name of a model contained in the MetaLearner
         will be ignored, for information about this names check
-        [nuisance_model_specifications][metalearners.metalearner.MetaLearner.nuisance_model_specifications] and
-        [treatment_model_specifications][metalearners.metalearner.MetaLearner.treatment_model_specifications].
+        [`nuisance_model_specifications`][metalearners.metalearner.MetaLearner.nuisance_model_specifications] and
+        [`treatment_model_specifications`][metalearners.metalearner.MetaLearner.treatment_model_specifications].
         The values must be a list of:
 
         * `string` representing a `sklearn` scoring method. Check
@@ -1018,18 +1018,18 @@ class MetaLearner(ABC):
         cate_model_factory: type[_ScikitModel] | None = None,
         cate_model_params: Params | None = None,
     ) -> Explainer:
-        r"""Create an [Explainer][metalearners.explainer.Explainer]
+        r"""Create an [`Explainer`][metalearners.explainer.Explainer]
 
-        which can be used in [feature_importances][metalearners.metalearner.MetaLearner.feature_importances].
+        which can be used in [`feature_importances`][metalearners.metalearner.MetaLearner.feature_importances].
 
         This function can be used in two distinct manners based on the provided parameters:
 
         *   When parameters `X`, `cate_estimates`, and `cate_model_factory` are all
-            set to `None`, the function creates an [Explainer][metalearners.explainer.Explainer]`
+            set to `None`, the function creates an [`Explainer`][metalearners.explainer.Explainer]
             using the pre-existing treatment models. If these models do not exist, however,
             it triggers a `ValueError`.
         *   On the contrary, if `X`, `cate_estimates`, and `cate_model_factory` are
-            not `None`, the function initiates an instance of the [Explainer][metalearners.explainer.Explainer]
+            not `None`, the function initiates an instance of the [`Explainer`][metalearners.explainer.Explainer]
             class using these parameters. This instance then fits new models for each
             treatment variant, and these models are employed to calculate the importance
             of features.
@@ -1074,8 +1074,8 @@ class MetaLearner(ABC):
     ) -> list[pd.Series]:
         r"""Calculates the feature importance for each treatment group.
 
-        If `explainer` is `None`, a new [Explainer][metalearners.explainer.Explainer]
-        is created using [explainer][metalearners.metalearner.MetaLearner.explainer]
+        If `explainer` is `None`, a new [`Explainer`][metalearners.explainer.Explainer]
+        is created using [`MetaLearner.explainer`][metalearners.metalearner.MetaLearner.explainer]
         with the passed parameters. If `explainer` is not `None`, then the parameters
         `X`, `cate_estimates`, `cate_model_factory` and `cate_model_params` are
         ignored.
@@ -1113,8 +1113,8 @@ class MetaLearner(ABC):
     ) -> list[np.ndarray]:
         """Calculates the shap values for each treatment group.
 
-        If `explainer` is `None` a new [Explainer][metalearners.explainer.Explainer]
-        is created using [explainer][metalearners.metalearner.MetaLearner.explainer]
+        If `explainer` is `None` a new [`Explainer`][metalearners.explainer.Explainer]
+        is created using [`MetaLearner.explainer`][metalearners.metalearner.MetaLearner.explainer]
         with the passed parameters. If `explainer` is not `None`, then the parameters
         `cate_estimates`, `cate_model_factory` and `cate_model_params` are
         ignored.
@@ -1215,7 +1215,8 @@ class MetaLearner(ABC):
         """Validates that the converted ONNX models are correct.
 
         Specifically it validates the following:
-        * The `necessary_models` are equal to the keys of the `models`` dictionary
+
+        * The `necessary_models` are equal to the keys of the `models` dictionary
         * The number of models for each model matches the cardinality in the MetaLearner
         * All ONNX have the same input format
         * The models with `"predict"` as `predict_method` have only one output
@@ -1285,7 +1286,8 @@ class MetaLearner(ABC):
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """Convert the MetaLearner to an ONNX model.
 
-        .. warning::
+        !!! warning
+
             This is a experimental feature which is not subject to deprecation cycles. Use
             it at your own risk!
 
@@ -1293,9 +1295,9 @@ class MetaLearner(ABC):
 
         `models` should be a dictionary of sequences with the necessary base models converted to
         ONNX. The necessary models for the specific MetaLearner can be accessed with
-        `metalearners.metalearner.MetaLearner._necessary_onnx_models`.
+        [`_necessary_onnx_models`][metalearners.metalearner.MetaLearner._necessary_onnx_models].
 
-        This method combines the the converted ONNX base models into a single ONNX model.
+        This method combines the converted ONNX base models into a single ONNX model.
         This combined model has a single 2D input `"X"` and a single output named
         `output_name`.
         """

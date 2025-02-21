@@ -13,7 +13,6 @@ from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitMode
 from metalearners._utils import (
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
-    copydoc,
     function_has_argument,
     get_one,
     get_predict,
@@ -57,11 +56,12 @@ def r_loss(
 
     This function computes:
 
-    .. math::
-        \sqrt{\frac{1}{N}\sum_{i=1}^N ((y_i - \mu(X_i)) - \hat{\tau}(X_i)
-        (w_i - e(X_i)))^2}
+    $$
+    \sqrt{\frac{1}{N}\sum_{i=1}^N ((y_i - \mu(X_i)) - \hat{\tau}(X_i)
+    (w_i - e(X_i)))^2}
+    $$
 
-    The R-Learner proposed in `Nie et al. (2017) <https://arxiv.org/pdf/1712.04912.pdf>`_
+    The R-Learner proposed in [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912.pdf)
     relies on a loss function which can be used in combination with empirical risk
     minimization to learn a CATE model.
 
@@ -85,20 +85,20 @@ def r_loss(
 
 
 class RLearner(MetaLearner):
-    r"""R-Learner for CATE estimation as described by `Nie et al. (2017) <https://arxiv.org/pdf/1712.04912.pdf>`_.
+    r"""R-Learner for CATE estimation as described by [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912.pdf).
 
     Importantly, the current R-Learner implementation only supports:
 
-        * binary classes in case of a classification outcome
+    * binary classes in case of a classification outcome
 
     The R-Learner contains two nuisance models
 
-        * a `"propensity_model"` estimating :math:`\Pr[W=k|X]`
-        * an `"outcome_model"` estimating :math:`\mathbb{E}[Y|X]`
+    * a `"propensity_model"` estimating $\Pr[W=k|X]$
+    * an `"outcome_model"` estimating $\mathbb{E}[Y|X]$
 
     and one treatment model per treatment variant which isn't control
 
-        * `"treatment_model"` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
+    * `"treatment_model"` which estimates $\mathbb{E}[Y(k) - Y(0) | X]$
 
     The `treatment_model_factory` provided needs to support the argument
     `sample_weight` in its `fit` method.
@@ -356,7 +356,7 @@ class RLearner(MetaLearner):
         scoring: Scoring | None = None,
     ) -> dict[str, float]:
         """In the RLearner case, the `"treatment_model"` is always evaluated with the
-        :func:`~metalearners.rlearner.r_loss` besides the scorers in
+        [`r_loss`][metalearners.rlearner.r_loss] besides the scorers in
         `scoring["treatment_model"]`, which should support passing the `sample_weight`
         keyword argument."""
         safe_scoring = self._scoring(scoring)
@@ -599,7 +599,6 @@ class RLearner(MetaLearner):
             n_obs, self.n_variants, -1
         )
 
-    @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the RLearner case, the necessary models are:
 
