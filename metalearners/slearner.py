@@ -49,8 +49,8 @@ def _append_treatment_to_covariates(
     # method, it, at the time of writing, doesn't allow for the manual setting of categories
     # which aren't observed in the vector w.
 
-    # Moreover, it seems that nw.concat does not the concatenation of a polars and a
-    # pandas data structure. Hence, we always transform to X to pandas.
+    # Moreover, nw.concat does not support the concatenation of a polars and a
+    # pandas object. Hence, we always transform to X to pandas.
     w_pd = pd.Series(w_np, dtype="category", name="treatment").cat.set_categories(
         list(range(n_variants))
     )
