@@ -1,7 +1,6 @@
 # Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
-from functools import partial
 
 import numpy as np
 import polars as pl
@@ -10,7 +9,7 @@ from lightgbm import LGBMClassifier, LGBMRegressor
 from scipy.sparse import csr_matrix
 from sklearn.base import is_classifier, is_regressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.metrics import accuracy_score, log_loss
+from sklearn.metrics import accuracy_score, log_loss, root_mean_squared_error
 from sklearn.model_selection import KFold
 
 from metalearners.cross_fit_estimator import (
@@ -92,15 +91,7 @@ def test_crossfitestimator_oos_smoke(
         assert predictions.ndim == 1 or predictions.shape[1] == 1
 
     if not use_clf:
-        try:
-            from sklearn.metrics import root_mean_squared_error
-
-            rmse = root_mean_squared_error
-        # TODO: Remove as soon as we can lower-bound sklearn to 1.4
-        except ImportError:
-            from sklearn.metrics import mean_squared_error
-
-            rmse = partial(mean_squared_error, squared=False)
+        rmse = root_mean_squared_error
         assert rmse(y, predictions) < y.std()
     elif predict_proba:
         log_loss_baseline = log_loss(y, 0.5 * np.ones(len(y)))
