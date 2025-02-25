@@ -10,8 +10,7 @@
 
 ### Other changes
 
-- Comply with ``scikit-learn`` versions 1.6 and higher.
-
+- Comply with `scikit-learn` versions 1.6 and higher.
 
 ## 0.11.0 (2024-09-05)
 

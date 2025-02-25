@@ -68,7 +68,6 @@ plugins:
             show_submodules: true # show *all* code docu
             inherited_members: true
 
-
 nav:
   # Demonstrate notebook inclusion
   - Welcome: index.md
