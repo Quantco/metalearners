@@ -29,14 +29,6 @@ ONNX_PROBABILITIES_OUTPUTS = ["probabilities", "output_probability"]
 default_rng = np.random.default_rng()
 
 
-def infer_native_namespace(X_nw: nw.DataFrame):
-    if X_nw.implementation.name == "PANDAS":
-        return pd
-    if X_nw.implementation.name == "POLARS":
-        return pl
-    raise TypeError("Couldn't infer native_namespace of matrix.")
-
-
 def safe_len(X: Matrix) -> int:
     """Determine the length of a Matrix."""
     if scipy.sparse.issparse(X):

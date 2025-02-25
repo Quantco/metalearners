@@ -10,7 +10,11 @@ import pandas as pd
 from scipy.sparse import csr_matrix, hstack
 from typing_extensions import Self
 
-from metalearners._narwhals_utils import load_vector_to_nw, nw_to_dummies
+from metalearners._narwhals_utils import (
+    infer_native_namespace,
+    load_vector_to_nw,
+    nw_to_dummies,
+)
 from metalearners._typing import (
     Features,
     Matrix,
@@ -24,7 +28,6 @@ from metalearners._typing import (
 from metalearners._utils import (
     adapt_treatment_dtypes,
     get_one,
-    infer_native_namespace,
     safe_len,
     supports_categoricals,
 )
