@@ -12,8 +12,8 @@ from typing_extensions import Self
 
 from metalearners._narwhals_utils import (
     infer_native_namespace,
-    load_vector_to_nw,
     nw_to_dummies,
+    vector_to_nw,
 )
 from metalearners._typing import (
     Features,
@@ -70,7 +70,7 @@ def _np_to_dummies(
 def _to_dummies(w: Vector, categories: Sequence, drop_first: bool = True) -> Matrix:
     if isinstance(w, np.ndarray):
         return _np_to_dummies(w, categories, drop_first=drop_first)
-    return nw_to_dummies(w, categories, drop_first=drop_first)
+    return nw_to_dummies(w, categories, column_name=_TREATMENT, drop_first=drop_first)
 
 
 def _append_treatment_to_covariates_with_one_hot_encoding(
@@ -89,8 +89,12 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
         # Note that it could be the case that w is a np.ndarray object
         # even if X is a dataframe. Therefore we have a conversion
         # with a case distinction.
-        w_nw = load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
-        w_dummies_nw = nw_to_dummies(w_nw, categories)
+        w_nw = vector_to_nw(w, native_namespace=infer_native_namespace(X_nw)).rename(
+            _TREATMENT
+        )
+        w_dummies_nw = nw_to_dummies(
+            w_nw, categories, column_name=_TREATMENT, drop_first=True
+        )
 
         X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
 
@@ -154,7 +158,9 @@ def _append_treatment_to_covariates_with_categorical(
     X_nw = convert_matrix_to_nw(X)
     X_nw = _stringify_column_names(X_nw)
 
-    w_nw = load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
+    w_nw = vector_to_nw(w, native_namespace=infer_native_namespace(X_nw)).rename(
+        _TREATMENT
+    )
     # narwhal's concat expects two DataFrames -- in contrast to mixing DataFrames
     # and Series.
     w_nw_categorical = (
