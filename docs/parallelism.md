@@ -13,7 +13,7 @@ In the context of the topic outlined in [Motivation - Multiprocessing](motivatio
 
 3. **Stage level**: A majority of MetaLearners entail multiple [nuisance models](glossary.md#nuisance-model) and/or [treatment models](glossary.md#treatment-effect-model). Within an individual stage, these models are independent of each other, an example of this would be one [propensity model](glossary.md#propensity-model) and an [outcome model](glossary.md#outcome-model) for each treatment variant. This independence translates into another possibility for parallelism.
 
-    To use parallelism at this level, you can use the `n_jobs_base_learners` parameter of the [`MetaLearner.fit`][metalearners.metalearner.MetaLearner.fit] method of the MetaLearner.
+    To use parallelism at this level, you can use the `n_jobs_base_learners` parameter of the [`fit`][metalearners.metalearner.MetaLearner.fit] method of the MetaLearner.
 
 Our experiments leveraging parallelism at various levels reveal that there is not a 'one-size-fits-all' setting; the optimal configuration varies significantly based on factors such as the choice of base models, the number of variants, the number of folds, or the number of observations.
 
