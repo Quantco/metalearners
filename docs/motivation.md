@@ -33,8 +33,7 @@ While MetaLearners are, in principle, designed in a very modular fashion, we've 
 
 One reason to access the base models is to evaluate their individual performance. Due to the fundamental problem of Causal Inference, we are not able to evaluate a MetaLearner based on a simple metric measuring the mismatch between estimate and ground truth. Yet, we might want to do this for our base learners which often do have ground truth labels to compare the estimates to. Yet, this is not supported by `econml` and `causalml`.
 
-![Component Evaluation](imgs/component_eval.drawio.svg#only-light)
-![Component Evaluation](imgs/heterogeneity.svg#only-dark)
+![Component Evaluation](imgs/component_eval.drawio.svg)
 
 In the illustration above, we indicate that we'd like to access, predict with, and evaluate a propensity model -- one base model of the MetaLearner at hand -- in isolation.
 
