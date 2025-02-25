@@ -203,7 +203,7 @@ The X-Learner was introduced by [Kuenzel et al. (2019)](https://arxiv.org/pdf/17
 
     $$
     \begin{align*}
-    \widetilde{D}\_1^i &:= Y^i_1 - \hat{\mu}\_0(X^i_1) \\
+    \widetilde{D}_1^i &:= Y^i_1 - \hat{\mu}_0(X^i_1) \\
     \widetilde{D}\_0^i &:= \hat{\mu}\_1(X^i_0) - Y^i_0
     \end{align*}
     $$
