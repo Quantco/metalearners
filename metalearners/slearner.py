@@ -7,10 +7,10 @@ from collections.abc import Mapping, Sequence
 import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
-from narwhals.dependencies import is_into_series
 from scipy.sparse import csr_matrix, hstack
 from typing_extensions import Self
 
+from metalearners._narwhals_utils import load_vector_to_nw, nw_to_dummies
 from metalearners._typing import (
     Features,
     Matrix,
@@ -22,7 +22,7 @@ from metalearners._typing import (
     _ScikitModel,
 )
 from metalearners._utils import (
-    convert_treatment,
+    adapt_treatment_dtypes,
     get_one,
     infer_native_namespace,
     safe_len,
@@ -38,45 +38,36 @@ from metalearners.metalearner import (
 
 _BASE_MODEL = "base_model"
 
+_TREATMENT = "treatment"
+
 
 def _stringify_column_names(df_nw):
     return df_nw.rename({column: str(column) for column in df_nw.columns})
 
 
-def _nw_dummify(x: nw.Series, categories: Sequence) -> nw.DataFrame:
-    return x.to_frame().select(
-        [
-            (nw.col("treatment") == cat).cast(nw.Int8).name.suffix(f"_{cat}")
-            for cat in categories[1:]
-        ]
-    )
+def _np_to_dummies(
+    x: np.ndarray, categories: Sequence, drop_first: bool = True
+) -> np.ndarray:
+    """Turn a vector into a matrix with dummies.
+
+    This operation is also referred to as one-hot-encoding.
+
+    The resulting columns will correspond to the order of values in ``categories``.
+    """
+
+    if x.ndim != 1:
+        raise ValueError("Can only convert 1-d array to dummies.")
+
+    dummy_matrix = np.eye(len(categories), dtype="int8")[x]
+    if drop_first:
+        return dummy_matrix[:, 1:]
+    return dummy_matrix
 
 
-def _np_dummify(x: np.ndarray, categories: Sequence) -> np.ndarray:
-    return np.eye(len(categories), dtype="int8")[x][:, 1:]
-
-
-def _dummify(w: Vector, categories: Sequence) -> Matrix:
+def _to_dummies(w: Vector, categories: Sequence, drop_first: bool = True) -> Matrix:
     if isinstance(w, np.ndarray):
-        return _np_dummify(w, categories)
-    return _nw_dummify(w, categories)
-
-
-def _load_vector_to_nw(x: Vector, native_namespace=None) -> nw.Series:
-    if isinstance(x, np.ndarray):
-        if native_namespace is None:
-            raise ValueError(
-                "x is a numpy object but no native_namespace was provided to "
-                "load it into narwhals."
-            )
-        # narwhals doesn't seem to like 1d numpy arrays. Therefore we first convert to
-        # a 2d np object and then convert the narwhals DataFrame to a narwhals Series.
-        return nw.from_numpy(x.reshape(-1, 1), native_namespace=native_namespace)[
-            "column_0"
-        ].rename("treatment")
-    if is_into_series(x):
-        return nw.from_native(x, series_only=True, eager_only=True)
-    raise TypeError(f"Unexpected type {type(x)} for Vector.")
+        return _np_to_dummies(w, categories, drop_first=drop_first)
+    return nw_to_dummies(w, categories, drop_first=drop_first)
 
 
 def _append_treatment_to_covariates_with_one_hot_encoding(
@@ -95,8 +86,8 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
         # Note that it could be the case that w is a np.ndarray object
         # even if X is a dataframe. Therefore we have a conversion
         # with a case distinction.
-        w_nw = _load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
-        w_dummies_nw = _nw_dummify(w_nw, categories)
+        w_nw = load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
+        w_dummies_nw = nw_to_dummies(w_nw, categories)
 
         X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
 
@@ -108,7 +99,7 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
                 "When covariates X are provided as a scipy csr_matrix, treatments "
                 f"should be provided as a np.ndarray, not {type(w)}."
             )
-        w_dummies = _np_dummify(w, categories)
+        w_dummies = _np_to_dummies(w, categories)
         return hstack((X, w_dummies), format="csr")
 
     if isinstance(X, np.ndarray):
@@ -117,7 +108,7 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
                 "When covariates X are provided as a numpy.ndarray object, treatments "
                 f"should be provided as a np.ndarray, not {type(w)}."
             )
-        w_dummies = _np_dummify(w, categories)
+        w_dummies = _np_to_dummies(w, categories)
         return np.concatenate([X, w_dummies], axis=1)
 
     raise TypeError(
@@ -160,18 +151,18 @@ def _append_treatment_to_covariates_with_categorical(
     X_nw = convert_matrix_to_nw(X)
     X_nw = _stringify_column_names(X_nw)
 
-    w_nw = _load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
-    # narwhal's concat expects two DataFrame -- in contrast to mixing DataFrames
+    w_nw = load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
+    # narwhal's concat expects two DataFrames -- in contrast to mixing DataFrames
     # and Series.
     w_nw_categorical = (
-        w_nw.cast(nw.String).cast(nw.Categorical).rename("treatment").to_frame()
+        w_nw.cast(nw.String).cast(nw.Categorical).rename(_TREATMENT).to_frame()
     )
 
-    X_with_w_nw = nw.concat([X_nw, w_nw_categorical], how="horizontal")
+    X_with_w_nw = nw.concat([X_nw, w_nw_categorical], how="horizontal")  # type: ignore
     X_result = X_with_w_nw.to_native()
 
     if isinstance(X_result, pd.DataFrame):
-        X_result["treatment"] = X_result["treatment"].cat.set_categories(categories)
+        X_result[_TREATMENT] = X_result[_TREATMENT].cat.set_categories(categories)
 
     return X_result
 
@@ -179,14 +170,28 @@ def _append_treatment_to_covariates_with_categorical(
 def _append_treatment_to_covariates(
     X: Matrix, w: Vector, supports_categoricals: bool, n_variants: int
 ) -> Matrix:
-    """Appends treatment columns to covariates and one-hot-encode if necessary."""
-    w = convert_treatment(w)
+    """Appends treatment columns to covariates.
 
-    if hasattr(X, "columns") and "treatment" in X.columns:
-        raise ValueError('"treatment" cannot be a column name in X.')
+    If ``support_categoricals`` is ``False``:
+
+    * the returned result will be of the same type as ``X``
+    * the treatment is appended with one-hot-encoding, where the
+      treatment value column is omitted
+
+    If ``support_categoricals`` is ``True``:
+
+    * the returned result will be a ``pandas.DataFrame``, except
+      if ``X`` was a ``polars.DataFrame``; in the latter case
+      the returned result will be a ``polars.DataFrame``, too
+    * the treatment is appended with a categorical column
+    """
+    w = adapt_treatment_dtypes(w)
+
+    if hasattr(X, "columns") and _TREATMENT in X.columns:
+        raise ValueError("treatment cannot be a column name in X.")
 
     if isinstance(X, pd.DataFrame):
-        # This is needed in case the index is not 0 based
+        # This is needed in case the index is not 0-based.
         X = X.reset_index(drop=True)
 
     categories = list(range(n_variants))
@@ -280,7 +285,7 @@ class SLearner(MetaLearner):
     ) -> Self:
         self._validate_treatment(w)
         self._validate_outcome(y, w)
-        self._fitted_treatments = convert_treatment(w)
+        self._fitted_treatments = adapt_treatment_dtypes(w)
 
         mock_model = self.nuisance_model_factory[_BASE_MODEL](
             **self.nuisance_model_params[_BASE_MODEL]

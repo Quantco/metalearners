@@ -267,8 +267,11 @@ def check_probability(p: float, zero_included=False, one_included=False) -> None
         raise ValueError("Probability p must be less than or equal to 1.")
 
 
-def convert_treatment(treatment: Vector) -> Vector:
-    """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
+def adapt_treatment_dtypes(treatment: Vector) -> Vector:
+    """Cast the dtype of treatment to integer, if necessary.
+
+    Raises if not possible.
+    """
     if treatment.dtype == bool:
         return treatment.astype(int)
     if treatment.dtype == float and all(x.is_integer() for x in treatment):
