@@ -116,11 +116,9 @@ def test_nw_to_dummies(data, categories, expected, drop_first):
     )
     assert isinstance(dummies_nw, nw.DataFrame)
 
-    if drop_first:
-        expected = expected.iloc[:, 1:]
+    expected = expected.iloc[:, drop_first:]
 
     # We couldn't find a good way to compare narwhals objects for equality.
     # Therefore, we convert back to the backend.
-
     dummies = dummies_nw.to_native()
     pd.testing.assert_frame_equal(expected, dummies)
