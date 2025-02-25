@@ -208,6 +208,9 @@ def _append_treatment_to_covariates(
         # This is needed in case the index is not 0-based.
         X = X.reset_index(drop=True)
 
+    if isinstance(w, pd.Series):
+        w = w.reset_index(drop=True)
+
     categories = list(range(n_variants))
 
     if not supports_categoricals:
