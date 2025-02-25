@@ -204,7 +204,7 @@ The X-Learner was introduced by [Kuenzel et al. (2019)](https://arxiv.org/pdf/17
     $$
     \begin{align*}
     \widetilde{D}_1^i &:= Y^i_1 - \hat{\mu}_0(X^i_1) \\
-    \widetilde{D}\_0^i &:= \hat{\mu}\_1(X^i_0) - Y^i_0
+    \widetilde{D}_0^i &:= \hat{\mu}_1(X^i_0) - Y^i_0
     \end{align*}
     $$
 
@@ -235,8 +235,8 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
     $$
     \begin{align*}
-    \widetilde{D}\_k^i &:= Y^i \cdot k - \hat{\mu}_0(X^i \cdot k) \\
-    \widetilde{D}_{0,k}^i &:= \hat{\mu}\_k(X^i \cdot 0) - Y^i_0
+    \widetilde{D}_k^i &:= Y^i_k - \hat{\mu}_0(X^i_k) \\
+    \widetilde{D}_{0,k}^i &:= \hat{\mu}_k(X^i_ 0) - Y^i_0
     \end{align*}
     $$
 
@@ -271,9 +271,9 @@ The R-Learner was introduced by [Nie et al. (2017)](https://arxiv.org/pdf/1712.0
 
     $$
     \begin{align*}
-    \hat{\tau}^R (\cdot) &:= \argmin*{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
-    &=\argmin*{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
-    &= \argmin\_{\tau}\left\{\mathbb{E}\left[{\widetilde{W}^i}^2\bigg(\frac{\widetilde{Y}^i}{\widetilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
+    \hat{\tau}^R (\cdot) &:= \argmin_{\tau}\Bigg\{\mathbb{E}\Bigg[\bigg(\left\{Y^i - \hat{m}(X^i)\right\} - \left\{W^i - \hat{e}(X^i)\right\}\tau(X^i)\bigg)^2\Bigg]\Bigg\} \\
+    &=\argmin_{\tau}\left\{\mathbb{E}\left[\left\{W^i - \hat{e}(X^i)\right\}^2\bigg(\frac{\left\{Y^i - \hat{m}(X^i)\right\}}{\left\{W^i - \hat{e}(X^i)\right\}} - \tau(X^i)\bigg)^2\right]\right\} \\
+    &= \argmin_{\tau}\left\{\mathbb{E}\left[{\widetilde{W}^i}^2\bigg(\frac{\widetilde{Y}^i}{\widetilde{W}^i} - \tau(X^i)\bigg)^2\right]\right\}
     \end{align*}
     $$
 
@@ -329,7 +329,7 @@ The DR-Learner was introduced by [Kennedy (2020)](https://arxiv.org/pdf/2004.144
 
     $$
     \begin{align*}
-    \varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))} \big\{Y^i - \hat{\mu}\_{W^i}(X^i)\big\} + \hat{\mu}\_{1}(X^i) - \hat{\mu}\_{0}(X^i)
+    \varphi(X^i, W^i, Y^i) := \frac{W^i - \hat{e}(X^i)}{\hat{e}(X^i)(1-\hat{e}(X^i))} \big\{Y^i - \hat{\mu}_{W^i}(X^i)\big\} + \hat{\mu}_{1}(X^i) - \hat{\mu}_{0}(X^i)
     \end{align*}
     $$
 
@@ -356,8 +356,8 @@ In the case of multiple discrete treatments, the stages are similar to the binar
 
     $$
     \begin{align*}
-    \varphi\_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}\_{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}\_k(X^i) \\
-    &- \frac{Y^i - \hat{\mu}\_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}\_0(X^i)
+    \varphi_k(X^i, W^i, Y^i) := &\frac{Y^i - \hat{\mu}_{k}(X^i)}{\hat{e}(k, X^i)}\mathbb{I}\{W^i = k\} + \hat{\mu}_k(X^i) \\
+    &- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}_0(X^i)
     \end{align*}
     $$
 
