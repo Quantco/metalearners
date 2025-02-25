@@ -10,7 +10,11 @@ from polars.testing import assert_frame_equal as pl_assert_frame_equal
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import LinearRegression
 
-from metalearners.slearner import SLearner, _append_treatment_to_covariates
+from metalearners.slearner import (
+    SLearner,
+    _append_treatment_to_covariates,
+    _np_to_dummies,
+)
 
 
 def test_feature_set_doesnt_raise(rng):
@@ -29,6 +33,59 @@ def test_feature_set_doesnt_raise(rng):
         slearner._nuisance_models["base_model"][0]._overall_estimator.n_features_in_  # type: ignore
         == 3
     )
+
+
+@pytest.mark.parametrize(
+    "x,categories",
+    [
+        (np.array([[1, 1, 1], [2, 2, 2]]), [1, 2]),
+        (np.array([1, 2, 3]), [1]),
+        (np.array([1, 2, 3]), [1, 2]),
+    ],
+)
+def test_np_to_dummies_raises(x, categories):
+    with pytest.raises(ValueError):
+        _np_to_dummies(x, categories)
+
+
+@pytest.mark.parametrize(
+    "data,categories,expected",
+    [
+        (
+            np.array([0, 1, 0, 1]),
+            [0, 1],
+            np.array(
+                [
+                    [1, 0],
+                    [0, 1],
+                    [1, 0],
+                    [0, 1],
+                ]
+            ),
+        ),
+        (
+            np.array([0, 1, 0, 1]),
+            [0, 1, 2],
+            np.array(
+                [
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [1, 0, 0],
+                    [0, 1, 0],
+                ]
+            ),
+        ),
+    ],
+)
+@pytest.mark.parametrize("drop_first", [True, False])
+def test_np_to_dummies(data, categories, expected, drop_first):
+    actual = _np_to_dummies(
+        x=data,
+        categories=categories,
+        drop_first=drop_first,
+    )
+    expected = expected[:, drop_first:]
+    np.testing.assert_array_equal(actual, expected)
 
 
 @pytest.mark.parametrize(

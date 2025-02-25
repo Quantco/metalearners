@@ -61,6 +61,15 @@ def _np_to_dummies(
     if x.ndim != 1:
         raise ValueError("Can only convert 1-d array to dummies.")
 
+    if len(categories) < 2:
+        raise ValueError(
+            "categories to be used for nw_to_dummies must have at least two "
+            "distinct values."
+        )
+
+    if set(categories) < set(np.unique(x)):
+        raise ValueError("We observed a value which isn't part of the categories.")
+
     dummy_matrix = np.eye(len(categories), dtype="int8")[x]
     if drop_first:
         return dummy_matrix[:, 1:]

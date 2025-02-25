@@ -27,8 +27,10 @@ def nw_to_dummies(
             "categories to be used for nw_to_dummies must have at least two "
             "distinct values."
         )
+
     if set(categories) < set(x.unique()):
-        raise ValueError("We observed a value which isn't par of the categories.")
+        raise ValueError("We observed a value which isn't part of the categories.")
+
     relevant_categories = categories[1:] if drop_first else categories
     return x.to_frame().select(
         [
