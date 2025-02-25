@@ -164,6 +164,8 @@ def _append_treatment_to_covariates_with_categorical(
     X_with_w_nw = nw.concat([X_nw, w_nw_categorical], how="horizontal")  # type: ignore
     X_result = X_with_w_nw.to_native()
 
+    # Ideally, we would like to do the analogous operation for polars, too. See
+    # https://github.com/pola-rs/polars/issues/21337
     if isinstance(X_result, pd.DataFrame):
         X_result[_TREATMENT] = X_result[_TREATMENT].cat.set_categories(categories)
 
