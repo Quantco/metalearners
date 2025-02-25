@@ -50,6 +50,9 @@ plugins:
         python:
           paths: [metalearners]
           options:
+            filters: # Disable all single underscore methods ("protected")
+              - "!^_"
+              - "^__" # re-enable double underscore methods ("dunder")
             extensions:
               - griffe_inherited_docstrings:
                   merge: true
@@ -64,6 +67,7 @@ plugins:
             merge_init_into_class: true
             show_submodules: true # show *all* code docu
             inherited_members: true
+
 
 nav:
   # Demonstrate notebook inclusion
