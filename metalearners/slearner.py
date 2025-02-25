@@ -67,12 +67,6 @@ def _np_to_dummies(
     return dummy_matrix
 
 
-def _to_dummies(w: Vector, categories: Sequence, drop_first: bool = True) -> Matrix:
-    if isinstance(w, np.ndarray):
-        return _np_to_dummies(w, categories, drop_first=drop_first)
-    return nw_to_dummies(w, categories, column_name=_TREATMENT, drop_first=drop_first)
-
-
 def _append_treatment_to_covariates_with_one_hot_encoding(
     X: Matrix,
     w: Vector,
