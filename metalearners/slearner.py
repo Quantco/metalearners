@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
+from narwhals.dependencies import is_into_series
 from scipy.sparse import csr_matrix, hstack
 from typing_extensions import Self
 
@@ -23,6 +24,7 @@ from metalearners._typing import (
 from metalearners._utils import (
     convert_treatment,
     get_one,
+    infer_native_namespace,
     safe_len,
     supports_categoricals,
 )
@@ -37,26 +39,148 @@ from metalearners.metalearner import (
 _BASE_MODEL = "base_model"
 
 
+def _stringify_column_names(df_nw):
+    return df_nw.rename({column: str(column) for column in df_nw.columns})
+
+
+def _nw_dummify(x: nw.Series, categories: Sequence) -> nw.DataFrame:
+    return x.to_frame().select(
+        [
+            (nw.col("treatment") == cat).cast(nw.Int8).name.suffix(f"_{cat}")
+            for cat in categories[1:]
+        ]
+    )
+
+
+def _np_dummify(x: np.ndarray, categories: Sequence) -> np.ndarray:
+    return np.eye(len(categories), dtype="int8")[x][:, 1:]
+
+
+def _dummify(w: Vector, categories: Sequence) -> Matrix:
+    if isinstance(w, np.ndarray):
+        return _np_dummify(w, categories)
+    return _nw_dummify(w, categories)
+
+
+def _load_vector_to_nw(x: Vector, native_namespace=None) -> nw.Series:
+    if isinstance(x, np.ndarray):
+        if native_namespace is None:
+            raise ValueError(
+                "x is a numpy object but no native_namespace was provided to "
+                "load it into narwhals."
+            )
+        # narwhals doesn't seem to like 1d numpy arrays. Therefore we first convert to
+        # a 2d np object and then convert the narwhals DataFrame to a narwhals Series.
+        return nw.from_numpy(x.reshape(-1, 1), native_namespace=native_namespace)[
+            "column_0"
+        ].rename("treatment")
+    if is_into_series(x):
+        return nw.from_native(x, series_only=True, eager_only=True)
+    raise TypeError(f"Unexpected type {type(x)} for Vector.")
+
+
+def _append_treatment_to_covariates_with_one_hot_encoding(
+    X: Matrix,
+    w: Vector,
+    categories: Sequence,
+) -> Matrix:
+
+    if nw.dependencies.is_into_dataframe(X):
+
+        X_nw = nw.from_native(X, eager_only=True)
+        # Some models (e.g. sklearn's LinearRegression) raise an error if some column
+        # names are integers and some strings.
+        X_nw = _stringify_column_names(X_nw)
+
+        # Note that it could be the case that w is a np.ndarray object
+        # even if X is a dataframe. Therefore we have a conversion
+        # with a case distinction.
+        w_nw = _load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
+        w_dummies_nw = _nw_dummify(w_nw, categories)
+
+        X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
+
+        return X_with_w_nw.to_native()
+
+    if isinstance(X, csr_matrix):
+        if not isinstance(w, np.ndarray):
+            raise TypeError(
+                "When covariates X are provided as a scipy csr_matrix, treatments "
+                f"should be provided as a np.ndarray, not {type(w)}."
+            )
+        w_dummies = _np_dummify(w, categories)
+        return hstack((X, w_dummies), format="csr")
+
+    if isinstance(X, np.ndarray):
+        if not isinstance(w, np.ndarray):
+            raise TypeError(
+                "When covariates X are provided as a numpy.ndarray object, treatments "
+                f"should be provided as a np.ndarray, not {type(w)}."
+            )
+        w_dummies = _np_dummify(w, categories)
+        return np.concatenate([X, w_dummies], axis=1)
+
+    raise TypeError(
+        "Cannot append treatments to covariates X if covariates are of type"
+        + str(type(X))
+    )
+
+
+def _append_treatment_to_covariates_with_categorical(
+    X: Matrix,
+    w: Vector,
+    categories: Sequence,
+) -> Matrix:
+    # This is necessary as each model works differently with categoricals,
+    # in some you need to specify them on instantiation while some others on
+    # fitting. This solutions converts it to a pd.DataFrame as most of the models
+    # have some "automatic" detection of categorical features based on pandas
+    # dtypes. Theoretically it would be possible to get around this conversion
+    # but it would require loads of model specific code.
+
+    def convert_matrix_to_nw(X: Matrix) -> nw.DataFrame:
+        if isinstance(X, np.ndarray):
+            warnings.warn(
+                "Converting the input covariates X from np.ndarray to a "
+                f"DataFrame as {_BASE_MODEL} supports categorical variables."
+            )
+            # By default, the columns are named column_i by narwhals.
+            # The pandas behavior we are used to relies on naming them i.
+            return nw.from_numpy(X, native_namespace=pd).rename(
+                {f"column_{i}": str(i) for i in range(X.shape[1])}
+            )
+        if isinstance(X, csr_matrix):
+            warnings.warn(
+                "Converting the input covariates X from a scipy csr_matrix to a "
+                f"pd.DataFrame as {_BASE_MODEL} supports categorical variables."
+            )
+            return nw.from_native(pd.DataFrame.sparse.from_spmatrix(X), eager_only=True)
+        return nw.from_native(X, eager_only=True)
+
+    X_nw = convert_matrix_to_nw(X)
+    X_nw = _stringify_column_names(X_nw)
+
+    w_nw = _load_vector_to_nw(w, native_namespace=infer_native_namespace(X_nw))
+    # narwhal's concat expects two DataFrame -- in contrast to mixing DataFrames
+    # and Series.
+    w_nw_categorical = (
+        w_nw.cast(nw.String).cast(nw.Categorical).rename("treatment").to_frame()
+    )
+
+    X_with_w_nw = nw.concat([X_nw, w_nw_categorical], how="horizontal")
+    X_result = X_with_w_nw.to_native()
+
+    if isinstance(X_result, pd.DataFrame):
+        X_result["treatment"] = X_result["treatment"].cat.set_categories(categories)
+
+    return X_result
+
+
 def _append_treatment_to_covariates(
     X: Matrix, w: Vector, supports_categoricals: bool, n_variants: int
 ) -> Matrix:
     """Appends treatment columns to covariates and one-hot-encode if necessary."""
-    # TODO: Consider adapting convert_treatment as to not always transform to np.
-    w_np = convert_treatment(w)
-
-    # We enforce pandas' Series as an intermediate data structure for the treatment vector w,
-    # since we rely on pandas' get dummies function. While there is a narwhals to_dummies
-    # method, it, at the time of writing, doesn't allow for the manual setting of categories
-    # which aren't observed in the vector w.
-
-    # Moreover, nw.concat does not support the concatenation of a polars and a
-    # pandas object. Hence, we always transform to X to pandas.
-    w_pd = pd.Series(w_np, dtype="category", name="treatment").cat.set_categories(
-        list(range(n_variants))
-    )
-
-    def _stringify_column_names(df_nw):
-        return df_nw.rename({column: str(column) for column in df_nw.columns})
+    w = convert_treatment(w)
 
     if hasattr(X, "columns") and "treatment" in X.columns:
         raise ValueError('"treatment" cannot be a column name in X.')
@@ -65,53 +189,19 @@ def _append_treatment_to_covariates(
         # This is needed in case the index is not 0 based
         X = X.reset_index(drop=True)
 
+    categories = list(range(n_variants))
+
     if not supports_categoricals:
-        w_dummies = pd.get_dummies(w_pd, prefix="treatment", dtype=int, drop_first=True)
-        if nw.dependencies.is_into_dataframe(X):
-            if not isinstance(X, pd.DataFrame):
-                X = X.to_pandas()
-            X_nw = nw.from_native(X, eager_only=True)
-            # This is because some models (LinearRegression) raise an error if some column
-            # names are integers and some strings.
-            X_nw = _stringify_column_names(X_nw)
-            w_dummies_nw = nw.from_native(w_dummies, eager_only=True)
-            X_with_w_nw = nw.concat([X_nw, w_dummies_nw], how="horizontal")
-
-            return X_with_w_nw.to_native()
-        if isinstance(X, csr_matrix):
-            return hstack((X, w_dummies), format="csr")
-        return np.concatenate([X, w_dummies], axis=1)
-
-    # This is necessary as each model works differently with categoricals,
-    # in some you need to specify them on instantiation while some others on
-    # fitting. This solutions converts it to a pd.DataFrame as most of the models
-    # have some "automatic" detection of categorical features based on pandas
-    # dtypes. Theoretically it would be possible to get around this conversion
-    # but it would require loads of model specific code.
-    if isinstance(X, np.ndarray):
-        warnings.warn(
-            "Converting the input covariates X from np.ndarray to a "
-            f"DataFrame as {_BASE_MODEL} supports categorical variables."
+        return _append_treatment_to_covariates_with_one_hot_encoding(
+            X=X,
+            w=w,
+            categories=categories,
         )
-        # By default, the columns are named column_i by narwhals.
-        # The pandas behavior we are used to relies on naming them i.
-        X_nw = nw.from_numpy(X, native_namespace=pd).rename(
-            {f"column_{i}": str(i) for i in range(X.shape[1])}
-        )
-    elif isinstance(X, csr_matrix):
-        warnings.warn(
-            "Converting the input covariates X from a scipy csr_matrix to a "
-            f"pd.DataFrame as {_BASE_MODEL} supports categorical variables."
-        )
-        X_nw = nw.from_native(pd.DataFrame.sparse.from_spmatrix(X), eager_only=True)
-    else:
-        X_nw = nw.from_native(pd.DataFrame(X), eager_only=True)
-
-    w_nw = nw.from_native(pd.DataFrame(w_pd))
-    X_nw = _stringify_column_names(X_nw)
-
-    X_with_w_nw = nw.concat([X_nw, w_nw], how="horizontal")
-    return X_with_w_nw.to_native()
+    return _append_treatment_to_covariates_with_categorical(
+        X=X,
+        w=w,
+        categories=categories,
+    )
 
 
 class SLearner(MetaLearner):
