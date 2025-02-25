@@ -165,7 +165,10 @@ def test_adapt_treatment_dtypes(treatment_values, backend):
         treatment = pl.Series(treatment_values)
 
     new_treatment = adapt_treatment_dtypes(treatment)
-    assert new_treatment.dtype == int
+    if backend == "pl":
+        assert new_treatment.dtype.is_integer()
+    else:
+        assert new_treatment.dtype == int
 
 
 @pytest.mark.parametrize(

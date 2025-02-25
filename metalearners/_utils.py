@@ -272,6 +272,18 @@ def adapt_treatment_dtypes(treatment: Vector) -> Vector:
 
     Raises if not possible.
     """
+    if isinstance(treatment, pl.Series):
+        dtype = treatment.dtype
+        if dtype.is_integer():
+            return treatment
+        if dtype.to_python().__name__ == "bool":
+            return treatment.cast(int)
+        if dtype.is_float() and all(x.is_integer() for x in treatment):
+            return treatment.cast(int)
+        raise TypeError(
+            "Treatment must be boolean, integer or float with integer values."
+        )
+
     if treatment.dtype == bool:
         return treatment.astype(int)
     if treatment.dtype == float and all(x.is_integer() for x in treatment):
