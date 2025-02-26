@@ -1,6 +1,6 @@
 site_name: metalearners
-site_description: description
-site_url: http://url
+site_description: MetaLearners for Conditional Average Treatment Effect (CATE) estimation
+site_url: https://metalearners.readthedocs.io/
 theme:
   name: material
   palette:
