@@ -6,8 +6,6 @@ from types import ModuleType
 
 import narwhals.stable.v1 as nw
 import numpy as np
-import pandas as pd
-import polars as pl
 from narwhals.dependencies import is_into_series
 
 from metalearners._typing import Vector
@@ -47,7 +45,9 @@ def vector_to_nw(x: Vector, native_namespace: ModuleType | None = None) -> nw.Se
                 "x is a numpy object but no native_namespace was provided to "
                 "load it into narwhals."
             )
-        return nw.new_series(name="column_0", values=x, native_namespace=native_namespace)
+        return nw.new_series(
+            name="column_0", values=x, native_namespace=native_namespace
+        )
     if is_into_series(x):
         return nw.from_native(x, series_only=True, eager_only=True)
     raise TypeError(f"Unexpected type {type(x)} for Vector.")
