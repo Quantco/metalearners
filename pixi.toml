@@ -85,7 +85,7 @@ readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPU
 # Notebook testing
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
-nb-assert-output = "sh nb-output-check.sh"
+nb-assert-output = "./nb-output-check.sh"
 
 [feature.build.dependencies]
 python-build = "*"
