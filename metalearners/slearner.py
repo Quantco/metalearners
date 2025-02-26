@@ -146,9 +146,10 @@ def _append_treatment_to_covariates_with_categorical(
             )
             # By default, the columns are named column_i by narwhals.
             # The pandas behavior we are used to relies on naming them i.
-            return nw.from_numpy(X, native_namespace=pd).rename(
-                {f"column_{i}": str(i) for i in range(X.shape[1])}
-            )
+            # We imitate the pandas behavior here.
+            column_names = [str(i) for i in range(X.shape[1])]
+            return nw.from_numpy(X, native_namespace=pd, schema=column_names)
+
         if isinstance(X, csr_matrix):
             warnings.warn(
                 "Converting the input covariates X from a scipy csr_matrix to a "
