@@ -84,7 +84,6 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             mask = self._treatment_variants_mask[treatment_variant]
             X_variant = index_matrix(X, mask)
             y_variant = index_vector(y, mask)
-            # breakpoint()
             nuisance_jobs.append(
                 self._nuisance_joblib_specifications(
                     X=X_variant,
