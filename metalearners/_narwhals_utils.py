@@ -58,11 +58,7 @@ def vector_to_nw(x: Vector, native_namespace: ModuleType | None = None) -> nw.Se
 
 
 def infer_native_namespace(df_nw: nw.DataFrame) -> ModuleType:
-    if df_nw.implementation.name == "PANDAS":
-        return pd
-    if df_nw.implementation.name == "POLARS":
-        return pl
-    raise TypeError("Couldn't infer native_namespace of matrix.")
+    return df_nw.implementation.to_native_namespace()
 
 
 def stringify_column_names(df_nw: nw.DataFrame) -> nw.DataFrame:
