@@ -186,17 +186,17 @@ def _append_treatment_to_covariates(
 ) -> Matrix:
     """Append treatment column to covariates.
 
-    If ``support_categoricals`` is ``False``:
+    If `support_categoricals` is `False`:
 
     * the returned result will be of the same type as ``X``
     * the treatment is appended with one-hot-encoding, where the
       treatment value column is omitted
 
-    If ``support_categoricals`` is ``True``:
+    If `support_categoricals` is `True`:
 
-    * the returned result will be a ``pandas.DataFrame``, except
-      if ``X`` was a ``polars.DataFrame``; in the latter case
-      the returned result will be a ``polars.DataFrame``, too
+    * the returned result will be a `pandas.DataFrame`, except
+      if `X` was a `polars.DataFrame`; in the latter case
+      the returned result will be a `polars.DataFrame`, too
     * the treatment is appended with a categorical column
     """
     w = adapt_treatment_dtypes(w)

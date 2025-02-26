@@ -18,7 +18,7 @@ def nw_to_dummies(
 
     This operation is also referred to as one-hot-encoding.
 
-    ``x`` is expected to have values which can be cast to integer.
+    `x` is expected to have values which can be cast to integer.
     """
     if len(categories) < 2:
         raise ValueError(
