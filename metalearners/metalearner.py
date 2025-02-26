@@ -11,6 +11,7 @@ import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
 import shap
+from scipy.sparse import csr_matrix
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import KFold
 from typing_extensions import Self
@@ -124,7 +125,7 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
         return X
     if len(feature_set) == 0:
         return np.ones((safe_len(X), 1))
-    if isinstance(X, np.ndarray):
+    if isinstance(X, np.ndarray) or isinstance(X, csr_matrix):
         return X[:, np.array(feature_set)]
     if nw.dependencies.is_into_dataframe(X):
         X_nw = nw.from_native(X, eager_only=True)
