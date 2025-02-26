@@ -33,7 +33,8 @@ While MetaLearners are, in principle, designed in a very modular fashion, we've 
 
 One reason to access the base models is to evaluate their individual performance. Due to the fundamental problem of Causal Inference, we are not able to evaluate a MetaLearner based on a simple metric measuring the mismatch between estimate and ground truth. Yet, we might want to do this for our base learners which often do have ground truth labels to compare the estimates to. Yet, this is not supported by `econml` and `causalml`.
 
-![Component Evaluation](imgs/component_eval.drawio.svg)
+![Component Evaluation](imgs/component_eval.drawio.svg#only-light)
+![Component Evaluation](imgs/component_eval_white.drawio.svg#only-dark)
 
 In the illustration above, we indicate that we'd like to access, predict with, and evaluate a propensity model -- one base model of the MetaLearner at hand -- in isolation.
 
@@ -49,7 +50,9 @@ We envision two concrete use cases where this might be relevant in that it would
 
 - When training several MetaLearner architectures on the same dataset, some base models might be part of the design of several of these MetaLearner architectures. An example of this could be an outcome model, used in both the R-Learner and DR-Learner. In such a scenario, it seems desirable to reuse the conceptually equivalent outcome model instead of training it several times.
 
-![Component Reuse](imgs/component_reuse.drawio.svg)
+![Component Reuse](imgs/component_reuse.drawio.svg#only-light)
+![Component Reuse](imgs/component_reuse_white.drawio.svg#only-dark)
+
 
 The illustration above indicates the intention to reuse an already trained base estimator as part of a MetaLearner.
 
@@ -71,7 +74,8 @@ Most base learners in a MetaLearner expect some covariate matrix `X`. Conceptual
 
 In the following illustration, we indicate that we have a column-wise partitioning of `X` into `X1` and `X2`. One base estimator relies on `X1` only, one on `X2` only, and one on `X`, i.e., `X1` and `X2`.
 
-![Covariate Sets](imgs/covariate_sets.drawio.svg)
+![Covariate Sets](imgs/covariate_sets.drawio.svg#only-light)
+![Covariate Sets](imgs/covariate_sets_white.drawio.svg#only-dark)
 
 For this reason, we would want to be able to define which covariate set is used by which base learner. This is currently not supported by `econml` or `causalml`.
 
