@@ -129,12 +129,14 @@ def _append_treatment_to_covariates_with_categorical(
     w: Vector,
     categories: Sequence,
 ) -> Matrix:
-    # This is necessary as each model works differently with categoricals,
-    # in some you need to specify them on instantiation while some others on
-    # fitting. This solutions converts it to a pd.DataFrame as most of the models
-    # have some "automatic" detection of categorical features based on pandas
-    # dtypes. Theoretically it would be possible to get around this conversion
-    # but it would require loads of model specific code.
+    """Append treatment column as categorical to covariates.
+
+    This is useful for models which automatically detect categoricals based on dtypes of
+    the columns.
+
+    For reference, see e.g.
+    https://lightgbm.readthedocs.io/en/latest/Advanced-Topics.html#categorical-feature-support
+    """
 
     def convert_matrix_to_nw(X: Matrix) -> nw.DataFrame:
         if isinstance(X, np.ndarray):
@@ -181,7 +183,7 @@ def _append_treatment_to_covariates_with_categorical(
 def _append_treatment_to_covariates(
     X: Matrix, w: Vector, supports_categoricals: bool, n_variants: int
 ) -> Matrix:
-    """Appends treatment columns to covariates.
+    """Append treatment column to covariates.
 
     If ``support_categoricals`` is ``False``:
 
