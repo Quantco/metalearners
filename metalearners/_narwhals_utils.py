@@ -47,11 +47,7 @@ def vector_to_nw(x: Vector, native_namespace: ModuleType | None = None) -> nw.Se
                 "x is a numpy object but no native_namespace was provided to "
                 "load it into narwhals."
             )
-        # narwhals doesn't seem to like 1d numpy arrays. Therefore we first convert to
-        # a 2d np array and then convert the narwhals DataFrame to a narwhals Series.
-        return nw.from_numpy(x.reshape(-1, 1), native_namespace=native_namespace)[
-            "column_0"
-        ]
+        return nw.new_series(name="column_0", values=x, native_namespace=native_namespace)
     if is_into_series(x):
         return nw.from_native(x, series_only=True, eager_only=True)
     raise TypeError(f"Unexpected type {type(x)} for Vector.")
