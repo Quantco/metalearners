@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 
@@ -11,7 +11,6 @@ from typing_extensions import Self
 from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitModel
 from metalearners._utils import (
     check_spox_installed,
-    copydoc,
     get_one,
     get_predict,
     get_predict_proba,
@@ -42,11 +41,11 @@ TREATMENT_EFFECT_MODEL = "treatment_effect_model"
 
 
 class XLearner(_ConditionalAverageOutcomeMetaLearner):
-    """X-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_.
+    """X-Learner for CATE estimation as described by [Kuenzel et al (2019)](https://arxiv.org/pdf/1706.03461.pdf).
 
     Importantly, the current X-Learner implementation only supports:
 
-        * binary classes in case of a classification outcome
+    * binary classes in case of a classification outcome
     """
 
     @classmethod
@@ -454,7 +453,6 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
             ),
         }
 
-    @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the XLearner case, the necessary models are:
 

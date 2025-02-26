@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Collection
@@ -25,10 +25,10 @@ class Explainer:
     r"""Responsible class for managing all functions related to feature explanation and
     interpretation.
 
-    The ``cate_models`` parameter should be a list of length :math:`n_{variants} -1` containing
-    a model for each treatment variant which estimates :math:`\tau_k`. The models should not be a
-    :class:`~metalearners.cross_fit_estimator.CrossFitEstimator` rather just a plain ``sklearn``
-    ``BaseEstimator``. A suggested option in the case of a :class:`~metalearners.cross_fit_estimator.CrossFitEstimator`
+    The ``cate_models`` parameter should be a list of length $n_{variants} -1$ containing
+    a model for each treatment variant which estimates $\tau_k$. The models should not be a
+    [`CrossFitEstimator`][metalearners.cross_fit_estimator.CrossFitEstimator] rather just a plain ``sklearn``
+    ``BaseEstimator``. A suggested option in the case of a [`CrossFitEstimator`][metalearners.cross_fit_estimator.CrossFitEstimator]
     would be to use their ``_overall_estimator``. These models should already be fitted
     on the data.
     """
@@ -129,7 +129,7 @@ class Explainer:
 
         The parameter ``shap_explainer_factory`` can be used to specify the type of shap
         explainer, for the different options see
-        `here <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
+        [here](https://shap.readthedocs.io/en/latest/api.html#explainers).
         """
         if shap_explainer_params is None:
             shap_explainer_params = {}

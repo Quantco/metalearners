@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from typing import Literal
@@ -34,13 +34,13 @@ def generate_categoricals(
     Generates a dataset of ``n_obs`` observations and ``n_features`` categorical
     features. The first ``n_uniform`` features are sampled uniformly across their
     categories and the rest are sampled from a binomial distribution with parameters
-    :math:`n = c_i` and :math:`p=` ``p_binomial`` where :math:`c_i` is the number of
-    categories of feature :math:`i`.
+    $n = c_i$ and $p = p\_binomial$ where $c_i$ is the number of
+    categories of feature $i$.
 
     ``n_categories`` is the number of categories of the features, it can either be an int
     which is used for all the features or an array of length ``n_features``. If None,
     the number of categories for each feature is sampled from
-    :math:`c_i \sim \mathcal{U}\{2,3,\dots,10\}`.
+    $c_i \sim \mathcal{U}\{2,3,\dots,10\}$.
 
     In case ``n_uniform`` is None, all features are sampled uniformly.
 
@@ -93,15 +93,15 @@ def generate_numericals(
     r"""Generate a dataset of numerical features.
 
     Generates a dataset of ``n_obs`` observations and ``n_features`` numerical features.
-    These are sampled from :math:`\mathcal{N}(\mu, \Sigma)` where
-    :math:`\mu \sim \mathcal{U}[-5,5]` unless specified in ``mu`` and
-    :math:`\Sigma \sim \mathcal{W}(d, \sigma_w I_d)` where :math:`W` is the Wishart
-    distribution and :math:`d` the number of features.
+    These are sampled from $\mathcal{N}(\mu, \Sigma)$ where
+    $\mu \sim \mathcal{U}[-5,5]$ unless specified in ``mu`` and
+    $\Sigma \sim \mathcal{W}(d, \sigma_w I_d)$ where $W$ is the Wishart
+    distribution and $d$ the number of features.
 
 
     ``mu`` can be either a float or an array of length ``n_features``.
 
-    ``wishart_scale`` should be :math:`\geq 0` , in case it is 0 then :math:`\Sigma = I_d`.
+    ``wishart_scale`` should be $\geq 0$ , in case it is 0 then $\Sigma = I_d$.
     """
     if rng is None:
         rng = default_rng
@@ -142,20 +142,20 @@ def generate_covariates(
     Dataset is composed of ``n_obs`` observations and ``n_features`` features, with the
     first ``n_features - n_categoricals`` being numerical and the rest being categorical.
     Numerical features are generated using the function
-    :func:`metalearners.data_generation.generate_numericals` and categorical features are
-    generated using the function :func:`metalearners.data_generation.generate_categoricals`.
+    [`generate_numericals`][metalearners.data_generation.generate_numericals] and categorical features are
+    generated using the function [`generate_categoricals`][metalearners.data_generation.generate_categoricals].
 
     By default, the generated dataset is returned as a Pandas DataFrame where categorical
-    features are converted to ``pandas``\' `Categorical <https://pandas.pydata.org/docs/reference/api/pandas.Categorical.html#pandas.Categorical>`_
+    features are converted to ``pandas``' [Categorical](https://pandas.pydata.org/docs/reference/api/pandas.Categorical.html#pandas.Categorical)
     type. Optionally, the dataset can be returned as a numpy array with dtype ``float64``
     with ``format = "numpy"``. If generating categorical variables, working with pandas
     DataFrames is preferred as they have support for category dtype.
 
     For ``mu`` and ``wishart_scale`` see the docstring for
-    :func:`metalearners.data_generation.generate_numericals`.
+    [`generate_numericals`][metalearners.data_generation.generate_numericals]
 
     For ``n_categories``, ``n_uniform``, ``p_binomial`` and  ``use_strings``
-    see the docstring for :func:`metalearners.data_generation.generate_categoricals`.
+    see the docstring for [`generate_categoricals`][metalearners.data_generation.generate_categoricals].
 
     ``use_strings`` can only be set to ``True`` when using ``format = "pandas"``.
 
@@ -293,7 +293,7 @@ def compute_experiment_outputs(
     This function generates experiment outputs and the true CATE values based on the
     given potential outcomes function and treatments. The treatment effect for each
     observation is computed as the difference in potential outcomes. Normally
-    distributed noise is added to the response variable :math:`Y_i(0)` with standard
+    distributed noise is added to the response variable $Y_i(0)$ with standard
     deviation ``sigma_y`` and to each corresponding treatment effect to simulate
     real-world variance with standard deviation ``sigma_tau``.
 
@@ -311,7 +311,7 @@ def compute_experiment_outputs(
     If True, the function simulates a classification problem where the response variable is binary
     and the proportion of positive outputs is controlled by the ``positive_proportion`` parameter.
     It is important to notice that the potential outputs are passed through a sigmoid function and
-    therefore the domain of them can be :math:`\mathbb{R}`. Classification problems are
+    therefore the domain of them can be $\mathbb{R}$. Classification problems are
     only implemented for binary treatments.
 
     In the case of a classification problem ``return_probability_cate`` specifies if the

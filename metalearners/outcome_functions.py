@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Callable
@@ -25,8 +25,9 @@ def constant_treatment_effect(
 ) -> Callable:
     r"""Generate a potential outcomes function with constant treatment effect.
 
-    .. math::
-        f(x_i, w_i) = x_i' \beta_{control} + \sum_{k=1}^{n_v-1} \tau_k \cdot \mathcal{I}(\{w_i = k\})
+    $$
+    f(x_i, w_i) = x_i' \beta_{control} + \sum_{k=1}^{n_v-1} \tau_k \cdot \mathcal{I}(\{w_i = k\})
+    $$
 
     where :math:`x_i` is a vector of features, :math:`\tau` a vector of treatment effects,
     :math:`w_i` the treatment indicator, :math:`n_v` the number of variants and

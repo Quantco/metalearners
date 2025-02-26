@@ -1,0 +1,16 @@
+/*
+Hides the In[ ] blocks in rendered jupyter notebooks.
+Out[ ] blocks are not displayed.
+*/
+.jp-InputPrompt, .jp-OutputPrompt {
+    display: none !important;
+}
+
+/*
+Note: For some reason, ".jp-OutputArea-area pre" didn't work as selector.
+But by introducing the custom class that is added through the plugin to jupyter
+input or output cells, we can target the pre tags inside the cells.
+*/
+.jupyter-custom-highlight .jp-OutputArea-area > pre {
+    white-space: pre;
+}

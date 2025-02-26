@@ -70,12 +70,22 @@ doubleml = "*"
 lime = "*"
 statsmodels = "*"
 nbconvert = "*"
+mkdocs-jupyter = ">=0.24.8,<0.25"
+mkdocs-material = ">=9.5.31,<10"
+mkdocstrings = ">=0.25.2"
+mkdocstrings-python = ">=1.12,<2"
+griffe-inherited-docstrings = ">=1.1.1,<2"
+ruff = "*"
+
 [feature.docs.tasks]
-# Note that this task will fail on systems without bash.
+# Postinstall task needs to be executed in 'docs' environment beforehand to resolve API references
+docs = "mkdocs serve"
+docs-build = "mkdocs build --strict"
+readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r site/ $READTHEDOCS_OUTPUT/html"
+# Notebook testing
 nb-convert = "nb-convert.sh"
 nb-mypy = "mypy docs/examples/*.py"
-docs = "cd docs && make html "
-readthedocs = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html"
+nb-assert-output = "./nb-output-check.sh"
 
 [feature.build.dependencies]
 python-build = "*"

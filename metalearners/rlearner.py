@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 
@@ -13,7 +13,6 @@ from metalearners._typing import Matrix, OosMethod, Scoring, Vector, _ScikitMode
 from metalearners._utils import (
     check_spox_installed,
     clip_element_absolute_value_to_epsilon,
-    copydoc,
     function_has_argument,
     get_one,
     get_predict,
@@ -57,11 +56,12 @@ def r_loss(
 
     This function computes:
 
-    .. math::
-        \sqrt{\frac{1}{N}\sum_{i=1}^N ((y_i - \mu(X_i)) - \hat{\tau}(X_i)
-        (w_i - e(X_i)))^2}
+    $$
+    \sqrt{\frac{1}{N}\sum_{i=1}^N ((y_i - \mu(X_i)) - \hat{\tau}(X_i)
+    (w_i - e(X_i)))^2}
+    $$
 
-    The R-Learner proposed in `Nie et al. (2017) <https://arxiv.org/pdf/1712.04912.pdf>`_
+    The R-Learner proposed in [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912.pdf)
     relies on a loss function which can be used in combination with empirical risk
     minimization to learn a CATE model.
 
@@ -85,35 +85,35 @@ def r_loss(
 
 
 class RLearner(MetaLearner):
-    r"""R-Learner for CATE estimation as described by `Nie et al. (2017) <https://arxiv.org/pdf/1712.04912.pdf>`_.
+    r"""R-Learner for CATE estimation as described by [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912.pdf).
 
     Importantly, the current R-Learner implementation only supports:
 
-        * binary classes in case of a classification outcome
+    * binary classes in case of a classification outcome
 
     The R-Learner contains two nuisance models
 
-        * a ``"propensity_model"`` estimating :math:`\Pr[W=k|X]`
-        * an ``"outcome_model"`` estimating :math:`\mathbb{E}[Y|X]`
+    * a `"propensity_model"` estimating $\Pr[W=k|X]$
+    * an `"outcome_model"` estimating $\mathbb{E}[Y|X]$
 
     and one treatment model per treatment variant which isn't control
 
-        * ``"treatment_model"`` which estimates :math:`\mathbb{E}[Y(k) - Y(0) | X]`
+    * `"treatment_model"` which estimates $\mathbb{E}[Y(k) - Y(0) | X]$
 
-    The ``treatment_model_factory`` provided needs to support the argument
-    ``sample_weight`` in its ``fit`` method.
+    The `treatment_model_factory` provided needs to support the argument
+    `sample_weight` in its `fit` method.
     """
 
     def _validate_models(self) -> None:
         """Validate that the base models are appropriate.
 
-        In particular, it is validated that a base model to be used with ``"predict"`` is
-        recognized by ``scikit-learn`` as a regressor via ``sklearn.base.is_regressor`` and
-        a model to be used with ``"predict_proba"`` is recognized by ``scikit-learn` as
-        a classifier via ``sklearn.base.is_classifier``.
+        In particular, it is validated that a base model to be used with `"predict"` is
+        recognized by `scikit-learn` as a regressor via `sklearn.base.is_regressor` and
+        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as
+        a classifier via `sklearn.base.is_classifier`.
 
         Additionally, this method ensures that the treatment model "treatment_model" supports
-        the ``"sample_weight"`` argument in its ``fit`` method.
+        the `"sample_weight"` argument in its `fit` method.
         """
         if not function_has_argument(
             self.treatment_model_factory[TREATMENT_MODEL].fit, _SAMPLE_WEIGHT
@@ -346,7 +346,6 @@ class RLearner(MetaLearner):
             tau_hat[variant_indices, treatment_variant - 1] = variant_estimates
         return tau_hat
 
-    @copydoc(MetaLearner.evaluate, sep="\n\t")
     def evaluate(
         self,
         X: Matrix,
@@ -356,10 +355,10 @@ class RLearner(MetaLearner):
         oos_method: OosMethod = OVERALL,
         scoring: Scoring | None = None,
     ) -> dict[str, float]:
-        """In the RLearner case, the ``"treatment_model"`` is always evaluated with the
-        :func:`~metalearners.rlearner.r_loss` besides the scorers in
-        ``scoring["treatment_model"]``, which should support passing the
-        ``sample_weight`` keyword argument."""
+        """In the RLearner case, the `"treatment_model"` is always evaluated with the
+        [`r_loss`][metalearners.rlearner.r_loss] besides the scorers in
+        `scoring["treatment_model"]`, which should support passing the `sample_weight`
+        keyword argument."""
         safe_scoring = self._scoring(scoring)
 
         propensity_evaluation = _evaluate_model_kind(
@@ -480,11 +479,11 @@ class RLearner(MetaLearner):
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the R-Learner pseudo outcome and corresponding weights.
 
-        If ``mask`` is provided, the returned pseudo outcomes and weights are only
+        If `mask` is provided, the returned pseudo outcomes and weights are only
         with respect the observations that the mask selects.
 
         Since the pseudo outcome is a fraction of residuals, we add a small
-        constant ``epsilon`` to the denominator in order to avoid numerical problems.
+        constant `epsilon` to the denominator in order to avoid numerical problems.
         """
         if mask is None:
             mask = np.ones(safe_len(X), dtype=bool)
@@ -537,29 +536,12 @@ class RLearner(MetaLearner):
     def predict_conditional_average_outcomes(
         self, X: Matrix, is_oos: bool, oos_method: OosMethod = OVERALL
     ) -> np.ndarray:
-        r"""Predict the vectors of conditional average outcomes.
+        r"""The conditional average outcomes are estimated as follows:
 
-        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
-        :math:`w`.
+        * $Y_i(0) = \hat{\mu}(X_i) - \sum_{k=1}^{K} \hat{e}_k(X_i) \hat{\tau_k}(X_i)$
+        * $Y_i(k) = Y_i(0) + \hat{\tau_k}(X_i)$ for $k \in \{1, \dots, K\}$
 
-        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
-        the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
-
-        The returned ndarray is of shape:
-
-        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
-          of a regression problem.
-
-        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
-          i.e. in case of a classification problem.
-
-        The conditional average outcomes are estimated as follows:
-
-        * :math:`Y_i(0) = \hat{\mu}(X_i) - \sum_{k=1}^{K} \hat{e}_k(X_i) \hat{\tau_k}(X_i)`
-        * :math:`Y_i(k) = Y_i(0) + \hat{\tau_k}(X_i)` for :math:`k \in \{1, \dots, K\}`
-
-        where :math:`K` is the number of treatment variants.
+        where $K$ is the number of treatment variants.
         """
         n_obs = safe_len(X)
 
@@ -617,11 +599,10 @@ class RLearner(MetaLearner):
             n_obs, self.n_variants, -1
         )
 
-    @copydoc(MetaLearner._build_onnx, sep="")
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """In the RLearner case, the necessary models are:
 
-        * ``"treatment_model"``
+        * `"treatment_model"`
         """
         warning_experimental_feature("_build_onnx")
         check_spox_installed()

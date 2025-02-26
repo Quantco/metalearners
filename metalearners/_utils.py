@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -113,12 +113,14 @@ def check_propensity_score(
     """Ensure propensity scores match assumptions.
 
     The function ensures that ``propensity_scores`` and, if provided, ``features`` are:
-     * shape-compatible and contain no missing or invalid entries;
-     * the shape of ``propensity_scores`` is (nobs, ``n_variants``);
-     * propensity scores are between 0 and 1;
-     * if ``sum_to_one`` is ``True``, ``propensity_scores`` sums up to 1 for each observation.
-    Shape compatibility is checked through scikit-learn's :func:`check_X_y` and
-    :func:`check_array`; optional parameters for that method can be supplied via
+
+    * shape-compatible and contain no missing or invalid entries;
+    * the shape of ``propensity_scores`` is (nobs, ``n_variants``);
+    * propensity scores are between 0 and 1;
+    * if ``sum_to_one`` is ``True``, ``propensity_scores`` sums up to 1 for each observation.
+
+    Shape compatibility is checked through scikit-learn's `check_X_y` and
+    `check_array`; optional parameters for that method can be supplied via
     ``check_kwargs``.
     """
     if check_kwargs is None:
@@ -161,6 +163,7 @@ def convert_and_pad_propensity_score(
 
     Taking in a matrix or vector of propensity scores ``propensity_scores``, the function
     performs two things:
+
     * convert ``propensity_scores`` to an ``np.ndarray``.
     * if ``propensity_scores`` is a vector, the function will expand it to a matrix in
      case the number of variants ``n_variants`` is 2. That ensures there  is one
@@ -221,8 +224,9 @@ def get_linear_dimension(X: Matrix) -> int:
 def sigmoid(x: np.ndarray) -> np.ndarray:
     r"""Sigmoid function.
 
-    .. math::
+    $$
         \sigma (x) = \frac{1}{1+e^{-x}}
+    $$
     """
     return 1 / (1 + np.exp(-x))
 
@@ -471,7 +475,7 @@ def simplify_output_2d(tensor: np.ndarray) -> np.ndarray:
     In the case of a classification task it only works in the binary classification
     outcome and returns the CATE of the positive class.
 
-    The returned array will be of shape :math:`(n_{obs}, n_{variants} - 1)`.
+    The returned array will be of shape $(n_{obs}, n_{variants} - 1)$.
     """
     if (n_dim := len(tensor.shape)) != 3:
         raise ValueError(
