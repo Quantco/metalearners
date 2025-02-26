@@ -236,8 +236,9 @@ class _ParallelJoblibResult:
 def _fit_cross_fit_estimator_joblib(
     parallel_joblib_job: _ParallelJoblibSpecification,
 ) -> _ParallelJoblibResult:
-    r"""Helper function to call from a delayed ``joblib`` object to fit a
-    :class:`~metaleaners.cross_fit_estimator.CrossFitEstimator` in parallel."""
+    r"""Helper function to call from a delayed `joblib` object to fit a
+    [`CrossFitEstimator`][metalearners.cross_fit_estimator.CrossFitEstimator] in
+    parallel."""
     return _ParallelJoblibResult(
         model_kind=parallel_joblib_job.model_kind,
         model_ord=parallel_joblib_job.model_ord,
@@ -257,31 +258,31 @@ class MetaLearner(ABC):
 
     All of
 
-    * ``nuisance_model_factory``
-    * ``treatment_model_factory``
-    * ``nuisance_model_params``
-    * ``treatment_model_params``
-    * ``feature_set``
+    * `nuisance_model_factory`
+    * `treatment_model_factory`
+    * `nuisance_model_params`
+    * `treatment_model_params`
+    * `feature_set`
 
     can either
 
     * contain a single value, such that the value will be used for all relevant models
       of the respective MetaLearner or
-    * a dictionary mapping from the relevant models (``model_kind``, a ``str``) to the
+    * a dictionary mapping from the relevant models (`model_kind`, a `str`) to the
       respective value; at least all relevant models need to be present, more are allowed
       and ignored
 
-    The possible values for defining ``feature_set`` (either one single value for all
+    The possible values for defining `feature_set` (either one single value for all
     the models or the values inside the dictionary specifying for each model) can be:
 
-    * ``None``: All columns will be used.
+    * `None`: All columns will be used.
     * A list of strings or integers indicating which columns to use.
-    * ``[]`` meaning that no present column should be used for that model and the
+    * `[]` meaning that no present column should be used for that model and the
       input of the model should be a vector of 1s.
 
-    To reuse already fitted models  ``fitted_nuisance_models`` and ``fitted_propensity_model``
+    To reuse already fitted models  `fitted_nuisance_models` and `fitted_propensity_model`
     should be used. The models should be fitted on the same data the MetaLearner is going
-    to call fit with. For an illustration, see :ref:`our example on reusing models <example-reuse>`.
+    to call fit with. For an illustration, see [our example on reusing models](examples/example_reuse.ipynb).
     """
 
     @classmethod
@@ -364,10 +365,10 @@ class MetaLearner(ABC):
     def _validate_models(self) -> None:
         """Validate that the base models are appropriate.
 
-        In particular, it is validated that a base model to be used with ``"predict"`` is
-        recognized by ``scikit-learn`` as a regressor via ``sklearn.base.is_regressor`` and
-        a model to be used with ``"predict_proba"`` is recognized by ``scikit-learn` as
-        a classifier via ``sklearn.base.is_classifier``.
+        In particular, it is validated that a base model to be used with `"predict"` is
+        recognized by `scikit-learn` as a regressor via `sklearn.base.is_regressor` and
+        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as
+        a classifier via `sklearn.base.is_classifier`.
         """
         for model_kind in self.nuisance_model_specifications():
             if model_kind in self._prefitted_nuisance_models:
@@ -616,7 +617,7 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
-        ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
+        `y` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
         If pre-fitted models were passed at instantiation, these are never refitted.
         """
         if model_kind in self._prefitted_nuisance_models:
@@ -641,10 +642,10 @@ class MetaLearner(ABC):
         n_jobs_cross_fitting: int | None = None,
         cv: SplitIndices | None = None,
     ) -> _ParallelJoblibSpecification | None:
-        r"""Create a :class:`metalearners.metalearner._ParallelJoblibSpecification` to
-        fit the corresponding nuisance model.
+        r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
+        oblibSpecification] to fit the corresponding nuisance model.
 
-        ``y`` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
+        `y` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
         If pre-fitted models were passed at instantiation, these are never refitted.
         """
         if model_kind in self._prefitted_nuisance_models:
@@ -668,8 +669,8 @@ class MetaLearner(ABC):
     def _assign_joblib_nuisance_results(
         self, joblib_results: list[_ParallelJoblibResult]
     ) -> None:
-        r"""Collect the ``joblib`` results and assign the fitted
-        :class:`~metalearners.cross_fit_estimator.CrossFitEstimator` s."""
+        r"""Collect the `joblib` results and assign the fitted
+        [CrossFitEstimators][metalearners.cross_fit_estimator.CrossFitEstimator]."""
         for result in joblib_results:
             if result.model_kind not in self._nuisance_models:
                 raise ValueError(
@@ -699,7 +700,7 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit the treatment model of a MetaLearner.
 
-        ``y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
+        `y` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._treatment_models[model_kind][model_ord].fit(
@@ -721,10 +722,10 @@ class MetaLearner(ABC):
         n_jobs_cross_fitting: int | None = None,
         cv: SplitIndices | None = None,
     ) -> _ParallelJoblibSpecification:
-        r"""Create a :class:`metalearners.metalearner._ParallelJoblibSpecification` to
-        fit the corresponding treatment model.
+        r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
+        oblibSpecification] to fit the corresponding treatment model.
 
-        `y`` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
+        `y` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
         If pre-fitted models were passed at instantiation, these are never refitted.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
@@ -746,8 +747,8 @@ class MetaLearner(ABC):
     def _assign_joblib_treatment_results(
         self, joblib_results: list[_ParallelJoblibResult]
     ) -> None:
-        r"""Collect the ``joblib`` results and assign the fitted
-        :class:`~metalearners.cross_fit_estimator.CrossFitEstimator` s."""
+        r"""Collect the `joblib` results and assign the fitted
+        [CrossFitEstimators][metalearners.cross_fit_estimator.CrossFitEstimator]."""
         for result in joblib_results:
             if result.model_kind not in self._treatment_models:
                 raise ValueError(
@@ -780,14 +781,14 @@ class MetaLearner(ABC):
 
         If pre-fitted models were passed at instantiation, these are never refitted.
 
-        The only difference with :meth:`~metalearners.metalearner.MetaLearner.fit` parameters,
-        is that if ``fit_params`` follows the first usage pattern (explained in
-        :meth:`~metalearners.metalearner.MetaLearner.fit`), then the training parameters
+        The only difference with [`fit`][metalearners.metalearner.MetaLearner.fit] parameters,
+        is that if `fit_params` follows the first usage pattern (explained in
+        [`fit`][metalearners.metalearner.MetaLearner.fit]), then the training parameters
         will only be used for the nuisance models, and in the case they should also be used
         by the treatment models, these should also be passed in the following call to
-        :meth:`~metalearners.metalearner.MetaLearner.fit_all_treatment`.
+        [`fit_all_treatment`][metalearners.metalearner.MetaLearner.fit_all_treatment].
 
-        This method, combined with :meth:`~metalearners.metalearner.MetaLearner.fit_all_treatment`,
+        This method, combined with [`fit_all_treatment`][metalearners.metalearner.MetaLearner.fit_all_treatment],
         facilitates the segmentation of the metalearner fitting process into two distinct parts.
         This division allows for interventions between the two stages, such as performing
         feature selection for the treatment models or conducting hyperparameter optimization
@@ -808,9 +809,9 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit all treatment models of the MetaLearner.
 
-        The only difference with :meth:`~metalearners.metalearner.MetaLearner.fit` parameters,
-        is that if ``fit_params`` follows the first usage pattern (explained in
-        :meth:`~metalearners.metalearner.MetaLearner.fit`), then the training parameters
+        The only difference with [`fit`][metalearners.metalearner.MetaLearner.fit] parameters,
+        is that if `fit_params` follows the first usage pattern (explained in
+        [`fit`][metalearners.metalearner.MetaLearner.fit]), then the training parameters
         will only be used for the treatment models, as the nuisance models should already
         be fitted.
         """
@@ -830,36 +831,36 @@ class MetaLearner(ABC):
 
         If pre-fitted models were passed at instantiation, these are never refitted.
 
-        ``n_jobs_cross_fitting`` will be used at the cross-fitting level and
-        ``n_jobs_base_learners`` will be used at the stage level. ``None`` means 1 unless in a
-        `joblib.parallel_backend <https://joblib.readthedocs.io/en/latest/generated/joblib.parallel_backend.html#joblib.parallel_backend>`_
-        context. ``-1`` means using all processors.
-        For more information about parallelism check :ref:`parallelism`
+        `n_jobs_cross_fitting` will be used at the cross-fitting level and
+        `n_jobs_base_learners` will be used at the stage level. `None` means 1 unless in a
+        [`joblib.parallel_backend`](https://joblib.readthedocs.io/en/latest/generated/joblib.parallel_backend.html#joblib.parallel_backend)
+        context. `-1` means using all processors.
+        For more information about parallelism check [parallelism](parallelism.md).
 
 
-        ``fit_params`` is an optional ``dict`` to be forwarded to base estimator ``fit`` calls. It supports
+        `fit_params` is an optional `dict` to be forwarded to base estimator `fit` calls. It supports
         two usages patterns:
 
-        * .. code-block:: python
+        ```python
+        fit_params={"parameter_of_interest": value_of_interest}
+        ```
 
-            fit_params={"parameter_of_interest": value_of_interest}
-
-        * .. code-block:: python
-
-            fit_params={
-                "nuisance": {
-                    "nuisance_model_kind1": {"parameter_of_interest1": value_of_interest1},
-                    "nuisance_model_kind3": {"parameter_of_interest3": value_of_interest3},
-                },
-                "treatment": {"treatment_model_kind1": {"parameter_of_interest4": value_of_interest4}}
-            }
+        ```python
+        fit_params={
+            "nuisance": {
+                "nuisance_model_kind1": {"parameter_of_interest1": value_of_interest1},
+                "nuisance_model_kind3": {"parameter_of_interest3": value_of_interest3},
+            },
+            "treatment": {"treatment_model_kind1": {"parameter_of_interest4": value_of_interest4}}
+        }
+        ```
 
         In the former approach, the parameter and value of interest are passed to all base models. In the
         the latter approach, the explicitly qualified parameter-value pairs are passed to respective base
         models and no fitting parameters are passed to base models not explicitly listed. Note that in this
         pattern, propensity models are considered a nuisance model.
 
-        ``synchronize_cross_fitting`` indicates whether the learning of different base models should use exactly
+        `synchronize_cross_fitting` indicates whether the learning of different base models should use exactly
         the same data splits where possible. Note that if there are several models to be synchronized which are
         classifiers, these cannot be split via stratification.
         """
@@ -895,8 +896,8 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Estimate based on a given nuisance model.
 
-        Importantly, this method needs to implement the subselection of ``X`` based on
-        the ``feature_set`` field of ``MetaLearner``.
+        Importantly, this method needs to implement the subselection of `X` based on
+        the `feature_set` field of `MetaLearner`.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         predict_method_name = self.nuisance_model_specifications()[model_kind][
@@ -917,8 +918,8 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Estimate based on a given treatment model.
 
-        Importantly, this method needs to implement the subselection of ``X`` based on
-        the ``feature_set`` field of ``MetaLearner``.
+        Importantly, this method needs to implement the subselection of `X` based on
+        the `feature_set` field of `MetaLearner`.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         return self._treatment_models[model_kind][model_ord].predict(
@@ -934,16 +935,16 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Estimate the CATE.
 
-        If ``is_oos``, an acronym for 'is out of sample', is ``False``,
+        If `is_oos`, an acronym for 'is out of sample', is `False`,
         the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
+        various approaches exist, specified via `oos_method`.
 
         The returned ndarray is of shape:
 
-        * :math:`(n_{obs}, n_{variants} - 1, 1)` if the outcome is a scalar, i.e. in case
+        * $(n_{obs}, n_{variants} - 1, 1)$ if the outcome is a scalar, i.e. in case
           of a regression problem.
 
-        * :math:`(n_{obs}, n_{variants} - 1, n_{classes})` if the outcome is a class,
+        * $(n_{obs}, n_{variants} - 1, n_{classes})$ if the outcome is a class,
           i.e. in case of a classification problem.
 
         In the case of multiple treatment variants, the second dimension represents the
@@ -957,20 +958,19 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         r"""Predict the vectors of conditional average outcomes.
 
-        These are defined as :math:`\mathbb{E}[Y_i(w) | X]` for each treatment variant
-        :math:`w`.
+        These are defined as $\mathbb{E}[Y_i(w) | X]$ for each treatment variant $w$.
 
-        If ``is_oos``, an acronym for 'is out of sample' is ``False``,
+        If `is_oos`, an acronym for 'is out of sample', is `False`,
         the estimates will stem from cross-fitting. Otherwise,
-        various approaches exist, specified via ``oos_method``.
+        various approaches exist, specified via `oos_method`.
 
         The returned ndarray is of shape:
 
-        * :math:`(n_{obs}, n_{variants}, 1)` if the outcome is a scalar, i.e. in case
-          of a regression problem.
+        * $(n_{obs}, n_{variants}, 1)$ if the outcome is a scalar, i.e., in case
+        of a regression problem.
 
-        * :math:`(n_{obs}, n_{variants}, n_{classes})` if the outcome is a class,
-          i.e. in case of a classification problem.
+        * $(n_{obs}, n_{variants}, n_{classes})$ if the outcome is a class,
+        i.e., in case of a classification problem.
         """
         ...
 
@@ -986,35 +986,35 @@ class MetaLearner(ABC):
     ) -> dict[str, float]:
         r"""Evaluate the MetaLearner.
 
-        The keys in ``scoring`` which are not a name of a model contained in the MetaLearner
+        The keys in `scoring` which are not a name of a model contained in the MetaLearner
         will be ignored, for information about this names check
-        :meth:`~metalearners.metalearner.MetaLearner.nuisance_model_specifications` and
-        :meth:`~metalearners.metalearner.MetaLearner.treatment_model_specifications`.
+        [`nuisance_model_specifications`][metalearners.metalearner.MetaLearner.nuisance_model_specifications] and
+        [`treatment_model_specifications`][metalearners.metalearner.MetaLearner.treatment_model_specifications].
         The values must be a list of:
 
-        * ``string`` representing a ``sklearn`` scoring method. Check
-          `here <https://scikit-learn.org/stable/modules/model_evaluation.html#common-cases-predefined-values>`__
+        * `string` representing a `sklearn` scoring method. Check
+          [here](https://scikit-learn.org/stable/modules/model_evaluation.html#common-cases-predefined-values)
           for the possible values.
-        * ``Callable`` with signature ``scorer(estimator, X, y_true, **kwargs)``. We recommend
-          using `sklearn.metrics.make_scorer <https://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html>`_
-          to create such a ``Callable``.
+        * `Callable` with signature `scorer(estimator, X, y_true, **kwargs)`. We recommend
+          using [`sklearn.metrics.make_scorer`](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html)
+          to create such a `Callable`.
 
-        If some model name is not present in the keys of ``scoring`` then the default used
-        metrics will be ``neg_log_loss`` if it is a classifier and ``neg_root_mean_squared_error``
+        If some model name is not present in the keys of `scoring` then the default used
+        metrics will be `neg_log_loss` if it is a classifier and `neg_root_mean_squared_error`
         if it is a regressor.
 
         The returned dictionary keys have the following structure:
 
         * For nuisance models:
 
-            * If the cardinality is one:  ``f"{model_kind}_{scorer}"``
+            * If the cardinality is one:  `f"{model_kind}_{scorer}"`
             * If there is one model for each treatment variant (including control):
-              ``f"{model_kind}_{treatment_variant}_{scorer}"``
+              `f"{model_kind}_{treatment_variant}_{scorer}"`
 
-        * For treatment models: ``f"{model_kind}_{treatment_variant}_vs_0_{scorer}"``
+        * For treatment models: `f"{model_kind}_{treatment_variant}_vs_0_{scorer}"`
 
-        Where ``scorer`` is the name of the scorer if it is a string and ``"custom_scorer_{idx}"``
-        if it is a callable where ``idx`` is the index in the ``scorers`` list.
+        Where `scorer` is the name of the scorer if it is a string and `"custom_scorer_{idx}"`
+        if it is a callable where `idx` is the index in the `scorers` list.
         """
         ...
 
@@ -1025,17 +1025,18 @@ class MetaLearner(ABC):
         cate_model_factory: type[_ScikitModel] | None = None,
         cate_model_params: Params | None = None,
     ) -> Explainer:
-        r"""Create an :class:`~metalearners.explainer.Explainer` which can be used in
-        :py:meth:`~metalearners.metalearner.MetaLearner.feature_importances`.
+        r"""Create an [`Explainer`][metalearners.explainer.Explainer]
+
+        which can be used in [`feature_importances`][metalearners.metalearner.MetaLearner.feature_importances].
 
         This function can be used in two distinct manners based on the provided parameters:
 
-        *   When parameters ``X``, ``cate_estimates``, and ``cate_model_factory`` are all
-            set to ``None``, the function creates an :class:`~metalearners.explainer.Explainer`
+        *   When parameters `X`, `cate_estimates`, and `cate_model_factory` are all
+            set to `None`, the function creates an [`Explainer`][metalearners.explainer.Explainer]
             using the pre-existing treatment models. If these models do not exist, however,
-            it triggers a ``ValueError``.
-        *   On the contrary, if ``X``, ``cate_estimates``, and ``cate_model_factory`` are
-            not ``None``, the function initiates an instance of the :class:`~metalearners.explainer.Explainer`
+            it triggers a `ValueError`.
+        *   On the contrary, if `X`, `cate_estimates`, and `cate_model_factory` are
+            not `None`, the function initiates an instance of the [`Explainer`][metalearners.explainer.Explainer]
             class using these parameters. This instance then fits new models for each
             treatment variant, and these models are employed to calculate the importance
             of features.
@@ -1080,17 +1081,17 @@ class MetaLearner(ABC):
     ) -> list[pd.Series]:
         r"""Calculates the feature importance for each treatment group.
 
-        If ``explainer`` is ``None``, a new :class:`~metalearners.explainer.Explainer`
-        is created using :py:meth:`~metalearners.metalearner.MetaLearner.explainer`
-        with the passed parameters. If ``explainer`` is not ``None``, then the parameters
-        ``X``, ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
+        If `explainer` is `None`, a new [`Explainer`][metalearners.explainer.Explainer]
+        is created using [`MetaLearner.explainer`][metalearners.metalearner.MetaLearner.explainer]
+        with the passed parameters. If `explainer` is not `None`, then the parameters
+        `X`, `cate_estimates`, `cate_model_factory` and `cate_model_params` are
         ignored.
 
-        If ``normalization = True``, for each treatment variant the feature importances
+        If `normalization = True`, for each treatment variant the feature importances
         are normalized so that they sum to 1.
 
-        ``feature_names`` is optional but in the case it's not passed the names of the
-        features will default to ``f"Feature {i}"`` where ``i`` is the corresponding
+        `feature_names` is optional but in the case it's not passed the names of the
+        features will default to `f"Feature {i}"` where `i` is the corresponding
         feature index.
 
         The returned list contains the feature importances for each treatment variant in
@@ -1119,15 +1120,15 @@ class MetaLearner(ABC):
     ) -> list[np.ndarray]:
         """Calculates the shap values for each treatment group.
 
-        If ``explainer`` is ``None`` a new :class:`~metalearners.explainer.Explainer`
-        is created using :py:meth:`~metalearners.metalearner.MetaLearner.explainer`
-        with the passed parameters. If `explainer`` is not ``None``, then the parameters
-        ``cate_estimates``, ``cate_model_factory`` and ``cate_model_params`` are
+        If `explainer` is `None` a new [`Explainer`][metalearners.explainer.Explainer]
+        is created using [`MetaLearner.explainer`][metalearners.metalearner.MetaLearner.explainer]
+        with the passed parameters. If `explainer` is not `None`, then the parameters
+        `cate_estimates`, `cate_model_factory` and `cate_model_params` are
         ignored.
 
-        The parameter ``shap_explainer_factory`` can be used to specify the type of shap
+        The parameter `shap_explainer_factory` can be used to specify the type of shap
         explainer, for the different options see
-        `here <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
+        [here](https://shap.readthedocs.io/en/latest/api.html#explainers).
 
         The returned list contains the shap values for each treatment variant in ascending
         order.
@@ -1221,11 +1222,12 @@ class MetaLearner(ABC):
         """Validates that the converted ONNX models are correct.
 
         Specifically it validates the following:
-        * The ``necessary_models`` are equal to the keys of the ``models``` dictionary
+
+        * The `necessary_models` are equal to the keys of the `models` dictionary
         * The number of models for each model matches the cardinality in the MetaLearner
         * All ONNX have the same input format
-        * The models with ``"predict"`` as ``predict_method`` have only one output
-        * The models with ``"predict_proba"`` as ``predict_method`` have a probabilities output
+        * The models with `"predict"` as `predict_method` have only one output
+        * The models with `"predict_proba"` as `predict_method` have a probabilities output
         """
         if set(models.keys()) != necessary_models:
             raise ValueError(
@@ -1272,7 +1274,7 @@ class MetaLearner(ABC):
         for feature_set in self.feature_set.values():
             if feature_set is not None:
                 raise ValueError(
-                    "ONNX conversion can only be used if all base models have ``None`` "
+                    "ONNX conversion can only be used if all base models have `None` "
                     "as feature set (and therefore use all the features)."
                 )
 
@@ -1291,19 +1293,20 @@ class MetaLearner(ABC):
     def _build_onnx(self, models: Mapping[str, Sequence], output_name: str = "tau"):
         """Convert the MetaLearner to an ONNX model.
 
-        .. warning::
+        !!! warning
+
             This is a experimental feature which is not subject to deprecation cycles. Use
             it at your own risk!
 
-        ``output_name`` can be used to change the output name of the ONNX model.
+        `output_name` can be used to change the output name of the ONNX model.
 
-        ``models`` should be a dictionary of sequences with the necessary base models converted to
+        `models` should be a dictionary of sequences with the necessary base models converted to
         ONNX. The necessary models for the specific MetaLearner can be accessed with
-        :meth:`~metalearners.metalearner.MetaLearner._necessary_onnx_models`.
+        [`_necessary_onnx_models`][metalearners.metalearner.MetaLearner._necessary_onnx_models].
 
-        This method combines the the converted ONNX base models into a single ONNX model.
-        This combined model has a single 2D input ``"X"`` and a single output named
-        ``output_name``.
+        This method combines the converted ONNX base models into a single ONNX model.
+        This combined model has a single 2D input `"X"` and a single output named
+        `output_name`.
         """
         ...
 

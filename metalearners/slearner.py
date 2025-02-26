@@ -227,7 +227,7 @@ def _append_treatment_to_covariates(
 
 
 class SLearner(MetaLearner):
-    """S-Learner for CATE estimation as described by `Kuenzel et al (2019) <https://arxiv.org/pdf/1706.03461.pdf>`_."""
+    """S-Learner for CATE estimation as described by [Kuenzel et al (2019)](https://arxiv.org/pdf/1706.03461.pdf)."""
 
     @classmethod
     def nuisance_model_specifications(cls) -> dict[str, _ModelSpecifications]:

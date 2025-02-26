@@ -1,0 +1,117 @@
+site_name: metalearners
+site_description: MetaLearners for Conditional Average Treatment Effect (CATE) estimation
+site_url: https://metalearners.readthedocs.io/
+theme:
+  name: material
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+    - navigation.tabs
+  icon:
+    repo: fontawesome/brands/github-alt
+    edit: material/pencil
+repo_name: quantco/metalearners
+repo_url: https://github.com/quantco/metalearners
+edit_uri: edit/main/docs/
+plugins:
+  - search
+  - mkdocs-jupyter:
+      ignore_h1_titles: false # Heading H1 -> Site title
+      execute: false
+      allow_errors: false
+      show_input: true
+      include_source: true
+      no_input: false
+      highlight_extra_classes: jupyter-custom-highlight
+
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [metalearners]
+          options:
+            filters: # Disable all single underscore methods ("protected")
+              - "!^_"
+              - "^__" # re-enable double underscore methods ("dunder")
+            extensions:
+              - griffe_inherited_docstrings:
+                  merge: true
+            allow_inspection: true
+            show_signature_annotations: true
+            show_signature: true
+            show_symbol_type_heading: true
+            docstring_style: "google" # null for no tables
+            docstring_section_style: "table"
+            separate_signature: true
+            merge_init_into_class: true
+            show_submodules: true # show *all* code docu
+            inherited_members: true
+
+nav:
+  # Demonstrate notebook inclusion
+  - Welcome: index.md
+  - Motivation: motivation.md
+  - Background: background.md
+  - FAQ: faq.md
+  - Examples:
+      - examples/index.md
+      - examples/example_basic.ipynb
+      - examples/example_estimating_ates.ipynb
+      - examples/example_reuse.ipynb
+      - examples/example_lime.ipynb
+      - examples/example_feature_importance_shap.ipynb
+      - examples/example_optuna.ipynb
+      - examples/example_gridsearch.ipynb
+      - examples/example_data_generation.ipynb
+      - examples/example_survival.ipynb
+      - examples/example_propensity.ipynb
+      - examples/example_onnx.ipynb
+      - examples/example_sparse_inputs.ipynb
+  - What About Parallelism: parallelism.md
+  - API Documentation: api_documentation.md
+  - Glossary: glossary.md
+  - Development: development.md
+  - Changelog:
+      - changelog.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - smarty
+  - pymdownx.tasklist: # Allow for use of check boxes like in gh flavored md
+      custom_checkbox: true
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/katex.js
+  - javascripts/external_links.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
+  - styles/custom.css

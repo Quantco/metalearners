@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -156,7 +156,7 @@ class CrossFitEstimator:
         If ``enable_overall`` is set, an additional estimator is trained on all data.
 
         ``n_jobs_cross_fitting`` can be used to specify the number of jobs for cross-fitting.
-        For more information see the `sklearn glossary <https://scikit-learn.org/stable/glossary.html#term-n_jobs>`_.
+        For more information see the [sklearn glossary](https://scikit-learn.org/stable/glossary.html#term-n_jobs).
 
         ``cv`` can optionally be passed. If passed, it is expected to be a list of
         (train_indices, test_indices) tuples indicating how to split the data at hand
