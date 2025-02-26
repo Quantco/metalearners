@@ -3,8 +3,7 @@
 ## Contents
 
 <!-- Nested lists need 4 spaces indentation -->
-<!-- markdownlint-disable MD007 -->
-<!-- prettier-ignore -->
+
 - [Motivation](motivation.md)
     - [Why CATE estimation?](motivation.md/#why-cate-estimation)
     - [Why MetaLearners?](motivation.md/#why-metalearners)
