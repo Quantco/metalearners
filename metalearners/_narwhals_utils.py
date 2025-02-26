@@ -29,6 +29,11 @@ def nw_to_dummies(
     if set(categories) < set(x.unique()):
         raise ValueError("We observed a value which isn't part of the categories.")
 
+    if any(x.is_null()):
+        raise ValueError(
+            "Can only apply nw_to_dummies on a narwhals Series without null values."
+        )
+
     relevant_categories = categories[1:] if drop_first else categories
     return x.to_frame().select(
         [
