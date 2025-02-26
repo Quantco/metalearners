@@ -13,6 +13,7 @@ from typing_extensions import Self
 from metalearners._narwhals_utils import (
     infer_native_namespace,
     nw_to_dummies,
+    stringify_column_names,
     vector_to_nw,
 )
 from metalearners._typing import (
@@ -42,10 +43,6 @@ from metalearners.metalearner import (
 _BASE_MODEL = "base_model"
 
 _TREATMENT = "treatment"
-
-
-def _stringify_column_names(df_nw):
-    return df_nw.rename({column: str(column) for column in df_nw.columns})
 
 
 def _np_to_dummies(
@@ -87,7 +84,7 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
         X_nw = nw.from_native(X, eager_only=True)
         # Some models (e.g. sklearn's LinearRegression) raise an error if some column
         # names are integers and some strings.
-        X_nw = _stringify_column_names(X_nw)
+        X_nw = stringify_column_names(X_nw)
 
         # Note that it could be the case that w is a np.ndarray object
         # even if X is a dataframe. Therefore we have a conversion
@@ -159,7 +156,7 @@ def _append_treatment_to_covariates_with_categorical(
         return nw.from_native(X, eager_only=True)
 
     X_nw = convert_matrix_to_nw(X)
-    X_nw = _stringify_column_names(X_nw)
+    X_nw = stringify_column_names(X_nw)
 
     w_nw = vector_to_nw(w, native_namespace=infer_native_namespace(X_nw)).rename(
         _TREATMENT

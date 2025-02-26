@@ -4,7 +4,7 @@
 from collections.abc import Sequence
 from types import ModuleType
 
-import narwhals as nw
+import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -57,9 +57,13 @@ def vector_to_nw(x: Vector, native_namespace=None) -> nw.Series:
     raise TypeError(f"Unexpected type {type(x)} for Vector.")
 
 
-def infer_native_namespace(X_nw: nw.DataFrame) -> ModuleType:
-    if X_nw.implementation.name == "PANDAS":
+def infer_native_namespace(df_nw: nw.DataFrame) -> ModuleType:
+    if df_nw.implementation.name == "PANDAS":
         return pd
-    if X_nw.implementation.name == "POLARS":
+    if df_nw.implementation.name == "POLARS":
         return pl
     raise TypeError("Couldn't infer native_namespace of matrix.")
+
+
+def stringify_column_names(df_nw: nw.DataFrame) -> nw.DataFrame:
+    return df_nw.rename({column: str(column) for column in df_nw.columns})
