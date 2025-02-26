@@ -53,7 +53,6 @@ We envision two concrete use cases where this might be relevant in that it would
 ![Component Reuse](imgs/component_reuse.drawio.svg#only-light)
 ![Component Reuse](imgs/component_reuse_white.drawio.svg#only-dark)
 
-
 The illustration above indicates the intention to reuse an already trained base estimator as part of a MetaLearner.
 
 See [econml issue 646](https://github.com/py-why/EconML/issues/646) for reference. The [causalml documentation](https://causalml.readthedocs.io/en/latest/causalml.html#causalml.inference.meta.BaseDRLearner) provides no officially supported way of passing in pre-trained models. Note that the specified models are first [copied](https://github.com/uber/causalml/blob/750e84e4916e6ec1f364bd30d5504f9b0e437f93/causalml/inference/meta/drlearner.py#L113-L132) and then [fit](https://github.com/uber/causalml/blob/750e84e4916e6ec1f364bd30d5504f9b0e437f93/causalml/inference/meta/drlearner.py#L150-L203) from scratch.
