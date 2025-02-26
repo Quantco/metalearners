@@ -9,4 +9,3 @@ for notebook in docs/examples/*.ipynb; do
 done
 
 echo "All notebooks have valid execution counts."
-exit 0
