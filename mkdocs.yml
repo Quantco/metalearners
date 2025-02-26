@@ -38,11 +38,10 @@ plugins:
   - search
   - mkdocs-jupyter:
       ignore_h1_titles: false # Heading H1 -> Site title
-      execute: false # TODO: Discuss whether this should be turned back on later
+      execute: false
       allow_errors: false
       show_input: true
       include_source: true
-      # highlight_extra_classes: custom-highlight -> add custom styling to code & output cells
       no_input: false
 
   - mkdocstrings:
@@ -57,7 +56,6 @@ plugins:
               - griffe_inherited_docstrings:
                   merge: true
             allow_inspection: true
-            # unwrap_annotated: true
             show_signature_annotations: true
             show_signature: true
             show_symbol_type_heading: true
