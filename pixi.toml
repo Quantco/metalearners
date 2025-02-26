@@ -75,7 +75,7 @@ mkdocs-material = ">=9.5.31,<10"
 mkdocstrings = ">=0.25.2"
 mkdocstrings-python = ">=1.12,<2"
 griffe-inherited-docstrings = ">=1.1.1,<2"
-black = ">=24.10.0,<25" # enables formatted (e.g. line-wrapped) function signatures
+ruff = "*"
 
 [feature.docs.tasks]
 # Postinstall task needs to be executed in 'docs' environment beforehand to resolve API references
