@@ -40,7 +40,7 @@ def nw_to_dummies(
     )
 
 
-def vector_to_nw(x: Vector, native_namespace=None) -> nw.Series:
+def vector_to_nw(x: Vector, native_namespace: ModuleType | None = None) -> nw.Series:
     if isinstance(x, np.ndarray):
         if native_namespace is None:
             raise ValueError(
