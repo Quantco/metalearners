@@ -13,6 +13,7 @@ import pandas as pd
 import polars as pl
 import scipy
 from narwhals.dependencies import is_into_dataframe, is_into_series
+from scipy.sparse import csr_matrix
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -42,12 +43,13 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
         if not hasattr(rows, "to_numpy"):
             raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        return matrix[rows, :]
     if is_into_dataframe(matrix):
-        matrix_nw = nw.from_native(matrix, eager_only=True)  # type: ignore
+        matrix_nw = nw.from_native(matrix, eager_only=True)
         if rows.dtype == "bool":
             return matrix_nw.filter(rows.tolist()).to_native()
         return matrix_nw[rows.tolist(), :].to_native()
-    return matrix[rows, :]
 
 
 def index_vector(vector: Vector, rows: Vector) -> Vector:
@@ -56,12 +58,14 @@ def index_vector(vector: Vector, rows: Vector) -> Vector:
         if not hasattr(rows, "to_numpy"):
             raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
+    if isinstance(vector, np.ndarray):
+        return vector[rows]
     if is_into_series(vector):
-        vector_nw = nw.from_native(vector, series_only=True, eager_only=True)  # type: ignore
+        vector_nw = nw.from_native(vector, series_only=True, eager_only=True)
         if rows.dtype == "bool":
             return vector_nw.filter(rows).to_native()
-        return vector_nw[rows].to_native()  # type: ignore
-    return vector[rows]
+        return vector_nw[rows].to_native()
+    raise TypeError(f"Encountered unexpected type of vector: {type(vector)}.")
 
 
 def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:

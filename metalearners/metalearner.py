@@ -124,14 +124,16 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
         return X
     if len(feature_set) == 0:
         return np.ones((safe_len(X), 1))
+    if isinstance(X, np.ndarray):
+        return X[:, np.array(feature_set)]
     if nw.dependencies.is_into_dataframe(X):
-        X_nw = nw.from_native(X, eager_only=True)  # type: ignore
+        X_nw = nw.from_native(X, eager_only=True)
         if all(map(lambda x: isinstance(x, int), feature_set)):
-            return X_nw.select(nw.nth(feature_set)).to_native()  # type: ignore
+            return X_nw.select(nw.nth(feature_set)).to_native()
         if all(map(lambda x: isinstance(x, str), feature_set)):
-            return X_nw.select(feature_set).to_native()  # type: ignore
+            return X_nw.select(feature_set).to_native()
         raise ValueError("features must either be all ints or all strings.")
-    return X[:, np.array(feature_set)]
+    raise TypeError(f"Unexpected type of matrix: {type(X)}.")
 
 
 def _validate_n_folds_synchronize(n_folds: dict[str, int]) -> None:
