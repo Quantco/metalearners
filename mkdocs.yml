@@ -43,6 +43,7 @@ plugins:
       show_input: true
       include_source: true
       no_input: false
+      highlight_extra_classes: jupyter-custom-highlight
 
   - mkdocstrings:
       handlers:
