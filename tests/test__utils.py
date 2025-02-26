@@ -16,11 +16,11 @@ from xgboost import XGBClassifier, XGBRegressor
 
 from metalearners._typing import Vector
 from metalearners._utils import (
+    adapt_treatment_dtypes,
     are_pd_indices_equal,
     check_probability,
     check_propensity_score,
     clip_element_absolute_value_to_epsilon,
-    convert_treatment,
     function_has_argument,
     get_linear_dimension,
     index_matrix,
@@ -155,7 +155,7 @@ def test_check_probability(value, zero_included, one_included):
     ],
 )
 @pytest.mark.parametrize("backend", ["np", "pd", "pl"])
-def test_convert_treatment(treatment_values, backend):
+def test_adapt_treatment_dtypes(treatment_values, backend):
     treatment: Vector
     if backend == "np":
         treatment = np.array(treatment_values)
@@ -164,9 +164,11 @@ def test_convert_treatment(treatment_values, backend):
     else:
         treatment = pl.Series(treatment_values)
 
-    new_treatment = convert_treatment(treatment)
-    assert isinstance(new_treatment, np.ndarray)
-    assert new_treatment.dtype == int
+    new_treatment = adapt_treatment_dtypes(treatment)
+    if backend == "pl":
+        assert new_treatment.dtype.is_integer()
+    else:
+        assert new_treatment.dtype == int
 
 
 @pytest.mark.parametrize(
@@ -177,7 +179,7 @@ def test_convert_treatment(treatment_values, backend):
     ],
 )
 @pytest.mark.parametrize("backend", ["np", "pd", "pl"])
-def test_convert_treatment_raise(treatment_values, backend):
+def test_adapt_treatment_dtypes_raise(treatment_values, backend):
     treatment: Vector
     if backend == "np":
         treatment = np.array(treatment_values)
@@ -190,7 +192,7 @@ def test_convert_treatment_raise(treatment_values, backend):
         TypeError,
         match="Treatment must be boolean, integer or float with integer values.",
     ):
-        convert_treatment(treatment)
+        adapt_treatment_dtypes(treatment)
 
 
 @pytest.mark.parametrize(

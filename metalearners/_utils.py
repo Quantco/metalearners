@@ -10,6 +10,7 @@ from pathlib import Path
 import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy
 from narwhals.dependencies import is_into_dataframe, is_into_series
 from sklearn.base import is_classifier, is_regressor
@@ -258,24 +259,32 @@ def check_probability(p: float, zero_included=False, one_included=False) -> None
         raise ValueError("Probability p must be less than or equal to 1.")
 
 
-def convert_treatment(treatment: Vector) -> np.ndarray:
-    """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
-    if isinstance(treatment, np.ndarray):
-        new_treatment = treatment.copy()
-    elif nw.dependencies.is_into_series(treatment):
-        new_treatment = nw.from_native(
-            treatment, series_only=True, eager_only=True
-        ).to_numpy()  # type: ignore
-    if new_treatment.dtype == bool:
-        return new_treatment.astype(int)
-    if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
-        return new_treatment.astype(int)
+def adapt_treatment_dtypes(treatment: Vector) -> Vector:
+    """Cast the dtype of treatment to integer, if necessary.
 
-    if not pd.api.types.is_integer_dtype(new_treatment):
+    Raises if not possible.
+    """
+    if isinstance(treatment, pl.Series):
+        dtype = treatment.dtype
+        if dtype.is_integer():
+            return treatment
+        if dtype.to_python().__name__ == "bool":
+            return treatment.cast(int)
+        if dtype.is_float() and all(x.is_integer() for x in treatment):
+            return treatment.cast(int)
         raise TypeError(
             "Treatment must be boolean, integer or float with integer values."
         )
-    return new_treatment
+
+    if treatment.dtype == bool:
+        return treatment.astype(int)
+    if treatment.dtype == float and all(x.is_integer() for x in treatment):
+        return treatment.astype(int)
+    if not pd.api.types.is_integer_dtype(treatment):
+        raise TypeError(
+            "Treatment must be boolean, integer or float with integer values."
+        )
+    return treatment
 
 
 def supports_categoricals(model: _ScikitModel) -> bool:
