@@ -202,7 +202,7 @@ def _append_treatment_to_covariates(
     w = adapt_treatment_dtypes(w)
 
     if hasattr(X, "columns") and _TREATMENT in X.columns:
-        raise ValueError("treatment cannot be a column name in X.")
+        raise ValueError(f"{_TREATMENT} cannot be a column name in X.")
 
     if isinstance(X, pd.DataFrame):
         # This is needed in case the index is not 0-based.
