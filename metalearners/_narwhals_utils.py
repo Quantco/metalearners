@@ -29,7 +29,7 @@ def nw_to_dummies(
     if set(categories) < set(x.unique()):
         raise ValueError("We observed a value which isn't part of the categories.")
 
-    if any(x.is_null()):
+    if x.is_null().any():
         raise ValueError(
             "Can only apply nw_to_dummies on a narwhals Series without null values."
         )
