@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Mapping, Sequence
@@ -7,6 +7,7 @@ from itertools import chain
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from scipy.sparse import csr_matrix
@@ -14,7 +15,7 @@ from shap import TreeExplainer, summary_plot
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-from metalearners._typing import _ScikitModel
+from metalearners._typing import Matrix, Vector, _ScikitModel
 from metalearners.cross_fit_estimator import CrossFitEstimator
 from metalearners.data_generation import insert_missing
 from metalearners.drlearner import DRLearner
@@ -481,7 +482,7 @@ def test_combine_propensity_and_nuisance_specs(
         ),
     ],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_feature_set(feature_set, expected_n_features, backend, rng):
     ml = _TestMetaLearner(
         nuisance_model_factory=LGBMRegressor,
@@ -500,6 +501,10 @@ def test_feature_set(feature_set, expected_n_features, backend, rng):
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
+        w = pl.Series(w)
     elif backend == "csr":
         X = csr_matrix(X)
     ml.fit(X, y, w)
@@ -1081,15 +1086,19 @@ def test_n_jobs_base_learners(implementation, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_validate_outcome_one_class(implementation, backend, rng):
     X = rng.standard_normal((10, 2))
     y = np.zeros(10)
     w = rng.integers(0, 2, 10)
-    if backend == "pandas":
+    if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)  # type: ignore
+        y = pl.Series(y)  # type: ignore
+        w = pl.Series(w)  # type: ignore
     elif backend == "csr":
         X = csr_matrix(X)
 
@@ -1111,15 +1120,19 @@ def test_validate_outcome_one_class(implementation, backend, rng):
     "implementation",
     [TLearner, SLearner, XLearner, RLearner, DRLearner],
 )
-@pytest.mark.parametrize("backend", ["np", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_validate_outcome_different_classes(implementation, backend, rng):
-    X = rng.standard_normal((4, 2))
-    y = np.array([0, 1, 0, 0])
-    w = np.array([0, 0, 1, 1])
+    X: Matrix = rng.standard_normal((4, 2))
+    y: Vector = np.array([0, 1, 0, 0])
+    w: Vector = np.array([0, 0, 1, 1])
     if backend == "pd":
         X = pd.DataFrame(X)
         y = pd.Series(y)
         w = pd.Series(w)
+    elif backend == "pl":
+        X = pl.DataFrame(X)
+        y = pl.Series(y)
+        w = pl.Series(w)
     elif backend == "csr":
         X = csr_matrix(X)
 

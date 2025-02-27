@@ -18,6 +18,7 @@ from metalearners._utils import (
     get_predict,
     get_predict_proba,
     index_matrix,
+    index_vector,
     infer_input_dict,
     safe_len,
     validate_all_vectors_same_index,
@@ -426,7 +427,7 @@ class RLearner(MetaLearner):
 
         treatment_evaluation = _evaluate_model_kind(
             self._treatment_models[TREATMENT_MODEL],
-            Xs=[X[masks[tv - 1]] for tv in range(1, self.n_variants)],
+            Xs=[index_matrix(X, masks[tv - 1]) for tv in range(1, self.n_variants)],
             ys=pseudo_outcome,
             scorers=safe_scoring[TREATMENT_MODEL],
             model_kind=TREATMENT_MODEL,
@@ -456,8 +457,8 @@ class RLearner(MetaLearner):
                 cate_estimates=cate_estimates[mask],
                 outcome_estimates=y_hat[mask],
                 propensity_scores=propensity_estimates[mask],
-                outcomes=y[mask],
-                treatments=w[mask] == treatment_variant,
+                outcomes=index_vector(y, mask),
+                treatments=index_vector(w, mask) == treatment_variant,
             )
         return (
             propensity_evaluation
@@ -513,9 +514,9 @@ class RLearner(MetaLearner):
         if self.is_classification:
             y_estimates = y_estimates[:, 1]
 
-        y_residuals = y[mask] - y_estimates
+        y_residuals = index_vector(y, mask) - y_estimates
 
-        w_binarized = w[mask] == treatment_variant
+        w_binarized = index_vector(w, mask) == treatment_variant
         w_residuals = w_binarized - w_estimates_binarized
         w_residuals_padded = clip_element_absolute_value_to_epsilon(
             w_residuals, epsilon
