@@ -1,12 +1,14 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from lightgbm import LGBMRegressor
 from scipy.sparse import csr_matrix
 
+from metalearners._typing import Matrix, Vector
 from metalearners.metalearner import MetaLearner
 from metalearners.utils import (
     FixedBinaryPropensity,
@@ -60,7 +62,7 @@ def test_simplify_output_raises(input):
         simplify_output(input)
 
 
-@pytest.mark.parametrize("backend", ["pd", "pd", "csr"])
+@pytest.mark.parametrize("backend", ["np", "csr", "pd", "pl"])
 def test_fixed_binary_propensity(backend):
     propensity_score = 0.3
     dominant_class = propensity_score >= 0.5
@@ -68,11 +70,11 @@ def test_fixed_binary_propensity(backend):
     model = FixedBinaryPropensity(propensity_score=propensity_score)
 
     n_samples = 5
-    X_train = np.ones((n_samples, 5))
-    y_train = np.ones(n_samples)
+    X_train: Matrix = np.ones((n_samples, 5))
+    y_train: Vector = np.ones(n_samples)
 
     n_test_samples = 3
-    X_test = np.zeros((n_test_samples, 5))
+    X_test: Matrix = np.zeros((n_test_samples, 5))
 
     expected_result = np.array(np.ones(n_test_samples) * dominant_class)
 
@@ -80,6 +82,10 @@ def test_fixed_binary_propensity(backend):
         X_train = pd.DataFrame(X_train)
         y_train = pd.Series(y_train)
         X_test = pd.DataFrame(X_test)
+    elif backend == "pl":
+        X_train = pl.DataFrame(X_train)
+        y_train = pl.Series(y_train)
+        X_test = pl.DataFrame(X_test)
     elif backend == "csr":
         X_train = csr_matrix(X_train)
         X_test = csr_matrix(X_test)
@@ -102,7 +108,7 @@ def test_fixed_binary_propensity(backend):
 
 
 @pytest.mark.parametrize("propensity_score", [-1, 100, 1.1])
-def test_fixed_binary_propensity_not_a_propbability(propensity_score):
+def test_fixed_binary_propensity_not_a_probability(propensity_score):
     with pytest.raises(ValueError, match="between 0 and 1 but got"):
         FixedBinaryPropensity(propensity_score=propensity_score)
 

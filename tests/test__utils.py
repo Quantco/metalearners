@@ -5,6 +5,7 @@ from contextlib import nullcontext as does_not_raise
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 from glum import GeneralizedLinearRegressor, GeneralizedLinearRegressorCV
 from lightgbm import LGBMClassifier, LGBMRegressor
@@ -13,12 +14,13 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from xgboost import XGBClassifier, XGBRegressor
 
+from metalearners._typing import Vector
 from metalearners._utils import (
+    adapt_treatment_dtypes,
     are_pd_indices_equal,
     check_probability,
     check_propensity_score,
     clip_element_absolute_value_to_epsilon,
-    convert_treatment,
     function_has_argument,
     get_linear_dimension,
     index_matrix,
@@ -145,33 +147,52 @@ def test_check_probability(value, zero_included, one_included):
 
 
 @pytest.mark.parametrize(
-    "treatment",
+    "treatment_values",
     [
-        np.array([0, 1, 0, 2]),
-        np.array([0.0, 1.0, 2.0]),
-        np.array([False, True, False]),
+        [0, 1, 0, 2],
+        [0.0, 1.0, 2.0],
+        [False, True, False],
     ],
 )
-@pytest.mark.parametrize("use_pd", [False, True])
-def test_convert_treatment(treatment, use_pd):
-    if use_pd:
-        treatment = pd.Series(treatment)
-    new_treatment = convert_treatment(treatment)
-    assert isinstance(new_treatment, np.ndarray)
-    assert new_treatment.dtype == int
-
-
-@pytest.mark.parametrize("use_pd", [False, True])
-def test_convert_treatment_raise(use_pd):
-    if use_pd:
-        treatment = pd.Series([1.2, 0.5])
+@pytest.mark.parametrize("backend", ["np", "pd", "pl"])
+def test_adapt_treatment_dtypes(treatment_values, backend):
+    treatment: Vector
+    if backend == "np":
+        treatment = np.array(treatment_values)
+    elif backend == "pd":
+        treatment = pd.Series(treatment_values)
     else:
-        treatment = np.array([1.2, 0.5])
+        treatment = pl.Series(treatment_values)
+
+    new_treatment = adapt_treatment_dtypes(treatment)
+    if backend == "pl":
+        assert new_treatment.dtype.is_integer()
+    else:
+        assert new_treatment.dtype == int
+
+
+@pytest.mark.parametrize(
+    "treatment_values",
+    [
+        [1.2, 0.05],
+        ["1", "0", "1"],
+    ],
+)
+@pytest.mark.parametrize("backend", ["np", "pd", "pl"])
+def test_adapt_treatment_dtypes_raise(treatment_values, backend):
+    treatment: Vector
+    if backend == "np":
+        treatment = np.array(treatment_values)
+    elif backend == "pd":
+        treatment = pd.Series(treatment_values)
+    else:
+        treatment = pl.Series(treatment_values)
+
     with pytest.raises(
         TypeError,
         match="Treatment must be boolean, integer or float with integer values.",
     ):
-        convert_treatment(treatment)
+        adapt_treatment_dtypes(treatment)
 
 
 @pytest.mark.parametrize(
@@ -350,57 +371,67 @@ def test_validate_valid_treatment_variant_not_control(
             validate_valid_treatment_variant_not_control(treatment_variant, n_variants)
 
 
-@pytest.mark.parametrize("matrix_backend", [np.ndarray, pd.DataFrame, csr_matrix])
-@pytest.mark.parametrize("rows_backend", [np.array, pd.Series])
-def test_index_matrix(matrix_backend, rows_backend):
+@pytest.mark.parametrize(
+    "matrix_backend", [np.ndarray, pd.DataFrame, csr_matrix, pl.DataFrame]
+)
+@pytest.mark.parametrize("rows_backend", [np.array, pd.Series, pl.Series])
+@pytest.mark.parametrize("use_boolean_mask", [True, False])
+def test_index_matrix(matrix_backend, rows_backend, use_boolean_mask):
     n_samples = 10
+    samples = list(range(n_samples))
     if matrix_backend == np.ndarray:
-        matrix = np.array(list(range(n_samples))).reshape((-1, 1))
+        matrix = np.array(samples).reshape((-1, 1))
     elif matrix_backend == pd.DataFrame:
         # We make sure that the index is not equal to the row number.
-        matrix = pd.DataFrame(
-            list(range(n_samples)), index=list(range(20, 20 + n_samples))
-        )
+        matrix = pd.DataFrame(samples, index=list(range(20, 20 + n_samples)))
     elif matrix_backend == csr_matrix:
-        matrix = csr_matrix(np.array(list(range(n_samples))).reshape((-1, 1)))
+        matrix = csr_matrix(np.array(samples).reshape((-1, 1)))
     else:
-        raise ValueError()
-    rows = rows_backend([1, 4, 5])
-    result = index_matrix(matrix=matrix, rows=rows)
+        matrix = matrix_backend(samples)
 
+    desired_rows = [1, 4, 5]
+    if use_boolean_mask:
+        rows = rows_backend([sample in desired_rows for sample in samples])
+    else:
+        rows = rows_backend(desired_rows)
+
+    result = index_matrix(matrix=matrix, rows=rows)
     assert isinstance(result, matrix_backend)
     assert result.shape[1] == matrix.shape[1]
 
-    if isinstance(result, pd.DataFrame):
-        processed_result = result.values[:, 0]
-    else:
-        processed_result = result[:, 0]
+    if isinstance(result, pd.DataFrame | pl.DataFrame):
+        result = result.to_numpy()
+    processed_result = result[:, 0]
 
-    expected = np.array([1, 4, 5])
+    expected = np.array(desired_rows)
     assert (processed_result == expected).sum() == len(expected)
 
 
-@pytest.mark.parametrize("vector_backend", [np.ndarray, pd.Series])
-@pytest.mark.parametrize("rows_backend", [np.array, pd.Series])
-def test_index_vector(vector_backend, rows_backend):
+@pytest.mark.parametrize("vector_backend", [np.ndarray, pd.Series, pl.Series])
+@pytest.mark.parametrize("rows_backend", [np.array, pd.Series, pl.Series])
+@pytest.mark.parametrize("use_boolean_mask", [True, False])
+def test_index_vector(vector_backend, rows_backend, use_boolean_mask):
     n_samples = 10
+    samples = list(range(n_samples))
     if vector_backend == np.ndarray:
-        vector = np.array(list(range(n_samples)))
+        vector = np.array(samples)
     elif vector_backend == pd.Series:
         # We make sure that the index is not equal to the row number.
-        vector = pd.Series(
-            list(range(n_samples)), index=list(range(20, 20 + n_samples))
-        )
+        vector = pd.Series(samples, index=list(range(20, 20 + n_samples)))
     else:
-        raise ValueError()
+        vector = vector_backend(samples)
 
-    rows = rows_backend([1, 4, 5])
+    desired_rows = [1, 4, 5]
+    if use_boolean_mask:
+        rows = rows_backend([sample in desired_rows for sample in samples])
+    else:
+        rows = rows_backend(desired_rows)
 
     result = index_vector(vector=vector, rows=rows)
     assert isinstance(result, vector_backend)
 
-    if isinstance(result, pd.Series):
-        result = result.values
+    if isinstance(result, pd.Series | pl.Series):
+        result = result.to_numpy()
 
-    expected = np.array([1, 4, 5])
+    expected = np.array(desired_rows)
     assert (result == expected).all()

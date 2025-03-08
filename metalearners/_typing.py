@@ -1,11 +1,12 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Callable, Collection, Mapping, Sequence
-from typing import Literal, Protocol, Union
+from typing import Literal, Protocol
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy.sparse as sps
 
 PredictMethod = Literal["predict", "predict_proba"]
@@ -20,9 +21,11 @@ OosMethod = Literal["overall", "median", "mean"]
 Params = Mapping[str, int | float | str]
 Features = Collection[str] | Collection[int] | None
 
-# ruff is not happy about the usage of Union.
-Vector = Union[pd.Series, np.ndarray]  # noqa
-Matrix = Union[pd.DataFrame, np.ndarray, sps.csr_matrix]  # noqa
+
+# TODO: Reassess whether we can use narwhals type aliases
+# instead of explicitly relying on polars and pandas.
+Vector = pl.Series | pd.Series | np.ndarray
+Matrix = pl.DataFrame | pd.DataFrame | np.ndarray | sps.csr_matrix
 
 
 class _ScikitModel(Protocol):

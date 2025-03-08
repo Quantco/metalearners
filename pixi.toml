@@ -14,6 +14,10 @@ joblib = ">=1.2.0"
 scikit-learn = ">=1.4"
 numpy = "*"
 pandas = "*"
+narwhals = ">=1.25.0,<2"
+pyarrow = ">=19.0.0,<20"
+# We only rely on polars in _typing.
+polars = "*"
 
 [host-dependencies]
 pip = "*"
@@ -26,7 +30,9 @@ mypy = "*"
 typing-extensions = "*"
 ipykernel = "*"
 ipywidgets = "*"
-lightgbm = "*"
+# lightgbm = "*"
+# We have issues with version 4.6.0 when working with polars objects.
+lightgbm = "4.5.0.*"
 xgboost = ">=2.1.4"
 lifelines = "*"
 onnx = "*"

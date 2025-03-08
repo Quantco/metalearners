@@ -7,9 +7,13 @@ from inspect import signature
 from operator import le, lt
 from pathlib import Path
 
+import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
+import polars as pl
 import scipy
+from narwhals.dependencies import is_into_dataframe, is_into_series
+from scipy.sparse import csr_matrix
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -33,22 +37,127 @@ def safe_len(X: Matrix) -> int:
     return len(X)
 
 
-def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
+def index_matrix2(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
-    if isinstance(rows, pd.Series):
+    if not is_into_series(rows):
+        msg = "some message"
+        raise ValueError(msg)
+
+    rows_nw = nw.from_native(rows, series_only=True)
+
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        return matrix[rows_nw.to_numpy(), :]
+
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix, eager_only=True)
+        if rows_nw.dtype is nw.Boolean():
+            return matrix_nw.filter(rows_nw).to_native()
+        return matrix_nw[rows_nw.tolist(), :].to_native()
+
+
+def index_matrix_t(matrix: Matrix, rows: Vector) -> Matrix:
+    """Subselect certain rows from a matrix."""
+
+    # TODO: This function currently relies on lots of conversions
+    # between different vector and matrix data structures.
+    # Can we find a pareto iprovement with fewer conversions and
+    # similar code complexity?
+
+    if isinstance(rows, np.ndarray):
+
+        if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+            return matrix[rows, :]
+
+        if is_into_dataframe(matrix):
+            matrix_nw = nw.from_native(matrix, eager_only=True)
+            if rows.dtype == "bool":
+                return matrix_nw.filter(rows.tolist()).to_native()
+            return matrix_nw[rows.tolist(), :].to_native()
+
+        raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+    if is_into_series(rows):
+        rows_nw = nw.from_native(rows, series_only=True)
+
+        if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+            return matrix[rows_nw.to_numpy(), :]
+
+        if is_into_dataframe(matrix):
+            matrix_nw = nw.from_native(matrix, eager_only=True)
+            if rows_nw.dtype is nw.Boolean():
+                return matrix_nw.filter(rows_nw).to_native()
+            return matrix_nw[rows_nw.to_list(), :].to_native()
+
+        raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+    raise ValueError(f"rows to index matrix with are of unexpected type: {type(rows)}")
+
+
+def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
+
+    # TODO: This function currently relies on lots of conversions
+    # between different vector and matrix data structures.
+    # Can we find a pareto iprovement with fewer conversions and
+    # similar code complexity?
+
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        if isinstance(rows, np.ndarray):
+            return matrix[rows, :]
+        if is_into_series(rows):
+            rows_nw = nw.from_native(rows, series_only=True, eager_only=True)
+            rows_np = rows_nw.to_numpy()
+            return matrix[rows_np, :]
+
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix, eager_only=True)
+
+        if isinstance(rows, np.ndarray):
+            rows_are_bool = rows.dtype == bool
+            rows_list = rows.tolist()
+        elif is_into_series(rows):
+            rows_nw = nw.from_native(rows, series_only=True, eager_only=True)
+            rows_are_bool = rows_nw.dtype == nw.Boolean
+            rows_list = rows_nw.to_list()
+        else:
+            raise TypeError(f"Unexpected type {type(rows)} for rows.")
+
+        if rows_are_bool:
+            return matrix_nw.filter(rows_list).to_native()
+
+        return matrix_nw[rows_list, :].to_native()
+
+    raise TypeError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+
+def index_matrix3(matrix: Matrix, rows: Vector) -> Matrix:
+    """Subselect certain rows from a matrix."""
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(matrix, pd.DataFrame):
-        return matrix.iloc[rows]
-    return matrix[rows, :]
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        return matrix[rows, :]
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix, eager_only=True)
+        if rows.dtype == "bool":
+            return matrix_nw.filter(rows.tolist()).to_native()
+        return matrix_nw[rows.tolist(), :].to_native()
 
 
 def index_vector(vector: Vector, rows: Vector) -> Vector:
     """Subselect certain rows from a vector."""
-    if isinstance(rows, pd.Series):
+    if is_into_series(rows):
+        if not hasattr(rows, "to_numpy"):
+            raise ValueError("rows couldn't be converted to numpy.")
         rows = rows.to_numpy()
-    if isinstance(vector, pd.Series):
-        return vector.iloc[rows]
-    return vector[rows]
+    if isinstance(vector, np.ndarray):
+        return vector[rows]
+    if is_into_series(vector):
+        vector_nw = nw.from_native(vector, series_only=True, eager_only=True)
+        if rows.dtype == "bool":
+            return vector_nw.filter(rows).to_native()
+        return vector_nw[rows].to_native()
+    raise TypeError(f"Encountered unexpected type of vector: {type(vector)}.")
 
 
 def are_pd_indices_equal(*args: pd.DataFrame | pd.Series) -> bool:
@@ -250,22 +359,32 @@ def check_probability(p: float, zero_included=False, one_included=False) -> None
         raise ValueError("Probability p must be less than or equal to 1.")
 
 
-def convert_treatment(treatment: Vector) -> np.ndarray:
-    """Convert to ``np.ndarray`` and adapt dtype, if necessary."""
-    if isinstance(treatment, np.ndarray):
-        new_treatment = treatment.copy()
-    elif isinstance(treatment, pd.Series):
-        new_treatment = treatment.to_numpy()
-    if new_treatment.dtype == bool:
-        return new_treatment.astype(int)
-    if new_treatment.dtype == float and all(x.is_integer() for x in new_treatment):
-        return new_treatment.astype(int)
+def adapt_treatment_dtypes(treatment: Vector) -> Vector:
+    """Cast the dtype of treatment to integer, if necessary.
 
-    if not pd.api.types.is_integer_dtype(new_treatment):
+    Raises if not possible.
+    """
+    if isinstance(treatment, pl.Series):
+        dtype = treatment.dtype
+        if dtype.is_integer():
+            return treatment
+        if dtype.to_python().__name__ == "bool":
+            return treatment.cast(int)
+        if dtype.is_float() and all(x.is_integer() for x in treatment):
+            return treatment.cast(int)
         raise TypeError(
             "Treatment must be boolean, integer or float with integer values."
         )
-    return new_treatment
+
+    if treatment.dtype == bool:
+        return treatment.astype(int)
+    if treatment.dtype == float and all(x.is_integer() for x in treatment):
+        return treatment.astype(int)
+    if not pd.api.types.is_integer_dtype(treatment):
+        raise TypeError(
+            "Treatment must be boolean, integer or float with integer values."
+        )
+    return treatment
 
 
 def supports_categoricals(model: _ScikitModel) -> bool:
