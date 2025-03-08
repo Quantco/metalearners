@@ -37,7 +37,98 @@ def safe_len(X: Matrix) -> int:
     return len(X)
 
 
+def index_matrix2(matrix: Matrix, rows: Vector) -> Matrix:
+    """Subselect certain rows from a matrix."""
+    if not is_into_series(rows):
+        msg = "some message"
+        raise ValueError(msg)
+
+    rows_nw = nw.from_native(rows, series_only=True)
+
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        return matrix[rows_nw.to_numpy(), :]
+
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix, eager_only=True)
+        if rows_nw.dtype is nw.Boolean():
+            return matrix_nw.filter(rows_nw).to_native()
+        return matrix_nw[rows_nw.tolist(), :].to_native()
+
+
+def index_matrix_t(matrix: Matrix, rows: Vector) -> Matrix:
+    """Subselect certain rows from a matrix."""
+
+    # TODO: This function currently relies on lots of conversions
+    # between different vector and matrix data structures.
+    # Can we find a pareto iprovement with fewer conversions and
+    # similar code complexity?
+
+    if isinstance(rows, np.ndarray):
+
+        if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+            return matrix[rows, :]
+
+        if is_into_dataframe(matrix):
+            matrix_nw = nw.from_native(matrix, eager_only=True)
+            if rows.dtype == "bool":
+                return matrix_nw.filter(rows.tolist()).to_native()
+            return matrix_nw[rows.tolist(), :].to_native()
+
+        raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+    if is_into_series(rows):
+        rows_nw = nw.from_native(rows, series_only=True)
+
+        if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+            return matrix[rows_nw.to_numpy(), :]
+
+        if is_into_dataframe(matrix):
+            matrix_nw = nw.from_native(matrix, eager_only=True)
+            if rows_nw.dtype is nw.Boolean():
+                return matrix_nw.filter(rows_nw).to_native()
+            return matrix_nw[rows_nw.to_list(), :].to_native()
+
+        raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+    raise ValueError(f"rows to index matrix with are of unexpected type: {type(rows)}")
+
+
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
+
+    # TODO: This function currently relies on lots of conversions
+    # between different vector and matrix data structures.
+    # Can we find a pareto iprovement with fewer conversions and
+    # similar code complexity?
+
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
+        if isinstance(rows, np.ndarray):
+            return matrix[rows, :]
+        if is_into_series(rows):
+            rows_nw = nw.from_native(rows, series_only=True, eager_only=True)
+            rows_np = rows_nw.to_numpy()
+            return matrix[rows_np, :]
+
+    if is_into_dataframe(matrix):
+        matrix_nw = nw.from_native(matrix, eager_only=True)
+
+        if isinstance(rows, np.ndarray):
+            if rows.dtype == "bool":
+                return matrix_nw.filter(rows.tolist()).to_native()
+            return matrix_nw[rows.tolist(), :].to_native()
+        if is_into_series(rows):
+            rows_nw = nw.from_native(rows, series_only=True, eager_only=True)
+            if rows_nw.dtype == nw.Boolean:
+                return matrix_nw.filter(rows_nw).to_native()
+            return matrix_nw[rows_nw.to_list(), :].to_native()
+
+        raise ValueError(
+            f"rows to index matrix with are of unexpected type: {type(rows)}"
+        )
+
+    raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+
+
+def index_matrix3(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
     if is_into_series(rows):
         if not hasattr(rows, "to_numpy"):
