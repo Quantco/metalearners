@@ -112,20 +112,21 @@ def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
         matrix_nw = nw.from_native(matrix, eager_only=True)
 
         if isinstance(rows, np.ndarray):
-            if rows.dtype == "bool":
-                return matrix_nw.filter(rows.tolist()).to_native()
-            return matrix_nw[rows.tolist(), :].to_native()
-        if is_into_series(rows):
+            rows_are_bool = rows.dtype == bool
+            rows_list = rows.tolist()
+        elif is_into_series(rows):
             rows_nw = nw.from_native(rows, series_only=True, eager_only=True)
-            if rows_nw.dtype == nw.Boolean:
-                return matrix_nw.filter(rows_nw).to_native()
-            return matrix_nw[rows_nw.to_list(), :].to_native()
+            rows_are_bool = rows_nw.dtype == nw.Boolean
+            rows_list = rows_nw.to_list()
+        else:
+            raise TypeError(f"Unexpected type {type(rows)} for rows.")
 
-        raise ValueError(
-            f"rows to index matrix with are of unexpected type: {type(rows)}"
-        )
+        if rows_are_bool:
+            return matrix_nw.filter(rows_list).to_native()
 
-    raise ValueError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
+        return matrix_nw[rows_list, :].to_native()
+
+    raise TypeError(f"matrix to be indexed is of unexpected type: {type(matrix)}")
 
 
 def index_matrix3(matrix: Matrix, rows: Vector) -> Matrix:
