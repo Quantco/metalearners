@@ -108,7 +108,7 @@ def test_fixed_binary_propensity(backend):
 
 
 @pytest.mark.parametrize("propensity_score", [-1, 100, 1.1])
-def test_fixed_binary_propensity_not_a_propbability(propensity_score):
+def test_fixed_binary_propensity_not_a_probability(propensity_score):
     with pytest.raises(ValueError, match="between 0 and 1 but got"):
         FixedBinaryPropensity(propensity_score=propensity_score)
 
