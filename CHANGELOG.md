@@ -6,6 +6,12 @@
 
 # Changelog
 
+## 0.13.0 (2025-05-19)
+
+## New features
+
+- Add support for `polars` input in all `fit*` and `predict*` functions.
+
 ## 0.12.0 (2025-01-29)
 
 ### Other changes
