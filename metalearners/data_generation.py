@@ -63,8 +63,8 @@ def generate_categoricals(
         n_uniform = n_features
 
     dtype = str if use_strings else np.int64
-    balanced_features = np.array([], dtype=dtype).reshape(n_obs, 0)  # type: ignore[var-annotated]
-    unbalanced_features = np.array([], dtype=dtype).reshape(n_obs, 0)  # type: ignore[var-annotated]
+    balanced_features: np.ndarray = np.array([], dtype=dtype).reshape(n_obs, 0)
+    unbalanced_features: np.ndarray = np.array([], dtype=dtype).reshape(n_obs, 0)
 
     if n_uniform > 0:
         balanced_features = rng.integers(
