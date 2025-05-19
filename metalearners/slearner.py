@@ -78,9 +78,7 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
     w: Vector,
     categories: Sequence,
 ) -> Matrix:
-
     if nw.dependencies.is_into_dataframe(X):
-
         X_nw = nw.from_native(X, eager_only=True)
         # Some models (e.g. sklearn's LinearRegression) raise an error if some column
         # names are integers and some strings.
@@ -346,8 +344,8 @@ class SLearner(MetaLearner):
             X=X, is_oos=is_oos, oos_method=oos_method
         )
 
-        return conditional_average_outcomes[:, 1:] - (
-            conditional_average_outcomes[:, [0]]
+        return (
+            conditional_average_outcomes[:, 1:] - (conditional_average_outcomes[:, [0]])
         )
 
     def evaluate(

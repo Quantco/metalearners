@@ -125,8 +125,8 @@ class TLearner(_ConditionalAverageOutcomeMetaLearner):
             X=X, is_oos=is_oos, oos_method=oos_method
         )
 
-        return conditional_average_outcomes[:, 1:] - (
-            conditional_average_outcomes[:, [0]]
+        return (
+            conditional_average_outcomes[:, 1:] - (conditional_average_outcomes[:, [0]])
         )
 
     def evaluate(

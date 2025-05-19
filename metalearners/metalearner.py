@@ -57,7 +57,6 @@ def _parse_fit_params(
     nuisance_model_names: set[str],
     treatment_model_names: set[str],
 ) -> dict[str, dict[str, dict[str, dict]]]:
-
     def _get_raw_fit_params():
         return fit_params
 
@@ -336,7 +335,7 @@ class MetaLearner(ABC):
         if set(np.unique(w)) != set(range(self.n_variants)):
             raise ValueError(
                 "Treatment variant should be encoded with values "
-                f"{{0...{self.n_variants -1}}} and all variants should be present. "
+                f"{{0...{self.n_variants - 1}}} and all variants should be present. "
                 f"Yet we found the values {set(np.unique(w))}."
             )
 
@@ -684,9 +683,9 @@ class MetaLearner(ABC):
                     f"{result.model_kind} has cardinality {cardinality} and "
                     f"model_ord is {result.model_ord}"
                 )
-            self._nuisance_models[result.model_kind][
-                result.model_ord
-            ] = result.cross_fit_estimator
+            self._nuisance_models[result.model_kind][result.model_ord] = (
+                result.cross_fit_estimator
+            )
 
     def fit_treatment(
         self,
@@ -762,9 +761,9 @@ class MetaLearner(ABC):
                     f"{result.model_kind} has cardinality {cardinality} and "
                     f"model_ord is {result.model_ord}"
                 )
-            self._treatment_models[result.model_kind][
-                result.model_ord
-            ] = result.cross_fit_estimator
+            self._treatment_models[result.model_kind][result.model_ord] = (
+                result.cross_fit_estimator
+            )
 
     @abstractmethod
     def fit_all_nuisance(
@@ -1147,7 +1146,6 @@ class MetaLearner(ABC):
         )
 
     def _scoring(self, scoring: Scoring | None) -> Scoring:
-
         def _default_scoring() -> Scoring:
             return {
                 nuisance_model: [
@@ -1312,7 +1310,6 @@ class MetaLearner(ABC):
 
 
 class _ConditionalAverageOutcomeMetaLearner(MetaLearner, ABC):
-
     def __init__(
         self,
         is_classification: bool,

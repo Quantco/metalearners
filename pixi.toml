@@ -49,7 +49,6 @@ coverage = "pytest tests --cov=metalearners --cov-report=xml --cov-report term-m
 
 [feature.lint.dependencies]
 pre-commit = "*"
-black = "*"
 ruff = "*"
 prettier = "*"
 insert-license-header = "*"

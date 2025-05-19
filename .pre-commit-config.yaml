@@ -34,12 +34,12 @@ repos:
         language: system
         types_or: [python, pyi]
         require_serial: true
-      - id: black-conda
-        name: black-conda
-        entry: pixi run -e lint black
+      - id: ruff-format
+        name: ruff-format
+        entry: pixi run -e lint ruff format --force-exclude
         language: system
+        types_or: [python, pyi]
         require_serial: true
-        types: [python]
       - id: mypy
         name: mypy
         entry: pixi run -e default mypy

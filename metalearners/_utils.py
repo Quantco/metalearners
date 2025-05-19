@@ -64,7 +64,6 @@ def index_matrix_t(matrix: Matrix, rows: Vector) -> Matrix:
     # similar code complexity?
 
     if isinstance(rows, np.ndarray):
-
         if isinstance(matrix, np.ndarray) or isinstance(matrix, csr_matrix):
             return matrix[rows, :]
 
@@ -94,7 +93,6 @@ def index_matrix_t(matrix: Matrix, rows: Vector) -> Matrix:
 
 
 def index_matrix(matrix: Matrix, rows: Vector) -> Matrix:
-
     # TODO: This function currently relies on lots of conversions
     # between different vector and matrix data structures.
     # Can we find a pareto iprovement with fewer conversions and
@@ -243,7 +241,6 @@ def check_propensity_score(
         )
 
     if features is not None:
-
         check_X_y(features, propensity_scores, multi_output=True, **check_kwargs)
     else:
         check_array(propensity_scores, **check_kwargs)

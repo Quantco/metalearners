@@ -216,7 +216,6 @@ def test_append_treatment_to_covariates_with_one_hot_encoding(
             )
 
         elif isinstance(X_with_w, pl.DataFrame):
-
             expected_one_hot_encoding = pl.DataFrame(
                 pd.get_dummies(
                     treatment_pd, dtype="int8", drop_first=True, prefix=_TREATMENT

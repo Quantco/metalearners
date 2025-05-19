@@ -124,7 +124,6 @@ heavier_columns = [
 data = []
 
 for i in range(len(t.values)):
-
     # select only if both <=2kg
     if t.iloc[i].values[1] >= 2000 or t.iloc[i].values[2] >= 2000:
         continue
