@@ -38,6 +38,8 @@ lifelines = "*"
 onnx = "*"
 onnxmltools = "*"
 onnxruntime = "*"
+# We have run into DateType issues with version 1.19.1.
+skl2onnx = "<=1.18.0"
 spox = "*"
 optuna = "*"
 pytest = ">=6"
