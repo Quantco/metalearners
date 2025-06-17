@@ -21,8 +21,8 @@ polars = "*"
 
 [host-dependencies]
 pip = "*"
-setuptools-scm = "*"
-setuptools = ">=61"
+hatchling = "*"
+hatch-vcs = "*"
 
 [feature.dev.dependencies]
 git_root = "*"
@@ -58,7 +58,6 @@ taplo = "*"
 typos = "*"
 docformatter = "*"
 pre-commit-hooks = "*"
-types-setuptools = "*"
 
 [feature.lint.tasks]
 pre-commit-install = "pre-commit install"
