@@ -1,8 +1,6 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel"]
-
-[tool.setuptools_scm]
-version_scheme = "post-release"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "metalearners"
@@ -33,9 +31,11 @@ dependencies = [
 [project.urls]
 repository = "https://github.com/quantco/metalearners"
 
-[tool.setuptools.packages.find]
-include = ["metalearners"]
-namespaces = false
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["metalearners"]
 
 [project.scripts]
 
