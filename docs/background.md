@@ -360,7 +360,6 @@ In the case of multiple discrete treatments, the stages are similar to the binar
     &- \frac{Y^i - \hat{\mu}_{0}(X^i)}{\hat{e}(0, X^i)}\mathbb{I}\{W^i = 0\} - \hat{\mu}_0(X^i)
     \end{align*}
     $$
-
     1. Finally, the CATE is estimated by regressing $\varphi_k$ on $X$ for each treatment variant, $\forall k \in \{1,\dots, K-1\}$:
 
     $$
