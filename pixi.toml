@@ -123,12 +123,15 @@ python = "3.10.*"
 python = "3.11.*"
 [feature.py312.dependencies]
 python = "3.12.*"
+[feature.py313.dependencies]
+python = "3.13.*"
 
 [environments]
 default = ["dev"]
 py310 = ["py310", "dev"]
 py311 = ["py311", "dev"]
 py312 = ["py312", "dev"]
+py313 = ["py313", "dev"]
 
 lint = { features = ["lint"], no-default-feature = true }
 
