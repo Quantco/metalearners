@@ -6,11 +6,18 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Literal, Protocol
 
 import numpy as np
-import pandas as pd
-import scipy.sparse as sps
 
 if typing.TYPE_CHECKING:
+    import pandas as pd
     import polars as pl
+    import scipy.sparse as sps
+    Vector = pl.Series | pd.Series | np.ndarray
+    Matrix = pl.DataFrame | pd.DataFrame | np.ndarray | sps.csr_matrix
+
+else:
+    # Runtime fallbacks
+    Vector = object
+    Matrix = object
 
 PredictMethod = Literal["predict", "predict_proba"]
 
@@ -23,12 +30,6 @@ OosMethod = Literal["overall", "median", "mean"]
 
 Params = Mapping[str, int | float | str]
 Features = Collection[str] | Collection[int] | None
-
-
-# TODO: Reassess whether we can use narwhals type aliases
-# instead of explicitly relying on polars and pandas.
-Vector = pl.Series | pd.Series | np.ndarray
-Matrix = pl.DataFrame | pd.DataFrame | np.ndarray | sps.csr_matrix
 
 
 class _ScikitModel(Protocol):
