@@ -1,6 +1,7 @@
 # Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
+import typing
 from collections.abc import Callable, Collection, Mapping, Sequence
 from typing import Literal, Protocol
 
@@ -8,6 +9,9 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import scipy.sparse as sps
+
+if typing.TYPE_CHECKING:
+    import polars as pl
 
 PredictMethod = Literal["predict", "predict_proba"]
 
