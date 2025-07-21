@@ -10,7 +10,6 @@ from pathlib import Path
 import narwhals.stable.v1 as nw
 import numpy as np
 import pandas as pd
-import polars as pl
 import scipy
 from narwhals.dependencies import is_into_dataframe, is_into_series
 from scipy.sparse import csr_matrix
@@ -364,27 +363,28 @@ def adapt_treatment_dtypes(treatment: Vector) -> Vector:
 
     Raises if not possible.
     """
-    if isinstance(treatment, pl.Series):
-        dtype = treatment.dtype
-        if dtype.is_integer():
-            return treatment
-        if dtype.to_python().__name__ == "bool":
-            return treatment.cast(int)
-        if dtype.is_float() and all(x.is_integer() for x in treatment):
-            return treatment.cast(int)
-        raise TypeError(
-            "Treatment must be boolean, integer or float with integer values."
-        )
+    if isinstance(treatment, np.ndarray):
+        if treatment.dtype == bool:
+            return treatment.astype(int)
+        if treatment.dtype == float and all(x.is_integer() for x in treatment):
+            return treatment.astype(int)
+        if not pd.api.types.is_integer_dtype(treatment):
+            raise TypeError(
+                "Treatment must be boolean, integer or float with integer values."
+            )
+        return treatment
 
-    if treatment.dtype == bool:
-        return treatment.astype(int)
-    if treatment.dtype == float and all(x.is_integer() for x in treatment):
-        return treatment.astype(int)
-    if not pd.api.types.is_integer_dtype(treatment):
-        raise TypeError(
-            "Treatment must be boolean, integer or float with integer values."
-        )
-    return treatment
+    treatment_nw = nw.from_native(treatment, series_only=True)
+
+    dtype = treatment_nw.dtype
+    if dtype.is_integer():
+        return treatment_nw.to_native()
+    if "bool" in str(dtype).lower():
+        return treatment_nw.cast(nw.Int64).to_native()
+    if dtype.is_float() and all(x.is_integer() for x in treatment_nw):
+        return treatment_nw.cast(nw.Int64).to_native()
+
+    raise TypeError("Treatment must be boolean, integer or float with integer values.")
 
 
 def supports_categoricals(model: _ScikitModel) -> bool:

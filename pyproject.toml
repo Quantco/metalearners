@@ -23,6 +23,7 @@ dependencies = [
     "scikit-learn>=1.4",
     "pandas",
     "numpy",
+    "narwhals",
     "typing-extensions",
     "shap",
     "joblib>=1.2.0"
