@@ -11,6 +11,7 @@ if typing.TYPE_CHECKING:
     import pandas as pd
     import polars as pl
     import scipy.sparse as sps
+
     Vector = pl.Series | pd.Series | np.ndarray
     Matrix = pl.DataFrame | pd.DataFrame | np.ndarray | sps.csr_matrix
 
