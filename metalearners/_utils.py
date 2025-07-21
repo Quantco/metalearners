@@ -384,9 +384,7 @@ def adapt_treatment_dtypes(treatment: Vector) -> Vector:
     if dtype.is_float() and all(x.is_integer() for x in treatment_nw):
         return treatment_nw.cast(nw.Int64).to_native()
 
-    raise TypeError(
-        "Treatment must be boolean, integer or float with integer values."
-    )
+    raise TypeError("Treatment must be boolean, integer or float with integer values.")
 
 
 def supports_categoricals(model: _ScikitModel) -> bool:
