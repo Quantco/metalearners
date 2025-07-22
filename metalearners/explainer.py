@@ -4,20 +4,37 @@
 from collections.abc import Collection
 
 import numpy as np
-import pandas as pd
 import shap
 
 from metalearners._typing import Matrix, _ScikitModel
 from metalearners._utils import safe_len, simplify_output_2d
 from metalearners.metalearner import Params
 
+FeatureImportance = dict[str, float | int | None]
+FeatureImportances = list[FeatureImportance]
+
 
 def _build_feature_importance_dict(
-    feature_importance: np.ndarray, feature_names: Collection[str] | None = None
-) -> pd.Series:
+    feature_importance: np.ndarray,
+    sort_values: bool,
+    feature_names: Collection[str] | None = None,
+) -> FeatureImportance:
     if feature_names is None:
         feature_names = [f"Feature {i}" for i in range(len(feature_importance))]
-    return pd.Series(feature_importance, index=feature_names)
+
+    importance_dict = {
+        name: value for name, value in zip(feature_names, feature_importance)
+    }
+
+    if sort_values:
+        return {
+            name: value
+            for name, value in sorted(
+                importance_dict.items(), key=lambda x: x[1], reverse=True
+            )
+        }
+
+    return importance_dict
 
 
 # TODO: implement permutation importance?
@@ -85,7 +102,7 @@ class Explainer:
         normalize: bool = False,
         feature_names: Collection[str] | None = None,
         sort_values: bool = False,
-    ) -> list[pd.Series]:
+    ) -> FeatureImportances:
         r"""Calculates the feature importance for each treatment group.
 
         If ``normalization = True``, for each treatment variant the feature importances
@@ -93,9 +110,9 @@ class Explainer:
 
         ``feature_names`` is optional but in the case it's not passed the names of the
         features will default to ``f"Feature {i}"`` where ``i`` is the corresponding
-        feature index.
+        feature key.
         """
-        feature_importances: list[pd.Series] = []
+        feature_importances: FeatureImportances = []
         for tv in range(self.n_variants - 1):
             if not hasattr(self.cate_models[tv], "feature_importances_"):
                 raise ValueError(
@@ -103,18 +120,16 @@ class Explainer:
                     "You need to use a model which computes them, e.g. LGBMRegressor."
                 )
 
-            variant_feature_importance = self.cate_models[tv].feature_importances_  # type: ignore
+            variant_feature_importance_np = self.cate_models[tv].feature_importances_  # type: ignore
             if normalize:
-                variant_feature_importance = variant_feature_importance / np.sum(
-                    variant_feature_importance
+                variant_feature_importance_np = variant_feature_importance_np / np.sum(
+                    variant_feature_importance_np
                 )
             variant_feature_importance = _build_feature_importance_dict(
-                variant_feature_importance, feature_names
+                variant_feature_importance_np,
+                sort_values,
+                feature_names,
             )
-            if sort_values:
-                variant_feature_importance = variant_feature_importance.sort_values(
-                    ascending=False
-                )
             feature_importances.append(variant_feature_importance)
 
         return feature_importances

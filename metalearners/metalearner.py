@@ -9,7 +9,6 @@ from typing import Any, TypedDict
 
 import narwhals.stable.v1 as nw
 import numpy as np
-import pandas as pd
 import shap
 from scipy.sparse import csr_matrix
 from sklearn.metrics import get_scorer
@@ -42,7 +41,7 @@ from metalearners.cross_fit_estimator import (
     CrossFitEstimator,
     _PredictContext,
 )
-from metalearners.explainer import Explainer
+from metalearners.explainer import Explainer, FeatureImportances
 
 PROPENSITY_MODEL = "propensity_model"
 VARIANT_OUTCOME_MODEL = "variant_outcome_model"
@@ -1078,7 +1077,7 @@ class MetaLearner(ABC):
         cate_estimates: np.ndarray | None = None,
         cate_model_factory: type[_ScikitModel] | None = None,
         cate_model_params: Params | None = None,
-    ) -> list[pd.Series]:
+    ) -> FeatureImportances:
         r"""Calculates the feature importance for each treatment group.
 
         If `explainer` is `None`, a new [`Explainer`][metalearners.explainer.Explainer]
