@@ -833,6 +833,9 @@ def test_feature_importances_smoke(
             cate_model_factory=LGBMRegressor,
             cate_model_params={"n_estimators": 1},
         )
+
+    feature_importances = [pd.Series(d) for d in feature_importances]
+
     assert len(feature_importances) == n_variants - 1
     for tv in range(n_variants - 1):
         assert len(feature_importances[tv]) == n_features
@@ -861,7 +864,9 @@ def test_feature_importances_smoke(
                 feature_names=feature_names,
                 sort_values=sort_values,
             )
+        feature_importances = [pd.Series(d) for d in feature_importances]
         assert len(feature_importances) == n_variants - 1
+
         for tv in range(n_variants - 1):
             assert len(feature_importances[tv]) == n_features
             if normalize and not pd.isna(feature_importances[tv]).all():
@@ -912,6 +917,7 @@ def test_feature_importances_known(
     feature_importances = ml.feature_importances(
         feature_names=X.columns, explainer=explainer
     )
+    feature_importances = [pd.Series(d) for d in feature_importances]
 
     assert feature_importances[0].idxmax() == "x1"
     assert feature_importances[1].idxmax() == "x2"
@@ -920,6 +926,7 @@ def test_feature_importances_known(
         feature_importances = ml.feature_importances(
             feature_names=X.columns,
         )
+        feature_importances = [pd.Series(d) for d in feature_importances]
         assert feature_importances[0].idxmax() == "x1"
         assert feature_importances[1].idxmax() == "x2"
 
