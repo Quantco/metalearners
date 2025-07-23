@@ -129,7 +129,7 @@ def _filter_x_columns(X: Matrix, feature_set: Features) -> Matrix:
     if nw.dependencies.is_into_dataframe(X):
         X_nw = nw.from_native(X, eager_only=True)
         if all(map(lambda x: isinstance(x, int), feature_set)):
-            return X_nw.select(nw.nth(feature_set)).to_native()
+            return X_nw.select(nw.nth(feature_set)).to_native()  # type: ignore
         if all(map(lambda x: isinstance(x, str), feature_set)):
             return X_nw.select(feature_set).to_native()
         raise ValueError("features must either be all ints or all strings.")
