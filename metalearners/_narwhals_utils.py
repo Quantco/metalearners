@@ -43,22 +43,20 @@ def nw_to_dummies(
     )
 
 
-def vector_to_nw(x: Vector, native_namespace: ModuleType | None = None) -> nw.Series:
+def vector_to_nw(x: Vector, backend: ModuleType | None = None) -> nw.Series:
     if isinstance(x, np.ndarray):
-        if native_namespace is None:
+        if backend is None:
             raise ValueError(
-                "x is a numpy object but no native_namespace was provided to "
+                "x is a numpy object but no backend was provided to "
                 "load it into narwhals."
             )
-        return nw.new_series(
-            name="column_0", values=x, native_namespace=native_namespace
-        )
+        return nw.new_series(name="column_0", values=x, backend=backend)
     if is_into_series(x):
         return nw.from_native(x, series_only=True, eager_only=True)
     raise TypeError(f"Unexpected type {type(x)} for Vector.")
 
 
-def infer_native_namespace(df_nw: nw.DataFrame) -> ModuleType:
+def infer_backend(df_nw: nw.DataFrame) -> ModuleType:
     return df_nw.implementation.to_native_namespace()
 
 

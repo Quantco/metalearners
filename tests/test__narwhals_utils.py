@@ -8,21 +8,21 @@ import polars as pl
 import pytest
 
 from metalearners._narwhals_utils import (
-    infer_native_namespace,
+    infer_backend,
     nw_to_dummies,
     vector_to_nw,
 )
 
 
 @pytest.mark.parametrize("backend", [pl, pd])
-def test_infer_native_namespace(backend):
+def test_infer_backend(backend):
     raw_data = {"a": [1, 2, 3], "b": ["a", "b", "c"]}
     df = backend.DataFrame(raw_data)
     df_nw = nw.from_native(df, eager_only=True)
-    assert infer_native_namespace(df_nw) == backend
+    assert infer_backend(df_nw) == backend
 
 
-@pytest.mark.parametrize("native_namespace", [pl, pd])
+@pytest.mark.parametrize("backend", [pl, pd])
 @pytest.mark.parametrize(
     "raw_data",
     [
@@ -32,13 +32,13 @@ def test_infer_native_namespace(backend):
         list("meta"),
     ],
 )
-def test_vector_to_nw_np(native_namespace, raw_data):
+def test_vector_to_nw_np(backend, raw_data):
     original_vector = np.array(raw_data)
-    vector_nw = vector_to_nw(original_vector, native_namespace=native_namespace)
+    vector_nw = vector_to_nw(original_vector, backend=backend)
     assert isinstance(vector_nw, nw.Series)
 
     new_vector = vector_nw.to_native()
-    assert isinstance(new_vector, native_namespace.Series)
+    assert isinstance(new_vector, backend.Series)
 
 
 @pytest.mark.parametrize("backend", [pd, pl])
