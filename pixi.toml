@@ -14,7 +14,7 @@ joblib = ">=1.2.0"
 scikit-learn = ">=1.4"
 numpy = "*"
 pandas = "*"
-narwhals = ">=1.25.0,<2"
+narwhals = ">=1.31.0,<2"
 pyarrow = ">=19.0.0,<20"
 # We only rely on polars in _typing.
 polars = "*"
