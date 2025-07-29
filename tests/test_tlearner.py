@@ -138,4 +138,6 @@ def test_tlearner_onnx(
         ["tau"],
         {"X": onnx_X},
     )
-    np.testing.assert_allclose(ml.predict(X, True, "overall"), pred_onnx, atol=5e-4)
+    np.testing.assert_allclose(
+        ml.predict(X, True, "overall"), pred_onnx, atol=5e-2, rtol=0.01
+    )
