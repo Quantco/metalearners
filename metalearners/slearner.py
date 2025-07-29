@@ -11,7 +11,7 @@ from scipy.sparse import csr_matrix, hstack
 from typing_extensions import Self
 
 from metalearners._narwhals_utils import (
-    infer_native_namespace,
+    infer_backend,
     nw_to_dummies,
     stringify_column_names,
     vector_to_nw,
@@ -89,9 +89,7 @@ def _append_treatment_to_covariates_with_one_hot_encoding(
         # Note that it could be the case that w is a np.ndarray object
         # even if X is a dataframe. Therefore we have a conversion
         # with a case distinction.
-        w_nw = vector_to_nw(w, native_namespace=infer_native_namespace(X_nw)).rename(
-            _TREATMENT
-        )
+        w_nw = vector_to_nw(w, backend=infer_backend(X_nw)).rename(_TREATMENT)
         w_dummies_nw = nw_to_dummies(
             w_nw, categories, column_name=_TREATMENT, drop_first=True
         )
@@ -148,7 +146,7 @@ def _append_treatment_to_covariates_with_categorical(
             # The pandas behavior we are used to relies on naming them i.
             # We imitate the pandas behavior here.
             column_names = [str(i) for i in range(X.shape[1])]
-            return nw.from_numpy(X, native_namespace=pd, schema=column_names)
+            return nw.from_numpy(X, backend=pd, schema=column_names)
 
         if isinstance(X, csr_matrix):
             warnings.warn(
@@ -161,9 +159,7 @@ def _append_treatment_to_covariates_with_categorical(
     X_nw = convert_matrix_to_nw(X)
     X_nw = stringify_column_names(X_nw)
 
-    w_nw = vector_to_nw(w, native_namespace=infer_native_namespace(X_nw)).rename(
-        _TREATMENT
-    )
+    w_nw = vector_to_nw(w, backend=infer_backend(X_nw)).rename(_TREATMENT)
     # narwhal's concat expects two DataFrames -- in contrast to mixing DataFrames
     # and Series.
     w_nw_categorical = (
