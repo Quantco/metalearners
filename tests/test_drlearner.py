@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import repeat
@@ -8,9 +8,9 @@ import onnxruntime as rt
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnx import ModelProto
-from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
 from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import RadiusNeighborsRegressor
 from xgboost import XGBRegressor

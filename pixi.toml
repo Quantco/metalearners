@@ -35,9 +35,9 @@ ipywidgets = "*"
 lightgbm = "4.5.0.*"
 xgboost = ">=2.1.4"
 lifelines = "*"
-onnx = "1.17.*"
-onnxmltools = "1.12.*"
-skl2onnx = "1.18.*"
+onnx = ">=1.18"
+onnxmltools = ">=1.14"
+skl2onnx = ">=1.19"
 onnxruntime = "*"
 spox = "*"
 optuna = "*"
@@ -110,7 +110,6 @@ causalml = "*"
 tabulate = "*"
 
 [feature.benchmark.tasks]
-postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-check -e ."
 benchmark = "python benchmarks/benchmark.py"
 
 [feature.py310.dependencies]
