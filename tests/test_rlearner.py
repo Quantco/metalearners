@@ -9,9 +9,10 @@ import pandas as pd
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnx import ModelProto
-from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
+from onnxmltools.convert.common.data_types import FloatTensorType as FloatTensorTypeOMLT
 from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType as FloatTensorTypeSkl
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from xgboost import XGBRegressor
 
@@ -42,23 +43,24 @@ def test_r_loss(use_pandas):
 
 
 @pytest.mark.parametrize(
-    "treatment_model_factory, onnx_converter",
+    "treatment_model_factory, onnx_converter, TensorType",
     (
         list(
             zip(
                 all_sklearn_regressors,
                 repeat(convert_sklearn),
+                repeat(FloatTensorTypeSkl),
             )
         )
         + [
-            (LGBMRegressor, convert_lightgbm),
-            (XGBRegressor, convert_xgboost),
+            (LGBMRegressor, convert_lightgbm, FloatTensorTypeOMLT),
+            (XGBRegressor, convert_xgboost, FloatTensorTypeOMLT),
         ]
     ),
 )
 @pytest.mark.parametrize("is_classification", [True, False])
 def test_rlearner_onnx(
-    treatment_model_factory, onnx_converter, is_classification, onnx_dataset
+    treatment_model_factory, onnx_converter, is_classification, onnx_dataset, TensorType
 ):
     if not function_has_argument(treatment_model_factory.fit, "sample_weight"):
         pytest.skip()
@@ -111,7 +113,7 @@ def test_rlearner_onnx(
                     initial_types=[
                         (
                             "X",
-                            FloatTensorType(
+                            TensorType(
                                 [None, n_numerical_features + n_categorical_features]
                             ),
                         )

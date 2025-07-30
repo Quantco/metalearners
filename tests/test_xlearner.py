@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 import random
@@ -10,9 +10,10 @@ import onnxruntime as rt
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnx import ModelProto
-from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
+from onnxmltools.convert.common.data_types import FloatTensorType as FloatTensorTypeOMLT
 from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType as FloatTensorTypeSkl
 from sklearn.neighbors import RadiusNeighborsClassifier, RadiusNeighborsRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
@@ -24,34 +25,40 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
 
 
 @pytest.mark.parametrize(
-    "treatment_model_factory, treatment_onnx_converter",
+    "treatment_model_factory, treatment_onnx_converter, TreatmentTensorType",
     random.sample(  # With this we run a different set of tests every time as running all of them is too costly (there are ~50 regressors and classifiers)
         list(
             zip(
                 all_sklearn_regressors,
                 repeat(convert_sklearn),
+                repeat(FloatTensorTypeSkl),
             )
         )
         + [
-            (LGBMRegressor, convert_lightgbm),
-            (XGBRegressor, convert_xgboost),
+            (LGBMRegressor, convert_lightgbm, FloatTensorTypeOMLT),
+            (XGBRegressor, convert_xgboost, FloatTensorTypeOMLT),
         ],
         4,
     ),
 )
 @pytest.mark.parametrize(
-    "propensity_model_factory, propensity_onnx_converter",
+    "propensity_model_factory, propensity_onnx_converter, PropensityTensorType",
     random.sample(
         list(
             zip(
                 all_sklearn_classifiers,
                 [partial(convert_sklearn, options={"zipmap": False})]
                 * len(all_sklearn_classifiers),
+                repeat(FloatTensorTypeSkl),
             )
         )
         + [
-            (LGBMClassifier, partial(convert_lightgbm, zipmap=False)),
-            (XGBClassifier, convert_xgboost),
+            (
+                LGBMClassifier,
+                partial(convert_lightgbm, zipmap=False),
+                FloatTensorTypeOMLT,
+            ),
+            (XGBClassifier, convert_xgboost, FloatTensorTypeOMLT),
         ],
         4,
     ),
@@ -64,6 +71,8 @@ def test_xlearner_onnx(
     propensity_onnx_converter,
     is_classification,
     onnx_dataset,
+    TreatmentTensorType,
+    PropensityTensorType,
 ):
     treatment_model_params: Params | None
     if treatment_model_factory == RadiusNeighborsRegressor:
@@ -108,8 +117,10 @@ def test_xlearner_onnx(
         onnx_models[model_kind] = []
         if model_kind in [CONTROL_EFFECT_MODEL, TREATMENT_EFFECT_MODEL]:
             onnx_converter = treatment_onnx_converter
+            TensorType = TreatmentTensorType
         else:
             onnx_converter = propensity_onnx_converter
+            TensorType = PropensityTensorType
         for model in models:
             onnx_models[model_kind].append(
                 onnx_converter(
@@ -117,7 +128,7 @@ def test_xlearner_onnx(
                     initial_types=[
                         (
                             "X",
-                            FloatTensorType([None, n_numerical_features]),
+                            TensorType([None, n_numerical_features]),
                         )
                     ],
                 )

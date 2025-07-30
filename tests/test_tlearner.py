@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
 from functools import partial
@@ -9,8 +9,13 @@ import onnxruntime as rt
 import pytest
 from lightgbm import LGBMClassifier, LGBMRegressor
 from onnx import ModelProto
-from onnxconverter_common.data_types import FloatTensorType
 from onnxmltools import convert_lightgbm, convert_xgboost
+
+# N.B. ONNX converters from onnxmltools and skl2onnx appear to have
+# diverged on the basic "common" tooling, but still share the same
+# name. The `FloatTensorType`s are not equivalent.
+from onnxmltools.convert.common.data_types import FloatTensorType as FloatTensorTypeOMLT
+from skl2onnx.common.data_types import FloatTensorType as FloatTensorTypeSkl
 from skl2onnx.convert import convert_sklearn
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
@@ -29,26 +34,39 @@ from .conftest import all_sklearn_classifiers, all_sklearn_regressors
 
 
 @pytest.mark.parametrize(
-    "nuisance_model_factory, onnx_converter, is_classification",
+    "nuisance_model_factory, onnx_converter, TensorType, is_classification",
     (
         list(
             zip(
                 all_sklearn_classifiers,
                 repeat(partial(convert_sklearn, options={"zipmap": False})),
+                repeat(FloatTensorTypeSkl),
                 repeat([True]),
             )
         )
-        + list(zip(all_sklearn_regressors, repeat(convert_sklearn), repeat(False)))
+        + list(
+            zip(
+                all_sklearn_regressors,
+                repeat(convert_sklearn),
+                repeat(FloatTensorTypeSkl),
+                repeat(False),
+            )
+        )
         + [
-            (LGBMClassifier, partial(convert_lightgbm, zipmap=False), True),
-            (LGBMRegressor, convert_lightgbm, False),
-            (XGBClassifier, convert_xgboost, True),
-            (XGBRegressor, convert_xgboost, False),
+            (
+                LGBMClassifier,
+                partial(convert_lightgbm, zipmap=False),
+                FloatTensorTypeOMLT,
+                True,
+            ),
+            (LGBMRegressor, convert_lightgbm, FloatTensorTypeOMLT, False),
+            (XGBClassifier, convert_xgboost, FloatTensorTypeOMLT, True),
+            (XGBRegressor, convert_xgboost, FloatTensorTypeOMLT, False),
         ]
     ),
 )
 def test_tlearner_onnx(
-    nuisance_model_factory, onnx_converter, is_classification, onnx_dataset
+    nuisance_model_factory, onnx_converter, is_classification, TensorType, onnx_dataset
 ):
     supports_categoricals = nuisance_model_factory in [
         LGBMClassifier,
@@ -112,7 +130,7 @@ def test_tlearner_onnx(
                     initial_types=[
                         (
                             "X",
-                            FloatTensorType(
+                            TensorType(
                                 [None, n_numerical_features + n_categorical_features]
                             ),
                         )
