@@ -30,7 +30,7 @@ jobs:
           cat benchmarks/comparison.md >> benchmarks/new_readme.md
           mv benchmarks/new_readme.md benchmarks/readme.md
       - name: Run pre-commit hooks
-        run: pixi run pre-commit-run --color=always --show-diff-on-failure
+        run: pixi run pre-commit-run --color=always --show-diff-on-failure || true
       - name: Create PR
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
