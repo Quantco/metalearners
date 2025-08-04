@@ -4,7 +4,7 @@
 import warnings
 from collections.abc import Mapping, Sequence
 
-import narwhals.stable.v1 as nw
+import narwhals as nw
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, hstack

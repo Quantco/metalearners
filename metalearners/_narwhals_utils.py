@@ -4,7 +4,7 @@
 from collections.abc import Sequence
 from types import ModuleType
 
-import narwhals.stable.v1 as nw
+import narwhals as nw
 import numpy as np
 from narwhals.dependencies import is_into_series
 
