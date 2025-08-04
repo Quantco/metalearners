@@ -14,7 +14,7 @@ joblib = ">=1.2.0"
 scikit-learn = ">=1.4"
 numpy = "*"
 pandas = "*"
-narwhals = ">=1.31.0,<2"
+narwhals = ">=1.31.0"
 pyarrow = ">=19.0.0,<20"
 # We only rely on polars in _typing.
 polars = "*"
@@ -121,12 +121,20 @@ python = "3.12.*"
 [feature.py313.dependencies]
 python = "3.13.*"
 
+[feature.nw1.dependencies]
+narwhals = "1.*"
+
+[feature.nw2.dependencies]
+narwhals = "2.*"
+
 [environments]
 default = ["dev"]
 py310 = ["py310", "dev"]
 py311 = ["py311", "dev"]
 py312 = ["py312", "dev"]
 py313 = ["py313", "dev"]
+nw1 = ["nw1", "dev"]
+nw2 = ["nw2", "dev"]
 
 lint = { features = ["lint"], no-default-feature = true }
 

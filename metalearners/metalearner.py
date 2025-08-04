@@ -7,7 +7,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
-import narwhals.stable.v1 as nw
+import narwhals as nw
 import numpy as np
 import shap
 from scipy.sparse import csr_matrix

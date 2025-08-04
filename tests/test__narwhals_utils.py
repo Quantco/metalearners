@@ -1,7 +1,7 @@
 # Copyright (c) QuantCo 2024-2025
 # SPDX-License-Identifier: BSD-3-Clause
 
-import narwhals.stable.v1 as nw
+import narwhals as nw
 import numpy as np
 import pandas as pd
 import polars as pl
