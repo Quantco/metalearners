@@ -50,18 +50,18 @@ on ground truth CATEs:
 
 | R-learner                                                     | causalml_in_sample | causalml_oos | metalearners_in_sample | metalearners_oos |
 | :------------------------------------------------------------ | -----------------: | -----------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0465997 |    0.0460291 |              0.0502287 |        0.0477101 |
-| synthetic_data_binary_outcome_binary_treatment_linear_te      |           0.304553 |     0.301834 |               0.304671 |         0.301833 |
-| twins_pandas                                                  |           0.327822 |     0.352831 |               0.354841 |         0.352163 |
-| twins_numpy                                                   |            0.32672 |     0.349791 |               0.349479 |         0.339678 |
-| synthetic_data_continuous_outcome_multi_treatment_linear_te   |           0.278879 |     0.277928 |               0.287116 |         0.277606 |
-| synthetic_data_continuous_outcome_multi_treatment_constant_te |          0.0815435 |    0.0817266 |              0.0848569 |        0.0810205 |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0467614 |    0.0465363 |              0.0502287 |        0.0477101 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te      |           0.304552 |     0.301835 |               0.304671 |         0.301833 |
+| twins_pandas                                                  |           0.325484 |     0.354198 |               0.354841 |         0.352163 |
+| twins_numpy                                                   |           0.324824 |     0.350011 |               0.349479 |         0.339678 |
+| synthetic_data_continuous_outcome_multi_treatment_linear_te   |           0.278341 |     0.278613 |               0.287116 |         0.277606 |
+| synthetic_data_continuous_outcome_multi_treatment_constant_te |           0.081892 |    0.0814257 |              0.0848569 |        0.0810205 |
 
 | DR-learner                                                    | causalml_in_sample | causalml_oos | econml_in_sample | econml_oos | metalearners_in_sample | metalearners_oos |
 | :------------------------------------------------------------ | -----------------: | -----------: | ---------------: | ---------: | ---------------------: | ---------------: |
-| synthetic_data_continuous_outcome_binary_treatment_linear_te  |           0.175723 |     0.191606 |         0.254076 |   0.250911 |              0.0477205 |        0.0452617 |
-| synthetic_data_binary_outcome_binary_treatment_linear_te      |                nan |          nan |         0.304581 |   0.301865 |               0.304652 |         0.301818 |
+| synthetic_data_continuous_outcome_binary_treatment_linear_te  |          0.0634086 |     0.139558 |         0.260622 |   0.250707 |              0.0477205 |        0.0452617 |
+| synthetic_data_binary_outcome_binary_treatment_linear_te      |                nan |          nan |          0.30458 |   0.301863 |               0.304652 |         0.301818 |
 | twins_pandas                                                  |                nan |          nan |              nan |        nan |               0.382051 |         0.371518 |
 | twins_numpy                                                   |                nan |          nan |              nan |        nan |               0.367528 |         0.354263 |
-| synthetic_data_continuous_outcome_multi_treatment_linear_te   |           0.405643 |     0.373155 |         0.351365 |   0.369064 |              0.0651796 |        0.0621723 |
-| synthetic_data_continuous_outcome_multi_treatment_constant_te |           0.527184 |     0.145628 |        0.0765839 |  0.0757693 |              0.0788408 |        0.0757627 |
+| synthetic_data_continuous_outcome_multi_treatment_linear_te   |           0.402791 |     0.449284 |         0.364978 |   0.359347 |              0.0651796 |        0.0621723 |
+| synthetic_data_continuous_outcome_multi_treatment_constant_te |           0.363484 |     0.373221 |        0.0762288 |  0.0764412 |              0.0788408 |        0.0757627 |
