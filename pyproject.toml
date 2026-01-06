@@ -20,7 +20,7 @@ classifiers = [
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "scikit-learn>=1.4",
+    "scikit-learn>=1.4,<1.8",
     "pandas",
     "numpy",
     "narwhals>=1.31.0",
