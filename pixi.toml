@@ -31,7 +31,9 @@ ipywidgets = "*"
 # lightgbm = "*"
 # We have issues with version 4.6.0 when working with polars objects.
 lightgbm = "4.5.0.*"
-xgboost = ">=2.1.4"
+# Upper-bounded until https://github.com/onnx/onnxmltools/pull/736 is
+# released.
+xgboost = ">=2.1.4,<3.1.0"
 lifelines = "*"
 onnx = ">=1.18"
 onnxmltools = ">=1.14"
