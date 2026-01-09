@@ -8,6 +8,8 @@ postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-
 
 [dependencies]
 python = ">=3.10"
+# Explicitly request OpenBLAS to avoid slow Netlib fallback on Windows.
+libblas = { version = "*", build = "*openblas*" }
 shap = "*"
 matplotlib-base = "*"
 joblib = ">=1.2.0"
