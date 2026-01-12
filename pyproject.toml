@@ -16,11 +16,12 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "scikit-learn>=1.4",
+    "scikit-learn>=1.4,<1.8",
     "pandas",
     "numpy",
     "narwhals>=1.31.0",
@@ -91,4 +92,12 @@ testpaths = [
 ]
 
 [tool.typos.default]
-extend-ignore-re = ["HTE", "crace", "(?Rm)^.*#\\s*spellchecker:disable-line$", "frst_in_family"]
+extend-ignore-re = [
+  "HTE",
+  "crace",
+  "frst_in_family",
+  # Disable spell-checking for an individual line.
+  "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+  # Disable spell-checking for a code block.
+  "(?s)(#|//)\\s*spellchecker:off.*?\\n\\s*(#|//)\\s*spellchecker:on",
+]

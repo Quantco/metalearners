@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2025
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 from contextlib import nullcontext as does_not_raise
@@ -397,7 +397,7 @@ def test_index_matrix(matrix_backend, rows_backend, use_boolean_mask):
 
     result = index_matrix(matrix=matrix, rows=rows)
     assert isinstance(result, matrix_backend)
-    assert result.shape[1] == matrix.shape[1]
+    assert result.shape[1] == matrix.shape[1]  # type: ignore
 
     if isinstance(result, pd.DataFrame | pl.DataFrame):
         result = result.to_numpy()

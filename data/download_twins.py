@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2024
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 import pandas as pd
@@ -62,7 +62,7 @@ lighter_columns = [
     "infant_id_0",
     "dlivord_min",
     "dtotord_min",
-    "bord_0",
+    "bord_0",  # spellchecker:disable-line
     "brstate_reg",
     "stoccfipb_reg",
     "mplbir_reg",
@@ -114,7 +114,7 @@ heavier_columns = [
     "infant_id_1",
     "dlivord_min",
     "dtotord_min",
-    "bord_1",
+    "bord_1",  # spellchecker:disable-line
     "brstate_reg",
     "stoccfipb_reg",
     "mplbir_reg",
@@ -193,7 +193,7 @@ cols = [
     "infant_id",
     "dlivord_min",
     "dtotord_min",
-    "bord",
+    "bord",  # spellchecker:disable-line
     "brstate_reg",
     "stoccfipb_reg",
     "mplbir_reg",

@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2025
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -515,14 +515,16 @@ def load_twins_data(
     # That way, we don't need to package the data for someone to be able to use this function.
     df = pd.read_csv(path)
     drop_columns = [
-        "bord",
+        "bord",  # spellchecker:disable-line
         "brstate_reg",
         "stoccfipb_reg",
         "mplbir_reg",
         "infant_id",
         "wt",
     ]
+    # spellchecker:off
     # We remove wt (weight) and bord (birth order) as they are different for each twin.
+    # spellchecker:on
     # We remove _reg variables as they are already represented by the corresponding
     # variable without _reg and this new only groups them in bigger regions.
     # We remove infant_id as it's a unique identifier for each infant.

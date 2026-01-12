@@ -10,7 +10,7 @@
 
 - Remove `polars` as a run dependency.
 - Make [`MetaLearner.feature_importances`][metalearners.metalearner.MetaLearner.feature_importances] and
-  [`Explainer.feature_importances`][metalearners.metalearner.Explainer.feature_importances] return a list
+  [`Explainer.feature_importances`][metalearners.explainer.Explainer.feature_importances] return a list
   of `dict`s, rather than a list of `pandas.DataFrame`s.
 
 ## 0.13.0 (2025-05-19)

@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "metalearners"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
@@ -8,18 +8,18 @@ postinstall = "pip install --no-build-isolation --no-deps --disable-pip-version-
 
 [dependencies]
 python = ">=3.10"
+# Explicitly request OpenBLAS to avoid slow Netlib fallback on Windows.
+libblas = { version = "*", build = "*openblas*" }
 shap = "*"
 matplotlib-base = "*"
 joblib = ">=1.2.0"
-scikit-learn = ">=1.4"
+scikit-learn = ">=1.4,<1.8"
 numpy = "*"
 pandas = "*"
 narwhals = ">=1.31.0"
 pyarrow = ">=19.0.0,<20"
 # We only rely on polars in _typing.
 polars = "*"
-
-[host-dependencies]
 pip = "*"
 hatchling = "*"
 hatch-vcs = "*"
@@ -33,7 +33,9 @@ ipywidgets = "*"
 # lightgbm = "*"
 # We have issues with version 4.6.0 when working with polars objects.
 lightgbm = "4.5.0.*"
-xgboost = ">=2.1.4"
+# Upper-bounded until https://github.com/onnx/onnxmltools/pull/736 is
+# released.
+xgboost = ">=2.1.4,<3.1.0"
 lifelines = "*"
 onnx = ">=1.18"
 onnxmltools = ">=1.14"
