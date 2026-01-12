@@ -1,3 +1,3 @@
 # Checklist
 
-- [ ] Added a `CHANGELOG.rst` entry
+- [ ] Added a `CHANGELOG.md` entry
