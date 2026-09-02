@@ -234,6 +234,18 @@ class RLearner(MetaLearner):
         qualified_fit_params = self._qualified_fit_params(fit_params)
         treatment_jobs: list[_ParallelJoblibSpecification] = []
         self._variants_indices = []
+        outcome_estimates = self.predict_nuisance(
+            X=X,
+            is_oos=False,
+            model_kind=OUTCOME_MODEL,
+            model_ord=0,
+        )
+        propensity_estimates = self.predict_nuisance(
+            X=X,
+            is_oos=False,
+            model_kind=PROPENSITY_MODEL,
+            model_ord=0,
+        )
         for treatment_variant in range(1, self.n_variants):
 
             is_treatment = w == treatment_variant
@@ -243,13 +255,13 @@ class RLearner(MetaLearner):
             self._variants_indices.append(mask)
 
             pseudo_outcomes, weights = self._pseudo_outcome_and_weights(
-                X=X,
                 w=w,
                 y=y,
                 treatment_variant=treatment_variant,
+                outcome_estimates=outcome_estimates,
+                propensity_estimates=propensity_estimates,
                 mask=mask,
                 epsilon=epsilon,
-                is_oos=False,
             )
 
             X_filtered = index_matrix(X, mask)
@@ -403,7 +415,9 @@ class RLearner(MetaLearner):
             model_ord=0,
         )
         if self.is_classification:
-            y_hat = y_hat[:, 1]
+            y_hat_for_r_loss = y_hat[:, 1]
+        else:
+            y_hat_for_r_loss = y_hat
 
         pseudo_outcome: list[np.ndarray] = []
         sample_weights: list[np.ndarray] = []
@@ -413,12 +427,11 @@ class RLearner(MetaLearner):
             is_treatment = w == treatment_variant
             mask = is_treatment | is_control
             tv_pseudo_outcome, tv_sample_weights = self._pseudo_outcome_and_weights(
-                X=X,
                 y=y,
                 w=w,
                 treatment_variant=treatment_variant,
-                is_oos=is_oos,
-                oos_method=oos_method,
+                outcome_estimates=y_hat,
+                propensity_estimates=w_hat,
                 mask=mask,
             )
             pseudo_outcome.append(tv_pseudo_outcome)
@@ -455,7 +468,7 @@ class RLearner(MetaLearner):
             )
             rloss_evaluation[f"r_loss_{treatment_variant}_vs_0"] = r_loss(
                 cate_estimates=cate_estimates[mask],
-                outcome_estimates=y_hat[mask],
+                outcome_estimates=y_hat_for_r_loss[mask],
                 propensity_scores=propensity_estimates[mask],
                 outcomes=index_vector(y, mask),
                 treatments=index_vector(w, mask) == treatment_variant,
@@ -469,12 +482,11 @@ class RLearner(MetaLearner):
 
     def _pseudo_outcome_and_weights(
         self,
-        X: Matrix,
         y: Vector,
         w: Vector,
         treatment_variant: int,
-        is_oos: bool,
-        oos_method: OosMethod = OVERALL,
+        outcome_estimates: np.ndarray,
+        propensity_estimates: np.ndarray,
         mask: Vector | None = None,
         epsilon: float = _EPSILON,
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -487,26 +499,12 @@ class RLearner(MetaLearner):
         constant `epsilon` to the denominator in order to avoid numerical problems.
         """
         if mask is None:
-            mask = np.ones(safe_len(X), dtype=bool)
+            mask = np.ones(safe_len(y), dtype=bool)
 
         validate_valid_treatment_variant_not_control(treatment_variant, self.n_variants)
 
-        # Note that if we already applied the mask as an input to this call, we wouldn't
-        # be able to match original observations with their corresponding folds.
-        y_estimates = self.predict_nuisance(
-            X=X,
-            is_oos=is_oos,
-            model_kind=OUTCOME_MODEL,
-            model_ord=0,
-            oos_method=oos_method,
-        )[mask]
-        w_estimates = self.predict_nuisance(
-            X=X,
-            is_oos=is_oos,
-            model_kind=PROPENSITY_MODEL,
-            model_ord=0,
-            oos_method=oos_method,
-        )[mask]
+        y_estimates = outcome_estimates[mask]
+        w_estimates = propensity_estimates[mask]
         w_estimates_binarized = w_estimates[:, treatment_variant] / (
             w_estimates[:, 0] + w_estimates[:, treatment_variant]
         )
