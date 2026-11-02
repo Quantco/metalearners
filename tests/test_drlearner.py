@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import repeat
+from typing import TypedDict
 
 import numpy as np
 import onnxruntime as rt
@@ -16,9 +17,83 @@ from sklearn.neighbors import RadiusNeighborsRegressor
 from xgboost import XGBRegressor
 
 from metalearners import DRLearner
-from metalearners._typing import Params
+from metalearners._typing import OosMethod, Params
+from metalearners.cross_fit_estimator import OVERALL
+from metalearners.metalearner import (
+    PROPENSITY_MODEL,
+    TREATMENT_MODEL,
+    VARIANT_OUTCOME_MODEL,
+)
 
 from .conftest import all_sklearn_regressors
+
+
+def _multi_variant_dataset(n_obs=120, n_variants=4):
+    sample_index = np.arange(n_obs)
+    X = np.column_stack(
+        [
+            sample_index / n_obs,
+            (sample_index % 5) / 5,
+            np.sin(sample_index / 7),
+        ]
+    )
+    w = sample_index % n_variants
+    y = X[:, 0] - 0.5 * X[:, 1] + 0.25 * w
+    return X, y, w
+
+
+class _NuisancePredictionCallArgs(TypedDict):
+    is_oos: bool | None
+    oos_method: OosMethod
+
+
+def _spy_on_drlearner_nuisance_predictions(monkeypatch, learner):
+    nuisance_estimate_calls = {
+        "conditional_average_outcome_estimates": 0,
+        PROPENSITY_MODEL: 0,
+    }
+    nuisance_estimate_call_args: dict[str, list[_NuisancePredictionCallArgs]] = {
+        "conditional_average_outcome_estimates": [],
+        PROPENSITY_MODEL: [],
+    }
+    original_predict_conditional_average_outcomes = (
+        learner.predict_conditional_average_outcomes
+    )
+    original_predict_nuisance = learner.predict_nuisance
+
+    def predict_conditional_average_outcomes_spy(*args, **kwargs):
+        nuisance_estimate_calls["conditional_average_outcome_estimates"] += 1
+        nuisance_estimate_call_args["conditional_average_outcome_estimates"].append(
+            {
+                "is_oos": kwargs.get("is_oos", args[1] if len(args) > 1 else None),
+                "oos_method": kwargs.get(
+                    "oos_method", args[2] if len(args) > 2 else OVERALL
+                ),
+            }
+        )
+        return original_predict_conditional_average_outcomes(*args, **kwargs)
+
+    def predict_nuisance_spy(*args, **kwargs):
+        model_kind = kwargs.get("model_kind", args[1] if len(args) > 1 else None)
+        if model_kind == PROPENSITY_MODEL:
+            nuisance_estimate_calls[PROPENSITY_MODEL] += 1
+            nuisance_estimate_call_args[PROPENSITY_MODEL].append(
+                {
+                    "is_oos": kwargs.get("is_oos", args[3] if len(args) > 3 else None),
+                    "oos_method": kwargs.get(
+                        "oos_method", args[4] if len(args) > 4 else OVERALL
+                    ),
+                }
+            )
+        return original_predict_nuisance(*args, **kwargs)
+
+    monkeypatch.setattr(
+        learner,
+        "predict_conditional_average_outcomes",
+        predict_conditional_average_outcomes_spy,
+    )
+    monkeypatch.setattr(learner, "predict_nuisance", predict_nuisance_spy)
+    return nuisance_estimate_calls, nuisance_estimate_call_args
 
 
 def test_adaptive_clipping_smoke(dummy_dataset):
@@ -33,6 +108,117 @@ def test_adaptive_clipping_smoke(dummy_dataset):
         adaptive_clipping=True,
     )
     ml.fit(X, y, w)
+
+
+def test_drlearner_reuses_nuisance_estimates_across_treatment_variants(monkeypatch):
+    n_variants = 4
+    X, y, w = _multi_variant_dataset(n_variants=n_variants)
+
+    learner = DRLearner(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        propensity_model_params={"max_iter": 1000},
+        n_folds=2,
+        random_state=0,
+    )
+    learner.fit_all_nuisance(X, y, w)
+
+    nuisance_estimate_calls, _ = _spy_on_drlearner_nuisance_predictions(
+        monkeypatch, learner
+    )
+
+    learner.fit_all_treatment(X, y, w)
+
+    assert nuisance_estimate_calls == {
+        "conditional_average_outcome_estimates": 1,
+        PROPENSITY_MODEL: 1,
+    }
+
+
+def test_drlearner_evaluate_reuses_nuisance_estimates_across_treatment_variants(
+    monkeypatch,
+):
+    n_variants = 4
+    X, y, w = _multi_variant_dataset(n_variants=n_variants)
+
+    learner = DRLearner(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        propensity_model_params={"max_iter": 1000},
+        n_folds=2,
+        random_state=0,
+    )
+    learner.fit(X, y, w)
+
+    nuisance_estimate_calls, nuisance_estimate_call_args = (
+        _spy_on_drlearner_nuisance_predictions(monkeypatch, learner)
+    )
+
+    learner.evaluate(
+        X,
+        y,
+        w,
+        is_oos=True,
+        oos_method="mean",
+        scoring={
+            PROPENSITY_MODEL: [],
+            VARIANT_OUTCOME_MODEL: [],
+            TREATMENT_MODEL: [],
+        },
+    )
+
+    assert nuisance_estimate_calls == {
+        "conditional_average_outcome_estimates": 1,
+        PROPENSITY_MODEL: 1,
+    }
+    assert nuisance_estimate_call_args == {
+        "conditional_average_outcome_estimates": [
+            {"is_oos": True, "oos_method": "mean"}
+        ],
+        PROPENSITY_MODEL: [{"is_oos": True, "oos_method": "mean"}],
+    }
+
+
+def test_drlearner_average_treatment_effect_reuses_nuisance_estimates_across_treatment_variants(
+    monkeypatch,
+):
+    n_variants = 4
+    X, y, w = _multi_variant_dataset(n_variants=n_variants)
+
+    learner = DRLearner(
+        is_classification=False,
+        n_variants=n_variants,
+        nuisance_model_factory=LinearRegression,
+        treatment_model_factory=LinearRegression,
+        propensity_model_factory=LogisticRegression,
+        propensity_model_params={"max_iter": 1000},
+        n_folds=2,
+        random_state=0,
+    )
+    learner.fit_all_nuisance(X, y, w)
+
+    nuisance_estimate_calls, nuisance_estimate_call_args = (
+        _spy_on_drlearner_nuisance_predictions(monkeypatch, learner)
+    )
+
+    learner.average_treatment_effect(X, y, w, is_oos=True)
+
+    assert nuisance_estimate_calls == {
+        "conditional_average_outcome_estimates": 1,
+        PROPENSITY_MODEL: 1,
+    }
+    assert nuisance_estimate_call_args == {
+        "conditional_average_outcome_estimates": [
+            {"is_oos": True, "oos_method": OVERALL}
+        ],
+        PROPENSITY_MODEL: [{"is_oos": True, "oos_method": OVERALL}],
+    }
 
 
 @pytest.mark.parametrize(

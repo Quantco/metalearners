@@ -12,6 +12,9 @@
 - Make [`MetaLearner.feature_importances`][metalearners.metalearner.MetaLearner.feature_importances] and
   [`Explainer.feature_importances`][metalearners.explainer.Explainer.feature_importances] return a list
   of `dict`s, rather than a list of `pandas.DataFrame`s.
+- Reuse nuisance estimates across treatment variants in [`RLearner`][metalearners.rlearner.RLearner] and
+  [`DRLearner`][metalearners.drlearner.DRLearner] pseudo-outcome computations, avoiding repeated nuisance
+  predictions.
 
 ## 0.13.0 (2025-05-19)
 
