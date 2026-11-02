@@ -101,3 +101,7 @@ extend-ignore-re = [
   # Disable spell-checking for a code block.
   "(?s)(#|//)\\s*spellchecker:off.*?\\n\\s*(#|//)\\s*spellchecker:on",
 ]
+
+[tool.typos.default.extend-words]
+# statsmodels' standard errors attribute, e.g. `RegressionResults.bse`.
+bse = "bse"

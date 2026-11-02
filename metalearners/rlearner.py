@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2025
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 
@@ -86,23 +86,24 @@ def r_loss(
 
 
 class RLearner(MetaLearner):
-    r"""R-Learner for CATE estimation as described by [Nie et al. (2017)](https://arxiv.org/pdf/1712.04912.pdf).
+    r"""R-Learner for CATE estimation as described by [Nie et al.
 
-    Importantly, the current R-Learner implementation only supports:
+    (2017)](https://arxiv.org/pdf/1712.04912.pdf).
+        Importantly, the current R-Learner implementation only supports:
 
-    * binary classes in case of a classification outcome
+        * binary classes in case of a classification outcome
 
-    The R-Learner contains two nuisance models
+        The R-Learner contains two nuisance models
 
-    * a `"propensity_model"` estimating $\Pr[W=k|X]$
-    * an `"outcome_model"` estimating $\mathbb{E}[Y|X]$
+        * a `"propensity_model"` estimating $\Pr[W=k|X]$
+        * an `"outcome_model"` estimating $\mathbb{E}[Y|X]$
 
-    and one treatment model per treatment variant which isn't control
+        and one treatment model per treatment variant which isn't control
 
-    * `"treatment_model"` which estimates $\mathbb{E}[Y(k) - Y(0) | X]$
+        * `"treatment_model"` which estimates $\mathbb{E}[Y(k) - Y(0) | X]$
 
-    The `treatment_model_factory` provided needs to support the argument
-    `sample_weight` in its `fit` method.
+        The `treatment_model_factory` provided needs to support the argument
+        `sample_weight` in its `fit` method.
     """
 
     def _validate_models(self) -> None:
@@ -110,11 +111,11 @@ class RLearner(MetaLearner):
 
         In particular, it is validated that a base model to be used with `"predict"` is
         recognized by `scikit-learn` as a regressor via `sklearn.base.is_regressor` and
-        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as
-        a classifier via `sklearn.base.is_classifier`.
+        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as a
+        classifier via `sklearn.base.is_classifier`.
 
-        Additionally, this method ensures that the treatment model "treatment_model" supports
-        the `"sample_weight"` argument in its `fit` method.
+        Additionally, this method ensures that the treatment model "treatment_model"
+        supports the `"sample_weight"` argument in its `fit` method.
         """
         if not function_has_argument(
             self.treatment_model_factory[TREATMENT_MODEL].fit, _SAMPLE_WEIGHT
@@ -480,11 +481,11 @@ class RLearner(MetaLearner):
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the R-Learner pseudo outcome and corresponding weights.
 
-        If `mask` is provided, the returned pseudo outcomes and weights are only
-        with respect the observations that the mask selects.
+        If `mask` is provided, the returned pseudo outcomes and weights are only with
+        respect the observations that the mask selects.
 
-        Since the pseudo outcome is a fraction of residuals, we add a small
-        constant `epsilon` to the denominator in order to avoid numerical problems.
+        Since the pseudo outcome is a fraction of residuals, we add a small constant
+        `epsilon` to the denominator in order to avoid numerical problems.
         """
         if mask is None:
             mask = np.ones(safe_len(X), dtype=bool)
