@@ -56,7 +56,6 @@ def index_matrix2(matrix: Matrix, rows: Vector) -> Matrix:
 
 def index_matrix_t(matrix: Matrix, rows: Vector) -> Matrix:
     """Subselect certain rows from a matrix."""
-
     # TODO: This function currently relies on lots of conversions
     # between different vector and matrix data structures.
     # Can we find a pareto iprovement with fewer conversions and
@@ -342,10 +341,9 @@ def sigmoid(x: np.ndarray) -> np.ndarray:
 def check_probability(p: float, zero_included=False, one_included=False) -> None:
     r"""Checks whether the provided probability p lies within a valid range.
 
-    The valid range, from 0 to 1, which can be inclusive or exclusive, depending on
-    the flags ``zero_included`` and ``one_included`` respectively.
+    The valid range, from 0 to 1, which can be inclusive or exclusive, depending on the
+    flags ``zero_included`` and ``one_included`` respectively.
     """
-
     if np.isnan(p):
         raise ValueError("Invalid input! Probability p should not be NaN.")
 
@@ -444,11 +442,12 @@ def clip_element_absolute_value_to_epsilon(vector: Vector, epsilon: float) -> Ve
     """Clip in accordance with the sign of each element if the element's absolute value
     is below ``epsilon``.
 
-    For instance, if ``vector`` equals ``[0, 1, -1, .09, -.09]`` and ``epsilon`` equals ``.1``,
-    this function will return ``[0, 1, -1, .1, -.1]``.
+    For instance, if ``vector`` equals ``[0, 1, -1, .09, -.09]`` and ``epsilon`` equals
+    ``.1``, this function will return ``[0, 1, -1, .1, -.1]``.
 
-    Typically, this is done in order to avoid numerical problems when there is an element-wise
-    division by ``vector`` and that the elements of ``vector`` are very close to 0.
+    Typically, this is done in order to avoid numerical problems when there is an
+    element-wise division by ``vector`` and that the elements of ``vector`` are very
+    close to 0.
     """
     bound = np.where(vector < 0, -1, 1) * epsilon
     return np.where(np.abs(vector) < epsilon, bound, vector)
@@ -616,9 +615,7 @@ def simplify_output_2d(tensor: np.ndarray) -> np.ndarray:
 
 # Taken from https://stackoverflow.com/questions/13741998/is-there-a-way-to-let-classes-inherit-the-documentation-of-their-superclass-with
 def copydoc(fromfunc, sep="\n"):
-    """
-    Decorator: Copy the docstring of ``fromfunc``
-    """
+    """Decorator: Copy the docstring of ``fromfunc``"""
 
     def _decorator(func):
         sourcedoc = fromfunc.__doc__

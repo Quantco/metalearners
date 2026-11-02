@@ -70,11 +70,11 @@ class Explainer:
     ) -> "Explainer":
         r"""Create an ``Explainer`` object from CATE estimates.
 
-        This function will fit a model for each treatment variant with ``X`` as its input
-        and the corresponding CATE estimates as its output.
+        This function will fit a model for each treatment variant with ``X`` as its
+        input and the corresponding CATE estimates as its output.
 
-        The ``cate_estimates`` should be the raw outcome of a MetaLearner with 3 dimensions
-        and should not be simplified.
+        The ``cate_estimates`` should be the raw outcome of a MetaLearner with 3
+        dimensions and should not be simplified.
         """
         if safe_len(X) != len(cate_estimates) or safe_len(X) == 0:
             raise ValueError(

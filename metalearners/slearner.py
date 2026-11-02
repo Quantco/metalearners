@@ -54,7 +54,6 @@ def _np_to_dummies(
 
     The resulting columns will correspond to the order of values in ``categories``.
     """
-
     if x.ndim != 1:
         raise ValueError("Can only convert 1-d array to dummies.")
 

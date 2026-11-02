@@ -410,10 +410,10 @@ class XLearner(_ConditionalAverageOutcomeMetaLearner):
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute the X-Learner pseudo outcome.
 
-        Importantly this method only returns the imputed treatment effect using the control
-        outcome model for the observatons treated with variant ``treatment_variant`` and
-        the imputed treatment effect using the treatment variant outcome model for the
-        observations in the control group.
+        Importantly this method only returns the imputed treatment effect using the
+        control outcome model for the observatons treated with variant
+        ``treatment_variant`` and the imputed treatment effect using the treatment
+        variant outcome model for the observations in the control group.
 
         This function can be used with both in-sample or out-of-sample data.
         """
