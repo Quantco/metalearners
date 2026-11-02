@@ -138,7 +138,7 @@ def test_append_treatment_to_covariates_with_categorical(backend, request, sampl
     else:
         assert isinstance(X_with_w, pl.DataFrame)
         assert isinstance(X_with_w[_TREATMENT].dtype, pl.Categorical)
-        assert set(X_with_w[_TREATMENT].cat.get_categories()) == {"0"}
+        assert set(X_with_w[_TREATMENT].cast(pl.String).unique()) == {"0"}
         pl_assert_frame_equal(
             X_with_w.drop(_TREATMENT),
             covariates,
