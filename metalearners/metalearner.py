@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2025
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
@@ -252,8 +252,9 @@ def _fit_cross_fit_estimator_joblib(
 
 
 class MetaLearner(ABC):
-    r"""MetaLearner abstract class. All metalearner implementations should inherit from
-    it.
+    r"""MetaLearner abstract class.
+
+    All metalearner implementations should inherit from it.
 
     All of
 
@@ -366,8 +367,8 @@ class MetaLearner(ABC):
 
         In particular, it is validated that a base model to be used with `"predict"` is
         recognized by `scikit-learn` as a regressor via `sklearn.base.is_regressor` and
-        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as
-        a classifier via `sklearn.base.is_classifier`.
+        a model to be used with `"predict_proba"` is recognized by `scikit-learn` as a
+        classifier via `sklearn.base.is_classifier`.
         """
         for model_kind in self.nuisance_model_specifications():
             if model_kind in self._prefitted_nuisance_models:
@@ -616,8 +617,9 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit a given nuisance model of a MetaLearner.
 
-        `y` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
-        If pre-fitted models were passed at instantiation, these are never refitted.
+        `y` represents the objective of the given nuisance model, not necessarily the
+        outcome of the experiment. If pre-fitted models were passed at instantiation,
+        these are never refitted.
         """
         if model_kind in self._prefitted_nuisance_models:
             return self
@@ -644,8 +646,9 @@ class MetaLearner(ABC):
         r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
         oblibSpecification] to fit the corresponding nuisance model.
 
-        `y` represents the objective of the given nuisance model, not necessarily the outcome of the experiment.
-        If pre-fitted models were passed at instantiation, these are never refitted.
+        `y` represents the objective of the given nuisance model, not necessarily the
+        outcome of the experiment. If pre-fitted models were passed at instantiation,
+        these are never refitted.
         """
         if model_kind in self._prefitted_nuisance_models:
             return None
@@ -699,7 +702,8 @@ class MetaLearner(ABC):
     ) -> Self:
         """Fit the treatment model of a MetaLearner.
 
-        `y` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
+        `y` represents the objective of the given treatment model, not necessarily the
+        outcome of the experiment.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         self._treatment_models[model_kind][model_ord].fit(
@@ -724,8 +728,9 @@ class MetaLearner(ABC):
         r"""Create a [`_ParallelJoblibSpecification`][metalearners.metalearner._ParallelJ
         oblibSpecification] to fit the corresponding treatment model.
 
-        `y` represents the objective of the given treatment model, not necessarily the outcome of the experiment.
-        If pre-fitted models were passed at instantiation, these are never refitted.
+        `y` represents the objective of the given treatment model, not necessarily the
+        outcome of the experiment. If pre-fitted models were passed at instantiation,
+        these are never refitted.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
 
@@ -895,8 +900,8 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Estimate based on a given nuisance model.
 
-        Importantly, this method needs to implement the subselection of `X` based on
-        the `feature_set` field of `MetaLearner`.
+        Importantly, this method needs to implement the subselection of `X` based on the
+        `feature_set` field of `MetaLearner`.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         predict_method_name = self.nuisance_model_specifications()[model_kind][
@@ -917,8 +922,8 @@ class MetaLearner(ABC):
     ) -> np.ndarray:
         """Estimate based on a given treatment model.
 
-        Importantly, this method needs to implement the subselection of `X` based on
-        the `feature_set` field of `MetaLearner`.
+        Importantly, this method needs to implement the subselection of `X` based on the
+        `feature_set` field of `MetaLearner`.
         """
         X_filtered = _filter_x_columns(X, self.feature_set[model_kind])
         return self._treatment_models[model_kind][model_ord].predict(

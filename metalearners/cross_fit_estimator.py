@@ -1,4 +1,4 @@
-# Copyright (c) QuantCo 2024-2025
+# Copyright (c) QuantCo 2024-2026
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -81,8 +81,8 @@ class CrossFitEstimator:
     ``n_folds`` folds of the data.
 
     ``estimator_factory`` is a class implementing an estimator with a scikit-learn
-    interface. Instantiation parameters can be passed to ``estimator_params``.
-    An example argument for ``estimator_factory`` would be ``lightgbm.LGBMRegressor``.
+    interface. Instantiation parameters can be passed to ``estimator_params``. An
+    example argument for ``estimator_factory`` would be ``lightgbm.LGBMRegressor``.
 
     Importantly, the ``CrossFitEstimator`` can handle in-sample and out-of-sample
     ('oos') data for prediction. When doing in-sample prediction the single model will
@@ -91,10 +91,10 @@ class CrossFitEstimator:
     combining the ``n_folds`` models or using a model trained on all of the data
     (``enable_overall``).
 
-    ``n_folds`` can be set to 1 if the user desires to deactivate cross-fitting. In
-    that case, the ``CrossFitEstimator`` would only fit one overall model which would be
-    the one used for either in sample or out of sample predictions. Note that this is
-    not recommended since it can lead to data leakage when doing in-sample predictions.
+    ``n_folds`` can be set to 1 if the user desires to deactivate cross-fitting. In that
+    case, the ``CrossFitEstimator`` would only fit one overall model which would be the
+    one used for either in sample or out of sample predictions. Note that this is not
+    recommended since it can lead to data leakage when doing in-sample predictions.
     """
 
     n_folds: int
@@ -309,11 +309,10 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         """Predict from ``X``.
 
-        If ``is_oos``, the ``oos_method`` will be used to generate predictions
-        on 'out of sample' data. 'Out of sample' refers to this data not having been
-        used in the ``fit`` method. The ``oos_method`` ``'overall'`` can only be used
-        if the ``CrossFitEstimator`` has been initialized with
-        ``enable_overall=True``.
+        If ``is_oos``, the ``oos_method`` will be used to generate predictions on 'out
+        of sample' data. 'Out of sample' refers to this data not having been used in the
+        ``fit`` method. The ``oos_method`` ``'overall'`` can only be used if the
+        ``CrossFitEstimator`` has been initialized with ``enable_overall=True``.
         """
         return self._predict(
             X=X,
@@ -330,11 +329,10 @@ class CrossFitEstimator:
     ) -> np.ndarray:
         """Predict probability from ``X``.
 
-        If ``is_oos``, the ``oos_method`` will be used to generate predictions
-        on 'out of sample' data. 'Out of sample' refers to this data not having been
-        used in the ``fit`` method. The ``oos_method`` ``'overall'`` can only be used
-        if the ``CrossFitEstimator`` has been initialized with
-        ``enable_overall=True``.
+        If ``is_oos``, the ``oos_method`` will be used to generate predictions on 'out
+        of sample' data. 'Out of sample' refers to this data not having been used in the
+        ``fit`` method. The ``oos_method`` ``'overall'`` can only be used if the
+        ``CrossFitEstimator`` has been initialized with ``enable_overall=True``.
         """
         return self._predict(
             X=X,
